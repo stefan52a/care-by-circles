@@ -1,0 +1,25 @@
+<a href="#/Circles">Go Back</a>
+<div class="panel panel-default" ng-init="getCircle()">
+  <div class="panel-heading">
+    <h3 class="panel-title">{{Circle.title}}</h3>
+  </div>
+  <div class="panel-body">
+    <div class="row">
+      <div class="col-md-4">
+        <img src="{{Circle.image_url}}">
+      </div>
+      <div class="col-md-8">
+        </p>{{Circle.UTXO}}</p>
+        <ul class="list-group">
+          <li class="list-group-item">circleInstance: {{Circle.circleInstance}}</li>
+          <li class="list-group-item">identity: {{Circle.identity}}</li>
+          <li class="list-group-item">contract: {{Circle.contract}}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pull-right">
+  <a href="#/Circles/edit/{{Circle._id}}">Edit</a> |  <a href="#" ng-click="removeCircle(Circle._id)">Delete</a>
+  </div>

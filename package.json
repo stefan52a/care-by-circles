@@ -1,0 +1,17 @@
+{
+  "name": "CirclesOracle",
+  "version": "1.0.0",
+  "description": "Simple api for Oracles",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "body-parser": "*",
+    "express": "*",
+    "jsonschema": "^1.3.0",
+    "mongoose": "*"
+  },
+  "author": "Stefan Verhagen",
+  "license": "MIT"
+}
