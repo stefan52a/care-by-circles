@@ -10,8 +10,9 @@ const regtestClient = require('regtest-client');
 //const APIPASS = process.env.APIPASS || 'satsoshi';
 const APIPASS = '';
 const APIURL = process.env.APIURL || 'http://localhost:8080/1';
-const regtest = (new regtestClient.RegtestUtils(APIPASS, APIURL)).network;
-const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
+const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
+const regtest = regtestUtils.network;
+// const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
 const oracleSignTx = bitcoin.ECPair.fromWIF(
 	'cTsrZtbGTamSLAQVbLfv3takw97x28FKEmVmCfSkebDoeQ3547jV', ///// TODO KEEP SECRET
 	regtest,
@@ -21,21 +22,37 @@ const oracleBurn = bitcoin.ECPair.fromWIF(
 	regtest,
 );
 
-module.exports.PubScriptToUnlockContainsAHashOf = (algorithm, callback) => {
-	const hash256 = crypto.SHA256(algorithm).toString();
-	callback(); //for the moment always return true
+module.exports.PubScriptToUnlockContainsAHashOf = (addressToUnlock, algorithm, callback) => {
+
+//WIP
+
+// I believe this does not work because the redeem script has a hash in the pubscript, and given the one-way nature of hashes
+// you can never find the contents of the redeem script. (P2SH)
+// we have to make a redeem script (a.o. with hash of contract etc) and look whether it hashes to the right redeem script.
+
+	const hash256ToCheck = crypto.SHA256(algorithm).toString();
+	let decodeBase58;
+	try {
+		decodeBase58 = bitcoin.address.fromBase58Check(addressToUnlock);
+	  } catch (e) { callback (e)}
+	  if (decodeBase58)
+	  {
+		const utxo = bitcoin.payments.p2sh({ hash: decodeBase58.hash }).output
+		const utxoStr=  Buffer.from(utxo,'hex').reverse();
+		callback(); 
+	  }
 }
 
 module.exports.PSBT = (callback) => {
 	callback("PSBT"); //for the moment always return something valid
 }
 
-module.exports.createAndBroadcastCircleGenesisTx = (toPubkeyStr, callback) => {
+module.exports.createAndBroadcastCircleGenesisTx = async (toPubkeyStr, satoshis) => {
 	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 
 	//WIP
 
-	toPubkey=new Buffer.alloc(32, toPubkeyStr, 'hex');// TODO unsure whether this works   
+	const toPubkey= Buffer.from(toPubkeyStr,'hex'); //new Buffer.alloc(32, toPubkeyStr, 'hex');// TODO unsure whether this works   
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
 	const redeemScript = circlesLockScript(toPubkey, oracleSignTx, oracleBurn);
 	const { address } = bitcoin.payments.p2sh({
@@ -43,40 +60,41 @@ module.exports.createAndBroadcastCircleGenesisTx = (toPubkeyStr, callback) => {
 		network: regtest,
 	});
 
-	callback();
-// // fund the P2SH(CLTV) address
-// const unspent = await regtestUtils.faucet(address!, 1e5);
-// const tx = new bitcoin.Transaction();
-// tx.locktime = lockTime;
-// // Note: nSequence MUST be <= 0xfffffffe otherwise LockTime is ignored, and is immediately spendable.
-// tx.addInput(idToHash(unspent.txId), unspent.vout, 0xfffffffe);
-// tx.addOutput(toOutputScript(regtestUtils.RANDOM_ADDRESS), 7e4);
 
-// // {toPubkey's signature} OP_TRUE
-// const signatureHash = tx.hashForSignature(0, redeemScript, hashType);
-// const redeemScriptSig = bitcoin.payments.p2sh({
-//   redeem: {
-// 	input: bitcoin.script.compile([
-// 	  bitcoin.script.signature.encode(
-// 		alice.sign(signatureHash),
-// 		hashType,
-// 	  ),
-// 	  bitcoin.opcodes.OP_TRUE,
-// 	]),
-// 	output: redeemScript,
-//   },
-// }).input;
-// tx.setInputScript(0, redeemScriptSig!);
+// fund the P2SH address
+//const unspent = await regtestUtils.faucet(address, 1e5); // TODO we actually want to MINT here
+	const unspentMINT = await regtestUtils.faucet(address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
 
-// await regtestUtils.broadcast(tx.toHex());
+/*const tx = new bitcoin.Transaction();
+tx.addInput(Buffer.from(unspent.txId, 'hex').reverse()
+, unspent.vout);//, 0xfffffffe);
+tx.addOutput(bitcoin.address.toOutputScript(address, regtest), 1e9);//(regtestUtils.RANDOM_ADDRESS, regtest), 1e9);
 
-// await regtestUtils.verify({
-//   txId: tx.getId(),
-//   address: regtestUtils.RANDOM_ADDRESS,
-//   vout: 0,
-//   value: 7e4,
-// });
-// }
+// {toPubkey's signature} OP_TRUE
+const signatureHash = tx.hashForSignature(0, redeemScript, hashType);
+const redeemScriptSig = bitcoin.payments.p2sh({
+  redeem: {
+	input: bitcoin.script.compile([
+	  bitcoin.script.signature.encode(
+		oracleSignTx.sign(signatureHash),
+		hashType,
+	  ),
+	  bitcoin.opcodes.OP_TRUE,
+	]),
+	output: redeemScript,
+  },
+}).input;
+tx.setInputScript(0, redeemScriptSig);
+
+await regtestUtils.broadcast(tx.toHex());
+
+await regtestUtils.verify({
+  txId: tx.getId(),
+  address: regtestUtils.RANDOM_ADDRESS,
+  vout: 0,
+  value: 1e9,
+});
+*/
 
 // 	const multisig = createPayment('p2sh-p2ms(2 of 4)');
 //     const inputData1 = await getInputData(2e4, multisig.payment, false, 'p2sh');

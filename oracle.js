@@ -19,33 +19,33 @@ app.use(bodyParser.json());
 
 // Airdrop tokens to an identity that does not have a genesis Circle yet
 app.post('/api/oracleGetAirdrop', (req, res) => {
-		const id = req.body.id;
-		var pubkey = req.body.pubkey;
-		// bitcoin.ECPair.makeRandom({ network: regtest }).publicKey.toString('hex')
-		pubkey = '033af0554f882a2dce68a4f9c162c7862c84ba1e5d01a349f29c0a7bdf11d05030'  //FTM
-		ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
+	const id = req.body.id;
+	var pubkey = req.body.pubkey;
+	// bitcoin.ECPair.makeRandom({ network: regtest }).publicKey.toString('hex')
+	pubkey = '033af0554f882a2dce68a4f9c162c7862c84ba1e5d01a349f29c0a7bdf11d05030'  //FTM
+	ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
+		if (err) {
+			return res.json(err + " Not allowed (id does not exist, id is not a person)");
+		}
+		ID.getGenesisCircle(id, async (CircleId, err) => {
 			if (err) {
-				throw (err + " Not allowed (id does not exist, id is not a person)");
+				await transactions.createAndBroadcastCircleGenesisTx(pubkey, 1e9) //10BTC 
+				return res.json("Circle " + CircleId + " created for " + id + " and " + (1e9 / 1e8) + " tokens will be airdropped (locked with an oracle and pubkey: " + pubkey);// xx e.g. could e.g. be be the same as the current blockchain reward
+				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
+			} else {
+				return res.json("Not allowed (the Id already has a genesis Circle(id)) " + CircleId);
 			}
-			ID.getGenesisCircle(id, (CircleId, err) => {
-				if (err) {
-					transactions.createAndBroadcastCircleGenesisTx(pubkey, (err) =>
-						{
-							res.json("Circle " + CircleId + " created for " + id + " and " + "xx" + " tokens will be airdropped (locked with a scriptPubkey) to " + pubkey);// xx e.g. could e.g. be be the same as the current blockchain reward
-						});
-					// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
-				} else {
-					throw ("Not allowed (the Id already has a genesis Circle(id)) " + CircleId);
-				}
-			});
 		});
+	});
 });
 
 app.post('/api/oraclePleaseSignTx', (req, res) => {
+	var addressToUnlock = req.body.addressToUnlock;
+	addressToUnlock = "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; // example address
 	const newId = req.body.newId;
 	const contractAlgorithm = req.body.contract;
 	// execute the contract if has its hash is in the pubscript to be unlocked
-	transactions.PubScriptToUnlockContainsAHashOf(contractAlgorithm, (err) => {
+	transactions.PubScriptToUnlockContainsAHashOf(addressToUnlock, contractAlgorithm, (err) => {
 		if (err) return res.json("Not allowed (The Hash of the contract (contractAlgorithm) is not in the UTXO's lock (pubscript) a new input could unlock)")
 		//save contractALgorithm to contract.js and execute that contract.js
 		try {
