@@ -11,7 +11,7 @@ const regtestClient = require('regtest-client');
 const APIPASS = '';
 const APIURL = process.env.APIURL || 'http://localhost:8080/1';
 const regtest = (new regtestClient.RegtestUtils(APIPASS, APIURL)).network;
-// const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
+const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
 const oracleSignTx = bitcoin.ECPair.fromWIF(
 	'cTsrZtbGTamSLAQVbLfv3takw97x28FKEmVmCfSkebDoeQ3547jV', ///// TODO KEEP SECRET
 	regtest,
@@ -35,7 +35,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (toPubkeyStr, callback) => {
 
 	//WIP
 
-	toPubkey=new Buffer(toPubkeyStr, 'hex');// TODO unsure whether this works   
+	toPubkey=new Buffer.alloc(32, toPubkeyStr, 'hex');// TODO unsure whether this works   
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
 	const redeemScript = circlesLockScript(toPubkey, oracleSignTx, oracleBurn);
 	const { address } = bitcoin.payments.p2sh({
