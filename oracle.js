@@ -50,10 +50,10 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 	transactions.PubScriptToUnlockContainsAHashOf(contractAlgorithm, (err) => {
 		if (err) return res.json("Not allowed (The Hash of the contract (above conditions C) is not in the lock (pubscript))")
 		//save contractALgorithm to contract.js and execute that contract.js
-		try {  //todo study how to prevent js injection attack
-			randFile = path.join(__dirname, "contract" + "Random256ByteRealRandom" + Math.random() + ".js");
+		try {  //todo study how to prevent js injection attack, is prevented by checking the hash
+			randFile = path.join(__dirname, "contract" + "Random256ByteRealRandom" + Math.random() + ".js");// generate a real random 256 byte string
 			createTempContractFile(randFile, contractAlgorithm,
-				function (err) { // generate a real random 256 byte string
+				function (err) { 
 					if (err) return res.json(err);
 					try {
 						require(randFile).contract(newId, (errInContract) => {
