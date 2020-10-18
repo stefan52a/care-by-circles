@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 
 const ID = require('./identification');
 const transactions = require('./transactions');
+const randomBytes = require('randombytes');
 
 // app.use(express.static(__dirname + '/client')); //for the Angular version
 app.use(bodyParser.json());
@@ -26,14 +27,7 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 		}
 		ID.getGenesisCircle(id, (CircleId, err) => {
 			if (err) {
-				// scriptPubKey (to lock output):
-				// IF
-				// <oraclePleaseSignTx_hash> DROP
-				// 2 <ID pubkey> <oraclePleaseSignTx_pubkey> 2 CHECKMULTISIG
-				// ELSE
-				// <contractBurn_hash> DROP
-				// n +1 <IDi pubkey> ..... <IDn pubkey><oracleBurn pubkey> m+1 CHECKMULTISIG
-				// ENDIF
+				createAndBroadcastCircleGenesisTx(pubkey);
 				res.json("Circle " + CircleId + " created for " + id + " and " + "x" + " tokens will be airdropped (locked with a scriptPubkey) to " + pubkey);// xx e.g. could e.g. be be the same as the current blockchain reward
 				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 			} else {
@@ -46,30 +40,36 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 app.post('/api/oraclePleaseSignTx', (req, res) => {
 	const newId = req.body.newId;
 	const contractAlgorithm = req.body.contract;
-	// execute the contract if has its hash in the pubscript to unlock
+	// execute the contract if has its hash is in the pubscript to be unlocked
 	transactions.PubScriptToUnlockContainsAHashOf(contractAlgorithm, (err) => {
-		if (err) return res.json("Not allowed (The Hash of the contract (above conditions C) is not in the lock (pubscript))")
+		if (err) return res.json("Not allowed (The Hash of the contract (contractAlgorithm) is not in the UTXO's lock (pubscript) a new input could unlock)")
 		//save contractALgorithm to contract.js and execute that contract.js
-		try {  //todo study how to prevent js injection attack, is prevented by checking the hash
-			randFile = path.join(__dirname, "contract" + "Random256ByteRealRandom" + Math.random() + ".js");// generate a real random 256 byte string
-			createTempContractFile(randFile, contractAlgorithm,
-				function (err) { 
-					if (err) return res.json(err);
-					try {
-						require(randFile).contract(newId, (errInContract) => {
-							if (errInContract) return res.json(errInContract)
-							transactions.PSBT((PSBT, err) => {
-								if (err) return res.json(err)
-								return res.json(PSBT)
-							})
+		try { 
+			var randFile; 
+			randomBytes(100, (err, buf) => { 
+				if (err)    console.log(err); 
+				else {
+					randFile = path.join(__dirname, "contract" + buf.toString('hex') + ".js");
+					createTempContractFile(randFile, contractAlgorithm,
+						function (err) { 
+							if (err) return res.json(err);
+							try {
+								require(randFile).contract(newId, (errInContract) => {
+									if (errInContract) return res.json(errInContract)
+									transactions.PSBT((PSBT, err) => {
+										if (err) return res.json(err)
+										return res.json(PSBT)
+									})
+								})
+							}
+							catch (e2) {
+								return res.json("invalid contract syntax. expecting exactly: " +
+									"const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId)\nelse if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId)\nelse callback(PSBT);});});}    "
+								);
+							}
 						})
-					}
-					catch (e2) {
-						return res.json("invalid contract syntax. expecting exactly: " +
-							"const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId)\nelse if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId)\nelse callback(PSBT);});});}    "
-						);
-					}
-				})
+						}   
+			  }); 
 		}
 		catch (e) {
 			return res.json("invalid contract syntax. Include \"contract\": in jour JSON. " + e);
@@ -91,6 +91,12 @@ function rmFile(f) {
 	fs.unlink(f, (err) => {
 		if (err) return console.log("Unexpected error removing " + f + " " + err)
 	})
+}
+
+function bin2string(array){
+	return array.map(function(b) { 
+		return String.fromCharCode(b);
+	 } ).join("");
 }
 
 app.listen(3000);
