@@ -12,7 +12,8 @@
     "body-parser": "*",
     "crypto-js": "^4.0.0",
     "express": "*",
-    "mongoose": "*"
+    "mongoose": "*",
+    "regtest-client": "^0.2.0"
   },
   "author": "Stefan Verhagen",
   "license": "MIT"

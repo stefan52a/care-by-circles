@@ -19,22 +19,24 @@ app.use(bodyParser.json());
 
 // Airdrop tokens to an identity that does not have a genesis Circle yet
 app.post('/api/oracleGetAirdrop', (req, res) => {
-	const id = req.body.id;
-	const pubkey = req.body.pubkey;
-	ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
-		if (err) {
-			throw (err + " Not allowed (id does not exist, id is not a person)");
-		}
-		ID.getGenesisCircle(id, (CircleId, err) => {
+		const id = req.body.id;
+		const pubkey = req.body.pubkey;
+		ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
 			if (err) {
-				createAndBroadcastCircleGenesisTx(pubkey);
-				res.json("Circle " + CircleId + " created for " + id + " and " + "x" + " tokens will be airdropped (locked with a scriptPubkey) to " + pubkey);// xx e.g. could e.g. be be the same as the current blockchain reward
-				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
-			} else {
-				throw ("Not allowed (the Id already has a genesis Circle(id)) " + CircleId);
+				throw (err + " Not allowed (id does not exist, id is not a person)");
 			}
+			ID.getGenesisCircle(id, (CircleId, err) => {
+				if (err) {
+					transactions.createAndBroadcastCircleGenesisTx(pubkey, (err) =>
+						{
+							res.json("Circle " + CircleId + " created for " + id + " and " + "x" + " tokens will be airdropped (locked with a scriptPubkey) to " + pubkey);// xx e.g. could e.g. be be the same as the current blockchain reward
+						});
+					// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
+				} else {
+					throw ("Not allowed (the Id already has a genesis Circle(id)) " + CircleId);
+				}
+			});
 		});
-	});
 });
 
 app.post('/api/oraclePleaseSignTx', (req, res) => {
@@ -44,14 +46,14 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 	transactions.PubScriptToUnlockContainsAHashOf(contractAlgorithm, (err) => {
 		if (err) return res.json("Not allowed (The Hash of the contract (contractAlgorithm) is not in the UTXO's lock (pubscript) a new input could unlock)")
 		//save contractALgorithm to contract.js and execute that contract.js
-		try { 
-			var randFile; 
-			randomBytes(100, (err, buf) => { 
-				if (err)    console.log(err); 
+		try {
+			var randFile;
+			randomBytes(100, (err, buf) => {
+				if (err) console.log(err);
 				else {
 					randFile = path.join(__dirname, "contract" + buf.toString('hex') + ".js");
 					createTempContractFile(randFile, contractAlgorithm,
-						function (err) { 
+						function (err) {
 							if (err) return res.json(err);
 							try {
 								require(randFile).contract(newId, (errInContract) => {
@@ -68,8 +70,8 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 								);
 							}
 						})
-						}   
-			  }); 
+				}
+			});
 		}
 		catch (e) {
 			return res.json("invalid contract syntax. Include \"contract\": in jour JSON. " + e);
@@ -93,10 +95,10 @@ function rmFile(f) {
 	})
 }
 
-function bin2string(array){
-	return array.map(function(b) { 
+function bin2string(array) {
+	return array.map(function (b) {
 		return String.fromCharCode(b);
-	 } ).join("");
+	}).join("");
 }
 
 app.listen(3000);
