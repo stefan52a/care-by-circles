@@ -17,12 +17,12 @@ const oracleSignTx = bitcoin.ECPair.fromWIF(
 	'cTsrZtbGTamSLAQVbLfv3takw97x28FKEmVmCfSkebDoeQ3547jV', ///// TODO KEEP SECRET
 	regtest,
 );
-const oracleBurn = bitcoin.ECPair.fromWIF(
+const oracleBurnTx = bitcoin.ECPair.fromWIF(
 	'cRs1KTufxBpY4wcexxaQEULA4CFT3hKTqENEy7KZtpR5mqKeijwU',  ///// TODO KEEP SECRET
 	regtest,
 );
 
-module.exports.PubScriptToUnlockContainsAHashOf = (addressToUnlock, algorithm, callback) => {
+module.exports.PubScriptToUnlockContainsAHashOf = (algorithm, callback) => {
 
 //WIP
 
@@ -30,18 +30,60 @@ module.exports.PubScriptToUnlockContainsAHashOf = (addressToUnlock, algorithm, c
 // you can never find the contents of the redeem script. (P2SH)
 // we have to make a redeem script (a.o. with hash of contract etc) and look whether it hashes to the right hash of the redeem script.
 
-	const hash256ToCheck = crypto.SHA256(algorithm).toString();
-	let decodeBase58;
-	try {
-		decodeBase58 = bitcoin.address.fromBase58Check(addressToUnlock);
-	  } catch (e) { callback (e)}
-	  if (decodeBase58)
-	  {
-		const utxo = bitcoin.payments.p2sh({ hash: decodeBase58.hash }).output
-		const utxoStr=  Buffer.from(utxo,'hex').reverse();
-		callback(); 
-	  }
-}
+
+	const addressToUnlock = "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; //TODO get addressToUnlock from mongodb
+	const pubkeyUsedInUTXO= "033af0554f882a2dce68a4f9c162c7862c84ba1e5d01a349f29c0a7bdf11d05030"; //todo also from mongodb????, do we lose some anonimity here?
+//**************************************************************** */
+	// Maybe we should use a PSBT from the client and sign that....
+//**************************************************************** */
+	const contractHash = "48f3e95d19ca1b5eea847057b2f2487e8b07534c801473f35487ad92cc745993"; //hash of algorithm
+// get hash of the redeemscript in the UTXO (first HASH256 then RIPEMD160 -> 20-byte hash of the script)
+	// let decodeBase58;
+	// try {
+	// 	decodeBase58 = bitcoin.address.fromBase58Check(addressToUnlock); //BIP-13
+	//   } catch (e) { callback (e)}
+	//   if (decodeBase58)
+	//   {
+		// const utxo = bitcoin.payments.p2sh({ hash: decodeBase58.hash }).output   wrong
+		// const utxoStr=  Buffer.from(utxo,'hex').reverse();   wrong
+// make hash of the redeemscript
+		const redeemScript = bitcoin.script.fromASM(  
+			`
+		  OP_IF
+			  	${contractHash} 
+				OP_DROP
+				OP_0
+				OP_2
+				${pubkeyUsedInUTXO.toString('hex')}
+				${oracleSignTx.publicKey.toString('hex')}
+				OP_2
+				OP_CHECKMULTISIGVERIFY
+		  OP_ELSE
+				abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd
+				OP_DROP
+				OP_0
+				OP_1
+				${oracleBurnTx.publicKey.toString('hex')}
+				OP_1
+				OP_CHECKMULTISIGVERIFY
+		  OP_ENDIF
+		`
+				.trim()
+				.replace(/\s+/g, ' '),
+		);
+		const { address } = bitcoin.payments.p2sh({
+			redeem: { output: redeemScript, network: regtest },
+			network: regtest,
+		});
+
+// is address equal to utxo?
+		if (JSON.stringify(address)==="\""+addressToUnlock+"\"") callback(); 
+		else callback ("Hash of contract not in UTXO redeemScript")
+	//   }
+
+	//   const hash256ToCheck = crypto.SHA256(algorithm).toString();
+
+	}
 
 module.exports.PSBT = (callback) => {
 	callback("PSBT"); //for the moment always return something valid
@@ -54,7 +96,7 @@ module.exports.createAndBroadcastCircleGenesisTx = async (toPubkeyStr, satoshis)
 
 	const toPubkey= Buffer.from(toPubkeyStr,'hex'); //new Buffer.alloc(32, toPubkeyStr, 'hex');// TODO unsure whether this works   
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
-	const redeemScript = circlesLockScript(toPubkey, oracleSignTx, oracleBurn);
+	const redeemScript = circlesLockScript(toPubkey, oracleSignTx, oracleBurnTx);
 	const { address } = bitcoin.payments.p2sh({
 		redeem: { output: redeemScript, network: regtest },
 		network: regtest,
@@ -165,11 +207,15 @@ function circlesLockScript(
 	toPubkey,
 	oraclePleaseSignTxQ,  //: KeyPair,
 	oracleBurnTxQ  //: KeyPair,
-) {//returns a buffer:
+)
+
+{
+	const contractHash = "48f3e95d19ca1b5eea847057b2f2487e8b07534c801473f35487ad92cc745993"; //hash of algorithm
+	//returns a buffer:
 	return bitcoin.script.fromASM(
 		`
 	  OP_IF
-		  	48f3e95d19ca1b5eea847057b2f2487e8b07534c801473f35487ad92cc745993 
+		  	${contractHash} 
 		  	OP_DROP
 			OP_0
 			OP_2
