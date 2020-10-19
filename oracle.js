@@ -20,9 +20,9 @@ app.use(bodyParser.json());
 // Airdrop tokens to an identity that does not have a genesis Circle yet
 app.post('/api/oracleGetAirdrop', (req, res) => {
 	const id = req.body.id;
-	var pubkey = req.body.pubkey;
+	const pubkey = req.body.pubkey;
 	// bitcoin.ECPair.makeRandom({ network: regtest }).publicKey.toString('hex')
-	pubkey = '033af0554f882a2dce68a4f9c162c7862c84ba1e5d01a349f29c0a7bdf11d05030'  //FTM
+	// pubkey = '033af0554f882a2dce68a4f9c162c7862c84ba1e5d01a349f29c0a7bdf11d05030'  //FTM
 	ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
 		if (err) {
 			return res.json(err + " Not allowed (id does not exist, id is not a person)");
@@ -30,7 +30,7 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 		ID.getGenesisCircle(id, async (CircleId, err) => {
 			if (err) {
 				await transactions.createAndBroadcastCircleGenesisTx(pubkey, 1e9) //10BTC 
-				return res.json("Circle " + CircleId + " created for " + id + " and " + (1e9 / 1e8) + " tokens will be airdropped (locked with an oracle and pubkey: " + pubkey);// xx e.g. could e.g. be be the same as the current blockchain reward
+				return res.json("Circle " + CircleId + " created for " + id + " and " + (1e9 / 1e8) + " tokens will be airdropped (locked with an oracle and pubkey: " + pubkey+ ")";// xx e.g. could e.g. be be the same as the current blockchain reward
 				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 			} else {
 				return res.json("Not allowed (the Id already has a genesis Circle(id)) " + CircleId);
