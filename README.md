@@ -26,6 +26,13 @@ PSBT transaction which is partially to be signed by the Oracle oraclePleaseSignT
 Also includes a simple web application (WIP)
 
 ## Usage ##
-Just clone or download and run **npm install** 
+1. Setup a BTC regtest server with junderw who maintains an image of a Dockerfile as junderw/bitcoinjs-regtest-server on Docker Hub.
+
+Downloads the image from docker hub automatically:
+```
+docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
+```
+
+2. Clone or download and run **npm install** 
 
 (and if you want then **node app** to start the web application)

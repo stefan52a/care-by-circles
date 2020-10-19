@@ -28,7 +28,7 @@ module.exports.PubScriptToUnlockContainsAHashOf = (addressToUnlock, algorithm, c
 
 // I believe this does not work because the redeem script has a hash in the pubscript, and given the one-way nature of hashes
 // you can never find the contents of the redeem script. (P2SH)
-// we have to make a redeem script (a.o. with hash of contract etc) and look whether it hashes to the right redeem script.
+// we have to make a redeem script (a.o. with hash of contract etc) and look whether it hashes to the right hash of the redeem script.
 
 	const hash256ToCheck = crypto.SHA256(algorithm).toString();
 	let decodeBase58;
