@@ -59,7 +59,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 							try {
 								require(randFile).contract(newId, async (errInContract) => {
 									if (errInContract) return res.json(errInContract)
-									PSBT = await transactions.PSBT()
+									const PSBT = await transactions.PSBT()
 									return res.json(PSBT)// PSBT.data.inputs[0].partialSig[0].signature)  // this is the signature of the Oracle oracleSignTx
 								})
 							}

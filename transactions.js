@@ -34,8 +34,7 @@ module.exports.PubScriptToUnlockContainsAHashOf = (algorithm, callback) => {
 	// you can never find the contents of the redeem script. (P2SH)
 	// we have to make a redeem script (a.o. with hash of contract etc) and look whether it hashes to the right hash of the redeem script.
 
-	const txid = '7bd079f15deeff70566cd7078666c557d21d799d7ab3fe3110772dbe9c05e8e7'
-	const addressToUnlock = "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; //TODO get addressToUnlock from mongodb
+	const addressToUnlock = "2N213DaFM1Mpx2mH3qPyGYvGA3R1DoY1pJc"; //TODO get addressToUnlock from mongodb
 	const pubkeyUsedInUTXO = "033af0554f882a2dce68a4f9c162c7862c84ba1e5d01a349f29c0a7bdf11d05030"; //todo also from mongodb????, do we lose some anonimity here?
 
 	// make hash of the redeemscript
@@ -107,9 +106,9 @@ module.exports.PSBT = async () => {
 			.trim()
 			.replace(/\s+/g, ' '),
 	);
-	TX_ID = '7bd079f15deeff70566cd7078666c557d21d799d7ab3fe3110772dbe9c05e8e7'
-	TX_HEX = '02000000000101bda5a57d5d718c57d7640c146dfb0f95e3514e99b31d377f9774b7df3e5749dd00000000171600141bded115d49c7e95eb9d2a5da8ad931e11c07105feffffff0288a5e60e0000000017a914ce477ee9809f607f19672eef7e113d9da272ecf78700ca9a3b0000000017a914011d4e768a3f43276cb42bf9dbb5df2b1ec36925870247304402205a61bea2267a04e81899a920d939f6fa50cfd6684f3b95d872a72ae8956e883b02203535e1c709ee4d7daefb9b2e697530a900698bb4448f8484d07c371c62822f2d012103f4f015e0e304b8946de00ee57757427100949b05ca03133e9c3118185998bb0f00000000'
-	TX_VOUT = 1
+	TX_ID = '65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6'
+	TX_HEX = '02000000000101885e1f124e2d0d4ca6f2c5fb87055515a7ba8c9c1d1484b832f5ff2f4c20029800000000171600141bded115d49c7e95eb9d2a5da8ad931e11c07105feffffff0200ca9a3b0000000017a914600a51497a5d235fc9d2faf28fba1db81daa663087082268590000000017a9147ed2effc94497c719222b1b13dc4a68363a2dfe9870247304402201195a7c1b79a1a8cff8b4fc43999ab4e7e68dfa0069d61662d56864fbbae9bf3022042bdd8527cf5119cdb6313acfc4dcc7e127e77f6166938a313d19cf5f39e5d28012103f4f015e0e304b8946de00ee57757427100949b05ca03133e9c3118185998bb0f00000000'
+	TX_VOUT = 0
 	const psbt = new bitcoin.Psbt({ network: regtest });
 	psbt
 		.addInput({
@@ -127,10 +126,12 @@ module.exports.PSBT = async () => {
 			//   },
 			//   witnessScript: Buffer.from(WITNESS_SCRIPT, 'hex')
 		})
+	psbt
 		.addOutput({
 			address: regtestUtils.RANDOM_ADDRESS,  // TODO should be  locked with pubkey in ToBeSignedPSBT.jpg
 			value: 1e4,
 		})
+	psbt
 		.signInput(0, oracleSignTx)
 
 		return psbt; //for the moment always return something valid
@@ -152,9 +153,9 @@ module.exports.createAndBroadcastCircleGenesisTx = async (toPubkeyStr, satoshis)
 	const unspentMINT = await regtestUtils.faucet(address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
 
 	// to get TX_HEX
-	// by http://localhost:8080/1/t/7bd079f15deeff70566cd7078666c557d21d799d7ab3fe3110772dbe9c05e8e7    (BTW you can find more endpoints in https://github.com/bitcoinjs/regtest-server/blob/master/routes/1.js)
+	// by http://localhost:8080/1/t/65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6    (BTW you can find more endpoints in https://github.com/bitcoinjs/regtest-server/blob/master/routes/1.js)
 	// whcih gives
-	//02000000000101bda5a57d5d718c57d7640c146dfb0f95e3514e99b31d377f9774b7df3e5749dd00000000171600141bded115d49c7e95eb9d2a5da8ad931e11c07105feffffff0288a5e60e0000000017a914ce477ee9809f607f19672eef7e113d9da272ecf78700ca9a3b0000000017a914011d4e768a3f43276cb42bf9dbb5df2b1ec36925870247304402205a61bea2267a04e81899a920d939f6fa50cfd6684f3b95d872a72ae8956e883b02203535e1c709ee4d7daefb9b2e697530a900698bb4448f8484d07c371c62822f2d012103f4f015e0e304b8946de00ee57757427100949b05ca03133e9c3118185998bb0f00000000
+	//02000000000101885e1f124e2d0d4ca6f2c5fb87055515a7ba8c9c1d1484b832f5ff2f4c20029800000000171600141bded115d49c7e95eb9d2a5da8ad931e11c07105feffffff0200ca9a3b0000000017a914600a51497a5d235fc9d2faf28fba1db81daa663087082268590000000017a9147ed2effc94497c719222b1b13dc4a68363a2dfe9870247304402201195a7c1b79a1a8cff8b4fc43999ab4e7e68dfa0069d61662d56864fbbae9bf3022042bdd8527cf5119cdb6313acfc4dcc7e127e77f6166938a313d19cf5f39e5d28012103f4f015e0e304b8946de00ee57757427100949b05ca03133e9c3118185998bb0f00000000
 	//
 	// OR
 	//
@@ -166,7 +167,7 @@ module.exports.createAndBroadcastCircleGenesisTx = async (toPubkeyStr, satoshis)
 	// 	"14rbFswzZfkPGkbFZ7Ffj2qhQA1omvgiUx": sathoshis/1e8
 	// }'
 
-	const txId = unspentMINT.txId; // e.g. 7bd079f15deeff70566cd7078666c557d21d799d7ab3fe3110772dbe9c05e8e7 vout=1  for address 2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC
+	const txId = unspentMINT.txId; // e.g. 65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6 vout=1  for address 2N213DaFM1Mpx2mH3qPyGYvGA3R1DoY1pJc
 	return unspentMINT;
 }
 
