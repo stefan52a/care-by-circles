@@ -12,6 +12,15 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/oracle.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program test",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/socket.js"
         }
     ]
 }

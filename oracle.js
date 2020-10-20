@@ -22,15 +22,15 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 	const id = req.body.id; // telephone number FTM
 	const pubkey = req.body.pubkey;
 	// bitcoin.ECPair.makeRandom({ network: regtest }).publicKey.toString('hex')
-	// pubkey = '033af0554f882a2dce68a4f9c162c7862c84ba1e5d01a349f29c0a7bdf11d05030'  //FTM
+	// pubkey'033af0554f882a2dce68a4f9c162c7862c84ba1e5d01a349f29c0a7bdf11d05030'  //FTM
 	ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
 		if (err) {
 			return res.json(err + " Not allowed (id does not exist, id is not a person)");
 		}
 		ID.getGenesisCircle(id, async (CircleId, err) => {
 			if (err) {
-				await transactions.createAndBroadcastCircleGenesisTx(pubkey, 1e9) //10BTC 
-				return res.json("Circle " + CircleId + " created for " + id + " and " + (1e9 / 1e8) + " tokens will be airdropped (locked with an oracle and pubkey: " + pubkey+ ")");// xx e.g. could e.g. be be the same as the current blockchain reward
+				unspent = await transactions.createAndBroadcastCircleGenesisTx(pubkey, 1e9) //10BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
+				return res.json("Circle " + CircleId + " created for " + id + " and " + (1e9 / 1e8) + " tokens will be airdropped (locked with an oracle and pubkey: " + pubkey + ")");// xx e.g. could e.g. be be the same as the current blockchain reward
 				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 			} else {
 				return res.json("Not allowed (the Id already has a genesis Circle(id)) " + CircleId);
@@ -52,17 +52,15 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 			randomBytes(100, (err, buf) => {
 				if (err) console.log(err);
 				else {
-					randFile = path.join(__dirname, "contract" + buf.toString('hex') + ".js");
+					randFile = path.join(__dirname, "contractTMP" + buf.toString('hex') + ".js");
 					createTempContractFile(randFile, contractAlgorithm,
 						function (err) {
 							if (err) return res.json(err);
 							try {
-								require(randFile).contract(newId, (errInContract) => {
+								require(randFile).contract(newId, async (errInContract) => {
 									if (errInContract) return res.json(errInContract)
-									transactions.PSBT((PSBT, err) => {
-										if (err) return res.json(err)
-										return res.json(PSBT)
-									})
+									PSBT = await transactions.PSBT()
+									return res.json(PSBT.data.inputs[0].partialSig[0].signature)  // this is the signature of the Oracle oracleSignTx
 								})
 							}
 							catch (e2) {
@@ -101,6 +99,16 @@ function bin2string(array) {
 		return String.fromCharCode(b);
 	}).join("");
 }
+
+//janitor clean any old contract files
+require("glob").glob("contractTMP*.js", function (er, files) {
+	if (er) console.log(er)
+	for (f in files) {
+		fs.unlink(files[f], (err) => {
+			if (err) console.log("Unexpected error removing " + files[f] + " " + err)
+		})
+	}
+});
 
 app.listen(3000);
 console.log('Listening on port 3000...');
