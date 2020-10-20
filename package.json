@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "assert": "^2.0.0",
+    "axios": "^0.20.0",
     "bcrypt": "^5.0.0",
     "bitcoin-core": "^3.0.0",
     "bitcoind-rpc": "^0.8.1",
