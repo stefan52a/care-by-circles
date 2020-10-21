@@ -1,3 +1,8 @@
+var mongoose = require('mongoose');
+const Circles = require ('./lib/Circles');
+const randomBytes = require('randombytes');
+
+const axios = require('axios')
 // see for a tutorial of bitcoinjs:  https://bitcoinjs-guide.bitcoin-studio.com/
 
 
@@ -5,14 +10,15 @@
 //Downloads the image from docker
 //docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 
+const assert = require('assert')
+const { Connection } = require('./lib/Connection.js')
+
 const crypto = require('crypto-js');
 const bitcoin = require('bitcoinjs-lib');
-const assert = require('assert')
 
 const regtestClient = require('regtest-client');
-
-//const APIPASS = process.env.APIPASS || 'satsoshi';
-const APIPASS = '';
+// const e = require('express');
+const APIPASS = process.env.APIPASS || 'satoshi';
 const APIURL = process.env.APIURL || 'http://localhost:8080/1';
 const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
 const regtest = regtestUtils.network;
@@ -25,23 +31,63 @@ const oracleBurnTx = bitcoin.ECPair.fromWIF(
 	'cRs1KTufxBpY4wcexxaQEULA4CFT3hKTqENEy7KZtpR5mqKeijwU',  ///// TODO KEEP SECRET
 	regtest,
 );
+
+const axiosInstance = axios.create({
+	baseURL: APIURL,
+	timeout: 10000
+});
+
 const contractHash = "ad40955030777152caefd9e48ec01012f674c5300e1543d32191adba55b83a4d"; //SHA256 hash of algorithm: const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}
 
-
-module.exports.PubScriptToUnlockContainsAHashOf = (algorithm, callback) => {
+module.exports.PubScriptToUnlockContainsAHashOf = (id, algorithm, callback) => {
 
 	// The redeem script has a hash in the pubscript, and given the one-way nature of hashes
 	// you can never find the contents of the redeem script. (P2SH)
 	// we have to make a redeem script (a.o. with hash of contract etc) and look whether it hashes to the right hash of the redeem script.
 
-	const addressToUnlock = "2N213DaFM1Mpx2mH3qPyGYvGA3R1DoY1pJc"; //TODO get addressToUnlock from mongodb
-	const pubkeyUsedInUTXO = "033af0554f882a2dce68a4f9c162c7862c84ba1e5d01a349f29c0a7bdf11d05030"; //todo also from mongodb????, do we lose some anonimity here?
+	var addressToUnlock, pubkeyUsedInUTXO;
+
+
+	mongoose.connect('mongodb://localhost/carebycircles', { useNewUrlParser: true, useUnifiedTopology: true });
+
+	var connection = mongoose.connection;
+	// connection.on('error', () => { return callback("fout", "Something went wrong: " + 'connection error:') });
+	connection.once('open', function () {
+
+		connection.db.collection("Circles", function (err, Circles) {
+			Circles.find({ saltedHashedIdentification: id }).toArray(function (err, circles) {
+				connection.close()
+				if (err) { return callback(err, "Something went wrong terribly: no circles assigned to a user, in the function when checking the contract hash!") }
+				if (circles.length != 1) return callback("fout", "Something went wrong terribly: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
+				else {
+					addressToUnlock = circles[0].BTCaddress;
+					pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+				}
+			});
+		});
+	});
+
+
+	// Connection.db.collection('Circles').find({saltedHashedIdentification: id})
+	// .then(circles => 
+	//     {   
+	//         if (circles.length != 1) return callback (err, "Something went wrong terribly: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
+	// 		else 
+	// 		{
+	// 			addressToUnlock=circles[0].BTCaddress;
+	// 			pubkeyUsedInUTXO=circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+	// 		}
+	//     })
+	// .catch(err => {return callback (err,  "Something went wrong terribly: no circles assigned to a user, in the function when checking the contract hash!")})
+
+	// const addressToUnlock = "2Mxhnw8BMVLy5vaqxLn97seNue6gzrTkCwj"; //TODO get addressToUnlock from mongodb
+	// const pubkeyUsedInUTXO = "02cd1e024ea5660dfe4c44221ad32e96d9bf57151d7105d90070c5b56f9df59e5e"; //todo also from mongodb????, do we lose some anonimity here?
 
 	// make hash of the redeemscript
 	const redeemScript = bitcoin.script.fromASM(
 		`
 		  OP_IF
-			  	${contractHash} 
+			  	${crypto.SHA256(algorithm).toString()} 
 				OP_DROP
 				OP_0
 				OP_2
@@ -68,7 +114,7 @@ module.exports.PubScriptToUnlockContainsAHashOf = (algorithm, callback) => {
 	});
 
 	// is address equal to utxo?
-	if (JSON.stringify(address) === "\"" + addressToUnlock + "\"") callback();
+	if (address === addressToUnlock) callback();
 	else callback("Hash of contract not in UTXO redeemScript")
 	//   }
 
@@ -76,12 +122,48 @@ module.exports.PubScriptToUnlockContainsAHashOf = (algorithm, callback) => {
 
 }
 
-module.exports.PSBT = async () => {
+module.exports.PSBT = async (id) => {
 	// Signs PSBT by oracle
 	// const addressToUnlock = "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; //TODO get addressToUnlock from mongodb
 	// const txid = '7bd079f15deeff70566cd7078666c557d21d799d7ab3fe3110772dbe9c05e8e7' 
 
-	const pubkeyUsedInUTXO = "033af0554f882a2dce68a4f9c162c7862c84ba1e5d01a349f29c0a7bdf11d05030"; //todo also from mongodb????, do we lose some anonimity here?
+	var pubkeyUsedInUTXO, txId;
+
+
+	mongoose.connect('mongodb://localhost/carebycircles', { useNewUrlParser: true, useUnifiedTopology: true });
+
+	var connection = mongoose.connection;
+	// connection.on('error', () => { return callback("fout", "Something went wrong: " + 'connection error:') });
+	connection.once('open', function () {
+
+		connection.db.collection("Circles", function (err, Circles) {
+			Circles.find({ saltedHashedIdentification: id }).toArray(function (err, circles) {
+				connection.close()
+				if (err) { return callback(err, "Something went wrong terribly: no circles assigned to a user, in the function when checking the contract hash!") }
+				if (circles.length != 1) return callback("error", "Something went wrong terribly: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
+				else {
+					// addressToUnlock=circles[0].BTCaddress;
+					txId = circles[0].txId;
+					pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+				}
+			})
+		});
+	});
+
+
+	// Connection.db.collection('Circles').find({saltedHashedIdentification: id})
+	// .then(circles => 
+	//     {   
+	//         if (circles.length != 1) return callback (err, "Something went wrong terribly: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
+	// 		else 
+	// 		{
+	// 			// addressToUnlock=circles[0].BTCaddress;
+	// 			txId=circles[0].txId;
+	// 			pubkeyUsedInUTXO=circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+	// 		}
+	//     })
+	// .catch(err => {return callback (err,  "Something went wrong terribly: no circles assigned to a user, in the function when checking the contract hash!")})
+	// var pubkeyUsedInUTXO = "02cd1e024ea5660dfe4c44221ad32e96d9bf57151d7105d90070c5b56f9df59e5e"; //todo also from mongodb????, do we lose some anonimity here?
 	const redeemScript = bitcoin.script.fromASM(
 		`
 		  OP_IF
@@ -106,69 +188,148 @@ module.exports.PSBT = async () => {
 			.trim()
 			.replace(/\s+/g, ' '),
 	);
-	TX_ID = '65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6'
-	TX_HEX = '02000000000101885e1f124e2d0d4ca6f2c5fb87055515a7ba8c9c1d1484b832f5ff2f4c20029800000000171600141bded115d49c7e95eb9d2a5da8ad931e11c07105feffffff0200ca9a3b0000000017a914600a51497a5d235fc9d2faf28fba1db81daa663087082268590000000017a9147ed2effc94497c719222b1b13dc4a68363a2dfe9870247304402201195a7c1b79a1a8cff8b4fc43999ab4e7e68dfa0069d61662d56864fbbae9bf3022042bdd8527cf5119cdb6313acfc4dcc7e127e77f6166938a313d19cf5f39e5d28012103f4f015e0e304b8946de00ee57757427100949b05ca03133e9c3118185998bb0f00000000'
+	// TX_ID = '8c270058dec109c44d27271dde2fdf6bb4430e1fd575cfb808b37b5a40e20029'
+	axiosInstance.get('/t/' + txId)
+		.then(function (response) {
+			// console.log(response);
+			TX_HEX = response.data;
+		})
+		.catch(function (error) {
+			return callback(error, "very strange there is no TX_HEX of the txId:" + txId);
+		});
+
 	TX_VOUT = 0
 	const psbt = new bitcoin.Psbt({ network: regtest });
-	psbt
-		.addInput({
-			hash: TX_ID,
-			index: TX_VOUT,
-			sequence: 0xfffffffe,
-			nonWitnessUtxo: Buffer.from(TX_HEX, 'hex'),
-			redeemScript: Buffer.from(redeemScript, 'hex')
-			//Use SEGWIT later:
-			//   witnessUtxo: {
-			// 	script: Buffer.from('0020' +
-			// 	  bitcoin.crypto.sha256(Buffer.from(WITNESS_SCRIPT, 'hex')).toString('hex'),
-			// 	  'hex'),
-			// 	value: 12e2
-			//   },
-			//   witnessScript: Buffer.from(WITNESS_SCRIPT, 'hex')
-		})
-	psbt
-		.addOutput({
-			address: regtestUtils.RANDOM_ADDRESS,  // TODO should be  locked with pubkey in ToBeSignedPSBT.jpg
-			value: 1e4,
-		})
-	psbt
-		.signInput(0, oracleSignTx)
+	try {
+		psbt
+			.addInput({
+				hash: txId,
+				index: TX_VOUT,
+				sequence: 0xfffffffe,
+				nonWitnessUtxo: Buffer.from(TX_HEX, 'hex'),
+				redeemScript: Buffer.from(redeemScript, 'hex')
+				//Use SEGWIT later:
+				//   witnessUtxo: {
+				// 	script: Buffer.from('0020' +
+				// 	  bitcoin.crypto.sha256(Buffer.from(WITNESS_SCRIPT, 'hex')).toString('hex'),
+				// 	  'hex'),
+				// 	value: 12e2
+				//   },
+				//   witnessScript: Buffer.from(WITNESS_SCRIPT, 'hex')
+			})
+		/*		psbt
+					.addOutput({
+						address: createAddressLockedWithCirclesScript(pubkey from Id), en store in database
+						value: input - /-miner's fee,
+					})
+				psbt
+					.addOutput({
+						address: createAddressLockedWithCirclesScript(pubkey from newId),   & store in database(en verwijder oude gegevens ?)
+						value: 0,
+					})
+			psbt
+				.signInput(0, oracleSignTx)
+		
+		
+				mongoose.connect('mongodb://localhost/carebycircles', { useNewUrlParser: true, useUnifiedTopology: true });
+		
+				var connection = mongoose.connection;
+				connection.on('error', console.error.bind(console, 'connection error:'));
+				connection.once('open', function () {
+			
+					connection.db.collection("Circles", function (err, Circles) {
+						Circles.save({ saltedHashedIdentification: id }).toArray(function (err, circles) {
+							if (err) { return callback(err, "Something went wrong terribly: no circles assigned to a user, in the function when checking the contract hash!") }
+							if (circles.length != 1) return callback(err, "Something went wrong terribly: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
+							else {
+								// addressToUnlock=circles[0].BTCaddress;
+								txId = circles[0].txId;
+								pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+							}
+						})
+					});
+				});
+		*/
 
-		return psbt; //for the moment always return something valid
+
+	} catch (e) {
+		return "500" + e
+	}
+	return psbt;
 }
 
-module.exports.createAndBroadcastCircleGenesisTx = async (toPubkeyStr, satoshis) => {
-	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
+module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, satoshis) => {
 
-	const toPubkey = Buffer.from(toPubkeyStr, 'hex'); //new Buffer.alloc(32, toPubkeyStr, 'hex');// TODO unsure whether this works   
-	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
-	const redeemScript = circlesLockScript(toPubkey, oracleSignTx, oracleBurnTx);
-	const { address } = bitcoin.payments.p2sh({
-		redeem: { output: redeemScript, network: regtest },
-		network: regtest,
+	randomBytes(256, async (err, buf) => {
+		if (err) return "500" + err;
+		else {
+
+			const address = createAddressLockedWithCirclesScript(toPubkeyStr)
+
+			var txId;
+			var unspentMINT;
+			try {
+				// fund the P2SH address
+				unspentMINT = await regtestUtils.faucet(address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
+
+				// to get TX_HEX
+				// by http://localhost:8080/1/t/65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6    (BTW you can find more endpoints in https://github.com/bitcoinjs/regtest-server/blob/master/routes/1.js)
+				// whcih gives
+				//02000000000101885e1f124e2d0d4ca6f2c5fb87055515a7ba8c9c1d1484b832f5ff2f4c20029800000000171600141bded115d49c7e95eb9d2a5da8ad931e11c07105feffffff0200ca9a3b0000000017a914600a51497a5d235fc9d2faf28fba1db81daa663087082268590000000017a9147ed2effc94497c719222b1b13dc4a68363a2dfe9870247304402201195a7c1b79a1a8cff8b4fc43999ab4e7e68dfa0069d61662d56864fbbae9bf3022042bdd8527cf5119cdb6313acfc4dcc7e127e77f6166938a313d19cf5f39e5d28012103f4f015e0e304b8946de00ee57757427100949b05ca03133e9c3118185998bb0f00000000
+				//
+				// OR
+				//
+				// createrawtransaction
+				// '[
+				// 	{ "txid": "7bd079f15deeff70566cd7078666c557d21d799d7ab3fe3110772dbe9c05e8e7", "vout": 1 }
+				// ]'
+				// '{
+				// 	"14rbFswzZfkPGkbFZ7Ffj2qhQA1omvgiUx": sathoshis/1e8
+				// }'
+
+				txId = unspentMINT.txId; // e.g. 65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6 vout=1  for address 2N213DaFM1Mpx2mH3qPyGYvGA3R1DoY1pJc
+			}
+			catch (e) { return "500" + e; }
+			randCircle = "Circle" + buf.toString('hex');
+
+			mongoose.connect('mongodb://localhost/carebycircles', { useNewUrlParser: true, useUnifiedTopology: true });
+
+			var doc1 = Circles({ instanceCircle: randCircle, saltedHashedIdentification: id, txId: txId, pubkey: toPubkeyStr });
+
+			var connection = mongoose.connection;
+			// connection.on('error', () => { return callback("fout", "Something went wrong: " + 'connection error:') });
+			connection.once('open', function () {
+
+				connection.db.collection("Circles", function (err, Circles) {
+					doc1.save(function (err, doc)
+					{
+						connection.close()
+						if (err) { return "500" + "Could not store the Circle." + err }
+						console.log(result);
+						return unspentMINT;
+					});
+			});
+		});
+
+			// 	Connection.db.save({ instanceCircle: randCircle, saltedHashedIdentification: id, txId: txId })
+			// .then(result => {
+			// 	console.log(result);
+			// 	return unspentMINT;
+			// })
+			// .catch(err => { return "500" + "Could not store the Circle." + err })
+
+
+			// var connection = mongoose.connection;
+			// connection.on('error', console.error.bind(console, 'connection error:'));
+			// connection.once('open', function () {
+			//     connection.db.collection("Circles", function(err, Circles){
+			//         Circles.find({}).toArray(function(err, data){
+			//             console.log(data); // it will print your collection data
+			//         })
+			//     });
+			// });
+		}
 	});
-
-
-	// fund the P2SH address
-	const unspentMINT = await regtestUtils.faucet(address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
-
-	// to get TX_HEX
-	// by http://localhost:8080/1/t/65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6    (BTW you can find more endpoints in https://github.com/bitcoinjs/regtest-server/blob/master/routes/1.js)
-	// whcih gives
-	//02000000000101885e1f124e2d0d4ca6f2c5fb87055515a7ba8c9c1d1484b832f5ff2f4c20029800000000171600141bded115d49c7e95eb9d2a5da8ad931e11c07105feffffff0200ca9a3b0000000017a914600a51497a5d235fc9d2faf28fba1db81daa663087082268590000000017a9147ed2effc94497c719222b1b13dc4a68363a2dfe9870247304402201195a7c1b79a1a8cff8b4fc43999ab4e7e68dfa0069d61662d56864fbbae9bf3022042bdd8527cf5119cdb6313acfc4dcc7e127e77f6166938a313d19cf5f39e5d28012103f4f015e0e304b8946de00ee57757427100949b05ca03133e9c3118185998bb0f00000000
-	//
-	// OR
-	//
-	// createrawtransaction
-	// '[
-	// 	{ "txid": "7bd079f15deeff70566cd7078666c557d21d799d7ab3fe3110772dbe9c05e8e7", "vout": 1 }
-	// ]'
-	// '{
-	// 	"14rbFswzZfkPGkbFZ7Ffj2qhQA1omvgiUx": sathoshis/1e8
-	// }'
-
-	const txId = unspentMINT.txId; // e.g. 65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6 vout=1  for address 2N213DaFM1Mpx2mH3qPyGYvGA3R1DoY1pJc
-	return unspentMINT;
 }
 
 function circlesLockScript(
@@ -177,7 +338,6 @@ function circlesLockScript(
 	oraclePleaseSignTxQ,  //: KeyPair,
 	oracleBurnTxQ  //: KeyPair,
 ) {
-	const contractHash = "ad40955030777152caefd9e48ec01012f674c5300e1543d32191adba55b83a4d"; //hash of algorithm
 	//returns a buffer:
 	return bitcoin.script.fromASM(
 		`
@@ -205,5 +365,15 @@ function circlesLockScript(
 	);
 }
 
-
+function createAddressLockedWithCirclesScript(toPubkeyStr) {
+	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
+	const toPubkey = Buffer.from(toPubkeyStr, 'hex'); //new Buffer.alloc(32, toPubkeyStr, 'hex');// TODO unsure whether this works   
+	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
+	const redeemScript = circlesLockScript(toPubkey, oracleSignTx, oracleBurnTx);
+	const { address } = bitcoin.payments.p2sh({
+		redeem: { output: redeemScript, network: regtest },
+		network: regtest,
+	});
+	return address;
+}
 

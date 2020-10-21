@@ -17,7 +17,8 @@
     "crypto-js": "^4.0.0",
     "express": "*",
     "glob": "^7.1.6",
-    "mongoose": "*",
+    "mongoose": "^5.10.9",
+    "randombytes": "^2.1.0",
     "regtest-client": "^0.2.0",
     "zeromq": "^5.2.0"
   },

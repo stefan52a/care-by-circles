@@ -1,9 +1,11 @@
+const mongoose = require('mongoose')
+const { Connection } = require('./lib/Connection.js')
 // Checkexists does this by returning a message with a random Hash256 (H256), towards the telephone number of id and 
 // let that user id send H256 back to the server by posting endpoint validateMyId(Id, H256), which returns:
 // 	Not allowed (H256 does not belong to the id)
 // Or 	Succeeded
 module.exports.checkExists = (id, callback) => {
-	callback(); //for the moment always exists //identity determnined by his telephone number
+    callback(); //for the moment always exists //identity determnined by his telephone number
 }
 
 module.exports.hasGenesisCircle = (id, callback) => {
@@ -13,10 +15,54 @@ module.exports.hasGenesisCircle = (id, callback) => {
     // }
     // else
     // {
-        callback("abracadabraCirkel", "fout");// FTM pretend id not to have a Circle
+    callback("abracadabraCirkel", "fout");// FTM pretend id not to have a Circle
     // }
 }
 
 module.exports.getGenesisCircle = (id, callback) => {
-    callback("shjhjksdfjdsdsadsapoCirkel", "fout");
+// Connect to Mongoose
+    mongoose.connect('mongodb://localhost:27017/carebycircles');
+
+    var connection = mongoose.connection;
+    // connection.on('error', callback("Something went wrong: " + 'connection error:'));
+    connection.once('open', function () {
+
+        connection.db.collection("Circles", function (err, Circles) {
+            Circles.find({ saltedHashedIdentification: id }).toArray(function (err, circles) {
+                connection.close()
+                if (err) { return callback(err, "NotFound") }
+                if (circles.length == 0) return callback("No circles assigned to a user!")
+                if (circles.length != 1) return callback("Something went wrong terribly: more circles assigned to a user!","more than 1 Circle")
+                else return callback(circles[0].instanceCircle,"exactly 1 Circle");
+            })
+        });
+
+    });
+
+
+    // Connection.db.then(client => client.db('carebycircles').collection('Circles').find({ saltedHashedIdentification: id }).toArray(function (err, circles) {
+    //     if (err) { callback(err, "NotFound") }
+    //     if (circles.length != 1) callback(err, "Something went wrong terribly: more circles assigned to a user!")
+    //     else callback(circles[0].instanceCircles);
+    // }))
+
+    // Connection.db.collection('Circles').find({saltedHashedIdentification: id})
+    // .then(circles => 
+    //     {   
+    //         if (circles.length != 1) callback (err, "Something went wrong terribly: more circles assigned to a user!")
+    //         else callback(circles[0].instanceCircles);
+    //     })
+    // .catch(err => callback (err, "NotFound"))
+    // var connection = mongoose.connection;
+    // connection.on('error', console.error.bind(console, 'connection error:'));
+    // connection.once('open', function () {
+    //     connection.db.collection("Circles", function(err, Circles){
+    //         Circles.find({saltedHashedIdentification: id}).toArray(function(err, data){  //todo salt and hash the id
+    //             if (err) callback (err, "NotFound");
+    //             console.log(data); // it will print your collection data
+    //             callback(data.instanceCircles);
+    //         })
+    //     });
+
+    // });
 }
