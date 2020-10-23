@@ -56,10 +56,17 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 app.post('/api/oraclePleaseSignTx', (req, res) => {
 	// const addressToUnlock = req.body.addressToUnlock;// "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; // example address
 	const id = req.body.id;
+	const circleId = req.body.circleId;
+
+	const pubkeyInUTXO = req.body.pubkeyInUTXO; //Privacyreason: The client also has to keep track of the pubkey belonging to his last Circle transaction
+	const newPubkeyId = req.body.newPubkeyId;
+
+	const pubkeyNewId = req.body.pubkeyNewId;
 	const newId = req.body.newId;
+
 	const contractAlgorithm = req.body.contract;
 	// execute the contract if has its hash is in the pubscript to be unlocked
-	transactions.PubScriptToUnlockContainsAHashOf(id, contractAlgorithm, (err) => {
+	transactions.PubScriptToUnlockContainsAHashOfContract(id, pubkeyInUTXO, contractAlgorithm, circleId, (err) => {
 		if (err) return res.status(400).json(err+"\nNot allowed (The Hash of the contract (contractAlgorithm) is not in the UTXO's lock (pubscript) which a new input could unlock)")
 		//save contractALgorithm to contract.js and execute that contract.js
 		try {
@@ -74,7 +81,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 							try {
 								require(randFile).contract(newId, async (errInContract) => {
 									if (errInContract) return res.json(errInContract)
-									const PSBT = await transactions.PSBT(id)
+									const PSBT = await transactions.PSBT(id, newPubkeyId, pubkeyNewId, circleId)
 									if (PSBT.startsWith("500"))
 										return res.status(500).json(PSBT)// PSBT.data.inputs[0].partialSig[0].signature)  // this is the signature of the Oracle oracleSignTx
 									else
@@ -96,6 +103,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 		}
 	})
 });
+
 
 function createTempContractFile(randFile, contractAlgorithm, callback) {
 	//a janitor that deletes the contract file after 30 secs
