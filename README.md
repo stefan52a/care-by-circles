@@ -6,7 +6,7 @@ Oracle server for Care by Circles, social inclusion.
 
 Circles are tribes with a maximum of 150 people each.
 
-All transactions are locked by the following scriptPubKey (to lock output):
+All transactions are locked by the following scriptPub (to lock output):
 
 ```
 IF
@@ -14,9 +14,10 @@ IF
 2 <ID pubkey> <oraclePleaseSignTx_pubkey> 2 CHECKMULTISIG
 ELSE
 <contractBurn_hash> DROP
-n +1 <IDi pubkey> ..... <IDn pubkey><oracleBurn pubkey> m+1 CHECKMULTISIG
+n+1 <IDi pubkey> ..... <IDm pubkey><oracleBurn pubkey> m+1 CHECKMULTISIG
 ENDIF
 ```
+where n>m/2
 
 PSBT transaction which is partially to be signed by the Oracle oraclePleaseSignTx, looks like:
 
@@ -36,3 +37,12 @@ docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 2. Clone or download and run **npm install** 
 
 (and if you want then **node app** to start the web application)
+
+3. install mongodb:
+https://docs.mongodb.com/manual/administration/install-community/
+
+4.  Run the server 
+node oracle.js    # or use your favorite debugger
+
+5. Run a client or a test:
+node clientTest   # or use your favorite debugger

@@ -19,11 +19,10 @@ const axiosInstance = axios.create({
 //     id: '+31-6-233797929'
 // })
 //     .then(function (response) {
-//         // console.log(response);
-//         console.log(response.data);
+//          console.log(response.data);
 //     })
-//     .catch(function (error) {
-//         console.log(error);
+//     .catch (function (error) {
+//         console.log(error.message);
 //     });
 
 axiosInstance.post('/oraclePleaseSignTx', {
@@ -37,8 +36,13 @@ axiosInstance.post('/oraclePleaseSignTx', {
 		.signInput(0, aClientTx)
     })
     .catch(function (error) {
-        console.log(error.response.data+ " "+ error);
+        console.log(error.stack);
     });
+
+
+
+
+
 // assert.strictEqual(psbt.validateSignaturesOfAllInputs(), true);
 	// psbt.finalizeAllInputs();
 

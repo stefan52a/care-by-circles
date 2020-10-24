@@ -283,7 +283,7 @@ const minersFee = 50000;
 	// var pubkeyUsedInUTXO = "02cd1e024ea5660dfe4c44221ad32e96d9bf57151d7105d90070c5b56f9df59e5e"; //todo also from mongodb????, do we lose some anonimity here?
 }
 
-module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, satoshis) => {
+module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, satoshis, callback) => {
 	randomBytes(256, async (err, buf) => {
 		if (err) return "500" + err;
 		else {
@@ -318,39 +318,21 @@ module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, satos
 
 			mongoose.connect('mongodb://localhost/carebycircles', { useNewUrlParser: true, useUnifiedTopology: true });
 
-			var doc1 = Circles({ instanceCircle: randCircle, saltedHashedIdentification: id, txId: txId, pubkey: toPubkeyStr });
+			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: txId, pubKey: toPubkeyStr });
 
 			var connection = mongoose.connection;
 			// connection.on('error', () => { return callback("fout", "Something went wrong: " + 'connection error:') });
 			connection.once('open', function () {
 
-				connection.db.collection("Circles", function (err, Circles) {
-					doc1.save(function (err, doc) {
+				connection.db.collection("circles", function (err, Circles) {
+					doc1.save(async function (err, doc) {
 						connection.close()
-						if (err) { return "500" + "Could not store the Circle." + err }
-						console.log(result);
-						return unspentMINT;
+						if (err) {return calback ("" ,"","500" + "Could not store the Circle." + err) }
+						// console.log(result);
+						return callback(unspentMINT, randCircle);
 					});
 				});
 			});
-
-			// 	Connection.db.save({ instanceCircle: randCircle, saltedHashedIdentification: id, txId: txId })
-			// .then(result => {
-			// 	console.log(result);
-			// 	return unspentMINT;
-			// })
-			// .catch(err => { return "500" + "Could not store the Circle." + err })
-
-
-			// var connection = mongoose.connection;
-			// connection.on('error', console.error.bind(console, 'connection error:'));
-			// connection.once('open', function () {
-			//     connection.db.collection("Circles", function(err, Circles){
-			//         Circles.find({}).toArray(function(err, data){
-			//             console.log(data); // it will print your collection data
-			//         })
-			//     });
-			// });
 		}
 	});
 }

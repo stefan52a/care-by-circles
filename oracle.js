@@ -1,4 +1,4 @@
-// This criupt is callable by anybody, there is no login needed.
+// This script is callable by anybody, there is no protection needed.
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -33,22 +33,26 @@ app.use(bodyParser.json());
 // Airdrop tokens to an identity that does not have a genesis Circle yet
 app.post('/api/oracleGetAirdrop', (req, res) => {
 	const id = req.body.id; // telephone number FTM
-	const pubkey = req.body.pubkey;
+	const salt = req.body.salt; // a secret number which only the user controls
+	// todo study changing with a timestamp, like done in Corona BLE apps.
+	const pubkey = req.body.pubkey; //a HD wallet changing public key
 	// bitcoin.ECPair.makeRandom({ network: regtest }).publicKey.toString('hex')
 	// pubkey'02cd1e024ea5660dfe4c44221ad32e96d9bf57151d7105d90070c5b56f9df59e5e'  //FTM
 	ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
 		if (err) {
 			return res.status(400).json(err + " Not allowed (id does not exist, id is not a person)");
 		}
-		ID.getGenesisCircle(id, async (CircleId, err) => {
-			if (!err) {
-				unspent = await transactions.createAndBroadcastCircleGenesisTx(id, pubkey, 1e9) //10BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
-				if (unspent.toString().startsWith("500")) return res.status(500).json(unspent);
-				else return res.status(200).json("Circle " + CircleId + " created for " + id + " and " + (1e9 / 1e8) + " tokens will be airdropped (locked with an oracle and pubkey: " + pubkey + " and transactionId " + unspent.txId + ")");// xx e.g. could e.g. be be the same as the current blockchain reward
-				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
-			} else {
-				return res.status(400).json("Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId+" "+err);
+		ID.noGenesisCircle(id, (ans, err) => {
+			if (err) {
+				return res.status(400).json(err);
 			}
+			transactions.createAndBroadcastCircleGenesisTx(id, pubkey, 1e5, function (unspent, CircleId, err) {
+				if (err) return res.status(400).json("Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err);
+				//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
+				if (unspent.toString().startsWith("500")) return res.status(500).json(unspent);
+				else return res.status(200).json("Circle " + CircleId + " created for " + id + " and " + (1e5 / 1e8) + " tokens will be airdropped (locked with an oracle and pubkey: " + pubkey + " and transactionId " + unspent.txId + ")");// xx e.g. could e.g. be be the same as the current blockchain reward
+				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
+			})
 		});
 	});
 });
@@ -59,6 +63,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 	const circleId = req.body.circleId;
 
 	const pubkeyInUTXO = req.body.pubkeyInUTXO; //Privacyreason: The client also has to keep track of the pubkey belonging to his last Circle transaction
+	//instead of this pubkeyInUTXO we better transfer the hash of the script in transaction.PubScriptToUnlockContainsAHashOfContract
 	const newPubkeyId = req.body.newPubkeyId;
 
 	const pubkeyNewId = req.body.pubkeyNewId;
@@ -67,7 +72,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 	const contractAlgorithm = req.body.contract;
 	// execute the contract if has its hash is in the pubscript to be unlocked
 	transactions.PubScriptToUnlockContainsAHashOfContract(id, pubkeyInUTXO, contractAlgorithm, circleId, (err) => {
-		if (err) return res.status(400).json(err+"\nNot allowed (The Hash of the contract (contractAlgorithm) is not in the UTXO's lock (pubscript) which a new input could unlock)")
+		if (err) return res.status(400).json(err + "\nNot allowed (The Hash of the contract (contractAlgorithm) is not in the UTXO's lock (pubscript) which a new input could unlock)")
 		//save contractALgorithm to contract.js and execute that contract.js
 		try {
 			var randFile;
