@@ -40,17 +40,17 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 	// pubkey'02cd1e024ea5660dfe4c44221ad32e96d9bf57151d7105d90070c5b56f9df59e5e'  //FTM
 	ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
 		if (err) {
-			return res.status(400).json(err + " Not allowed (id does not exist, id is not a person)");
+			return res.status(400).json({error: err + " Not allowed (id does not exist, id is not a person)"});
 		}
 		ID.noGenesisCircle(id, (ans, err) => {
 			if (err) {
-				return res.status(400).json(err);
+				return res.status(400).json({error: err});
 			}
 			transactions.createAndBroadcastCircleGenesisTx(id, pubkey, 1e5, function (unspent, CircleId, err) {
-				if (err) return res.status(400).json("Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err);
+				if (err) return res.status(400).json({error: "Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err} );
 				//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
-				if (unspent.toString().startsWith("500")) return res.status(500).json(unspent);
-				else return res.status(200).json("Circle " + CircleId + " created for " + id + " and " + (1e5 / 1e8) + " tokens will be airdropped (locked with an oracle and pubkey: " + pubkey + " and transactionId " + unspent.txId + ")");// xx e.g. could e.g. be be the same as the current blockchain reward
+				if (unspent.toString().startsWith("500")) return res.status(500).json({ error: unspent});
+				else return res.status(200).json({error: "none", Circle: CircleId , tokens:  (1e5 / 1e8), txId: unspent.txId });// xx e.g. could e.g. be be the same as the current blockchain reward
 				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 			})
 		});
