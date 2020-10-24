@@ -55,13 +55,13 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, pubkeyUsedInUTXO,
 	// connection.on('error', () => { return callback("fout", "Something went wrong: " + 'connection error:') });
 	connection.once('open', function () {
 
-		connection.db.collection("Circles", function (err, Circles) {
+		connection.db.collection("circles", function (err, Circles) {
 			Circles.find({ saltedHashedIdentification: id }).toArray(function (err, circles) {
 				connection.close()
 				if (err) { return callback(err, "Something went wrong terribly: no circles assigned to a user, in the function when checking the contract hash!") }
 				if (circles.length != 1) return callback("error", "Something went wrong terribly: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
 				else {
-					addressToUnlock = circles[0].BTCaddress;
+					addressToUnlock = circles[0].BTCaddress;//can be derived from pubkey!!!
 					pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
 				}
 				// make hash of the redeemscript
@@ -318,7 +318,7 @@ module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, satos
 
 			mongoose.connect('mongodb://localhost/carebycircles', { useNewUrlParser: true, useUnifiedTopology: true });
 
-			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: txId, pubKey: toPubkeyStr });
+			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: txId, pubKey: toPubkeyStr , addressToUnlock: address});
 
 			var connection = mongoose.connection;
 			// connection.on('error', () => { return callback("fout", "Something went wrong: " + 'connection error:') });

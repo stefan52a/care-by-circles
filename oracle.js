@@ -72,31 +72,31 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 	const contractAlgorithm = req.body.contract;
 	// execute the contract if has its hash is in the pubscript to be unlocked
 	transactions.PubScriptToUnlockContainsAHashOfContract(id, pubkeyInUTXO, contractAlgorithm, circleId, (err) => {
-		if (err) return res.status(400).json(err + "\nNot allowed (The Hash of the contract (contractAlgorithm) is not in the UTXO's lock (pubscript) which a new input could unlock)")
+		if (err) return res.status(400).json({error: err + " Not allowed (The Hash of the contract (contractAlgorithm) is not in the UTXO's lock (pubscript) which a new input could unlock)"})
 		//save contractALgorithm to contract.js and execute that contract.js
 		try {
 			var randFile;
 			randomBytes(100, (err, buf) => {
-				if (err) console.log(err);
+				if (err) return res ({error: err});
 				else {
 					randFile = path.join(__dirname, "contractTMP" + buf.toString('hex') + ".js");
 					createTempContractFile(randFile, contractAlgorithm,
 						function (err) {
-							if (err) return res.status(500).json(err);
+							if (err) return res.status(500).json({error: err});
 							try {
 								require(randFile).contract(newId, async (errInContract) => {
-									if (errInContract) return res.json(errInContract)
+									if (errInContract) return res.json({error: errInContract})
 									const PSBT = await transactions.PSBT(id, newPubkeyId, pubkeyNewId, circleId)
 									if (PSBT.startsWith("500"))
-										return res.status(500).json(PSBT)// PSBT.data.inputs[0].partialSig[0].signature)  // this is the signature of the Oracle oracleSignTx
+										return res.status(500).json({error: PSBT})// PSBT.data.inputs[0].partialSig[0].signature)  // this is the signature of the Oracle oracleSignTx
 									else
-										return res.status(200).json(PSBT)// PSBT.data.inputs[0].partialSig[0].signature)  // this is the signature of the Oracle oracleSignTx
+										return res.status(200).json({error: "none", PSBT: PSBT})// PSBT.data.inputs[0].partialSig[0].signature)  // this is the signature of the Oracle oracleSignTx
 								})
 							}
 							catch (e2) {
 								//client error = status 400
-								return res.status(400).json("invalid contract syntax. expecting exactly: " +
-									"const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
+								return res.status(400).json({error: "invalid contract syntax. expecting exactly: " +
+									"const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"}
 								);
 							}
 						})
@@ -104,7 +104,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 			});
 		}
 		catch (e) {
-			return res.status(400).json("invalid contract syntax. Include \"contract\": in jour JSON. " + e);
+			return res.status(400).json({error: "invalid contract syntax. Include \"contract\": in jour JSON. " + e});
 		}
 	})
 });
@@ -122,7 +122,7 @@ function createTempContractFile(randFile, contractAlgorithm, callback) {
 
 function rmFile(f) {
 	fs.unlink(f, (err) => {
-		if (err) return console.log("Unexpected error removing " + f + " " + err)
+		if (err) return console.log({error: "Unexpected error removing " + f + " " + err})
 	})
 }
 
@@ -131,7 +131,7 @@ require("glob").glob("contractTMP*.js", function (er, files) {
 	if (er) console.log(er)
 	for (f in files) {
 		fs.unlink(files[f], (err) => {
-			if (err) console.log("Unexpected error removing " + files[f] + " " + err)
+			if (err) console.log({error: "Unexpected error removing " + files[f] + " " + err})
 		})
 	}
 });
