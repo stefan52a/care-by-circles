@@ -11,7 +11,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program":  "${file}" //"${workspaceFolder}/socket.js"
+            "program":  "${workspaceFolder}/oracle.js"  //"${file}"
         }
     ]
 }
