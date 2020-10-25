@@ -1,5 +1,6 @@
-var mongoose = require('mongoose'); // todo mak multiple connections possible....
 const Circles = require('./lib/Circles');
+const ID = require('./identification');
+
 const randomBytes = require('randombytes');
 
 const axios = require('axios')
@@ -12,7 +13,6 @@ const axios = require('axios')
 
 const assert = require('assert')
 
-const crypto = require('crypto-js');
 const bitcoin = require('bitcoinjs-lib');
 
 const regtestClient = require('regtest-client');
@@ -43,7 +43,7 @@ module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, algor
 		if (err) return "500" + err;
 		else {
 
-			const address = createAddressLockedWithCirclesScript(toPubkeyStr, algorithm)
+			const address = ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
 
 			var txId;
 			var unspentMINT;
@@ -101,7 +101,7 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, pubkeyUsedInUTXO,
 		}
 		// make hash of the redeemscript
 		try {
-			const redeemScript = circlesLockScript(pubkeyUsedInUTXO,
+			const redeemScript = ID.circlesLockScript(pubkeyUsedInUTXO,
 				algorithm,
 				oracleSignTx,  //: KeyPair,
 				oracleBurnTx  //: KeyPair,
@@ -146,7 +146,7 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 		// addressToUnlock=circles[0].BTCaddress;
 		txId = circles[0].txId;
 		// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-		const redeemScript = circlesLockScript(pubkeyUsedInUTXO,
+		const redeemScript = ID.circlesLockScript(pubkeyUsedInUTXO,
 			algorithm,
 			oracleSignTx,  //: KeyPair,
 			oracleBurnTx  //: KeyPair,
@@ -183,12 +183,12 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 					const minersFee = 5000;
 					psbt
 						.addOutput({
-							address: createAddressLockedWithCirclesScript(newPubkeyId, algorithm),
+							address: ID.createAddressLockedWithCirclesScript(newPubkeyId, algorithm, oracleSignTx, oracleBurnTx),
 							value: tx.outs[0].value - minersFee,
 						})
 					psbt
 						.addOutput({
-							address: createAddressLockedWithCirclesScript(pubkeyNewId, algorithm),
+							address: ID.createAddressLockedWithCirclesScript(pubkeyNewId,  algorithm, oracleSignTx, oracleBurnTx),  
 							value: 0,
 						})
 					psbt
@@ -208,11 +208,11 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 								// addressToUnlock=circles[0].BTCaddress;
 								// txId = circles[0].txId;
 								// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-								var doc1 = Circles({ instanceCircles: circleId, saltedHashedIdentification: newId, txId: "determine when fully signed", pubKey: pubkeyNewId, addressToUnlock: "determine when fully signed" });
-								CirclesCollection.insertOne(
+								CirclesCollection.updateOne(
 									// { "Attribute": "good" },
-									doc1,
-									// { upsert: true },
+									{ instanceCircles: circleId, saltedHashedIdentification: newId},
+									{ $set:  {txId: "determine when fully signed", pubKey: pubkeyNewId, addressToUnlock: "determine when fully signed" } },
+									{ upsert: true },
 									function (err, circles) {
 										if (err) { return callback("", "Something went wrong terribly while inserting!" + err) }
 										// addressToUnlock=circles[0].BTCaddress;
@@ -247,49 +247,3 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 	// .catch(err => {return callback (err,  "Something went wrong terribly: no circles assigned to a user, in the function when checking the contract hash!")})
 	// var pubkeyUsedInUTXO = "02cd1e024ea5660dfe4c44221ad32e96d9bf57151d7105d90070c5b56f9df59e5e"; //todo also from mongodb????, do we lose some anonimity here?
 }
-function circlesLockScript(
-	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
-	toPubkey,
-	algorithm,
-	oraclePleaseSignTxQ,  //: KeyPair,
-	oracleBurnTxQ  //: KeyPair,
-) {
-	//returns a buffer:
-	return bitcoin.script.fromASM(
-		`
-	  OP_IF
-			${crypto.SHA256(algorithm).toString()} 
-		  	OP_DROP
-			OP_0
-			OP_2
-			${toPubkey.toString('hex')}
-			${oraclePleaseSignTxQ.publicKey.toString('hex')}
-			OP_2
-			OP_CHECKMULTISIGVERIFY
-	  OP_ELSE
-		  	abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd
-	  		OP_DROP
-			OP_0
-			OP_1
-			${oracleBurnTxQ.publicKey.toString('hex')}
-			OP_1
-			OP_CHECKMULTISIGVERIFY
-      OP_ENDIF
-    `
-			.trim()
-			.replace(/\s+/g, ' '),
-	);
-}
-
-function createAddressLockedWithCirclesScript(toPubkeyStr, algorithm) {
-	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
-	const toPubkey = Buffer.from(toPubkeyStr, 'hex'); //new Buffer.alloc(32, toPubkeyStr, 'hex');// TODO unsure whether this works   
-	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
-	const redeemScript = circlesLockScript(toPubkey, algorithm, oracleSignTx, oracleBurnTx);
-	const { address } = bitcoin.payments.p2sh({
-		redeem: { output: redeemScript, network: regtest },
-		network: regtest,
-	});
-	return address;
-}
-

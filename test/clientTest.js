@@ -12,6 +12,7 @@ async function run() {
 
         const axios = require('axios')
         const bitcoin = require('bitcoinjs-lib');
+        const PsbtMod = require('./psbtMod/psbtMod')
         const prompt = require('prompt-sync')({ sigint: true })
         const bip32 = require('bip32');
         const bip39 = require('bip39');
@@ -35,11 +36,15 @@ async function run() {
             'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
             regtest,
         );
+        const ID = '+31-6-233787929'
         const pubKeyID = aClientSignTxID.publicKey.toString('hex')
+
         const aClientSignTxNEWID = bitcoin.ECPair.fromWIF(
             'cU4suhCk1LDHEksGRen2293CmZE1GdfSA4V4A6GmwZvmVRC7Vpvu', ///// TODO KEEP SECRET
             regtest,
         );
+        const NewID = '+31-6-231610011'
+        const pubkeyNewId = aClientSignTxNEWID.publicKey.toString('hex');
 
         // const path = "m/0'/0/0"
         // var mnemonic = 'praise you muffin enable lion neck crumble super myself grocery license ghost'  //id
@@ -77,6 +82,7 @@ async function run() {
                         console.log(response.data);
                         const circleID = response.data.Circle;//store them persistent on client
                         const txID = response.data.txId;//store them persistent on client
+                        const address = response.data.addressToUnlock;//store them persistent on client
                     })
                     .catch(function (error) {
                         console.log(error.message);
@@ -84,54 +90,66 @@ async function run() {
                 stop = true
             } else if (answ === "o") {
                 stop = true
-                CirclesCollection.find({ "saltedHashedIdentification": '+31-6-233787929' }).toArray(function (err, circles) {
-                    if (err) { return callback("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
-                    if (circles.length != 1) { return callback("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
+
+                //should be stored in persistent storage, in this example we use mongodb:
+                CirclesCollection.find({ "saltedHashedIdentification": ID }).toArray(function (err, circles) {
+                    if (err) { return console.log("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
+                    if (circles.length != 1) { return console.log("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!, maybe your forget to create a Circle first") }
                     // addressToUnlock=circles[0].BTCaddress;
                     const txID = circles[0].txId;
                     const circleID = circles[0].instanceCircles;
+                    const addressToUnlock = circles[0].addressToUnlock
 
                     axiosInstance.post('/oraclePleaseSignTx', {
-                        id: '+31-6-233787929',
+                        id: ID,
                         pubkeyInUTXO: pubKeyID,
                         txId: txID,//get txID from persistent storage on client
                         newPubkeyId: aClientSignTxID.publicKey.toString('hex'),
 
-                        newId: '+31-6-231610011',
+                        newId: NewID,
                         circleId: circleID,//get circleID from persistent storage on client
-                        pubkeyNewId: aClientSignTxNEWID.publicKey.toString('hex'),
+                        pubkeyNewId: pubkeyNewId,
 
                         contract: "const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
                     })
-                        .then(function (response) {
-                            var psbt = bitcoin.Psbt.fromHex(response.data.PSBT);
+                        .then(async function (response) {
+                            const psbt = PsbtMod.Psbt.fromHex(response.data.PSBT);
                             // const psbtObj = new Function('return ' + psbt.toString()+'')()
                             psbt.signInput(0, aClientSignTxID)
 
-                            //todo broadcast it
                             // you can use validate signature method provided by library to make sure generated signature is valid
-                            psbt.validateSignaturesOfAllInputs() // if this returns false, then you can throw the error
-                            psbt.finalizeAllInputs()
+                            if (!psbt.validateSignaturesOfAllInputs()) // if this returns false, then you can throw the error
+                            {
+                                console.log("could not validate txId " + transactionId)
+                            }
+
+                            psbt.finalizeAllInputs(regtest)
+
+
                             // signed transaction hex
                             const transaction = psbt.extractTransaction()
                             const signedTransaction = transaction.toHex()
                             const transactionId = transaction.getId()
                             // sign transaction end
 
-                            const axiosInstance = axios.create({
-                                baseURL: 'http://localhost:8080/1/',  ////?????????
-                                timeout: 10000
-                            });
+                            // // build and broadcast to the Bitcoin RegTest network
+                            await regtestUtils.broadcast(signedTransaction);
 
-                            axiosInstance.post('/sendrawtransaction', {
-                                params: [signedTransaction],
-                                id: '1'
+                            console.log(response)
+                            console.log(transactionId)
+
+                            axiosInstance.post('/GiveTxIdToOracle', {
+                                instanceCircles: circleID,
+                                id: pubkeyNewId,
+
+                                txId: transactionId,
                             }
-
                             ).then(function (response) {
-                                console.log(response)
-                                console.log(transactionId)
+                                console.log(response.data);
                             })
+                                .catch(function (error) {
+                                    console.log(error.message);
+                                });
                         })
                         .catch(function
                             (error) {
@@ -142,20 +160,7 @@ async function run() {
                 answ = prompt('(a)irdrop or ask (o)rale to sign?')
             }
         }
-
-
-
-
     })
-
-
-    // assert.strictEqual(psbt.validateSignaturesOfAllInputs(), true);
-    // psbt.finalizeAllInputs();
-
-    // const tx = psbt.extractTransaction();
-
-    // // build and broadcast to the Bitcoin RegTest network
-    // await regtestUtils.broadcast(tx.toHex());
 }
 
 run();

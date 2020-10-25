@@ -28,17 +28,17 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 	const algorithm = req.body.contract;
 	ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
 		if (err) {
-			console.log("error: "+err + " Not allowed (id does not exist, id is not a person)");
+			console.log("error: " + err + " Not allowed (id does not exist, id is not a person)");
 			return res.status(400).json({ error: err + " Not allowed (id does not exist, id is not a person)" });
 		}
 		ID.noGenesisCircle(id, (ans, err) => {
 			if (err) {
-				console.log("error: "+err);
+				console.log("error: " + err);
 				return res.status(400).json({ error: err });
 			}
 			transactions.createAndBroadcastCircleGenesisTx(id, pubkey, algorithm, 1e5, function (unspent, CircleId, err) {
 				if (err) {
-					console.log ("Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err)
+					console.log("Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err)
 					return res.status(400).json({ error: "Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err });
 				}
 				//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
@@ -69,8 +69,8 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 	// execute the contract if has its hash is in the pubscript to be unlocked
 	transactions.PubScriptToUnlockContainsAHashOfContract(id, pubkeyInUTXO, contractAlgorithm, circleId, (err) => {
 		if (err) {
-			console.log({ error: err + " Not allowed (the unlockscript contains an incorrect information (contract or pubkey))"})
-			return res.status(400).json({ error: err + " Not allowed (the unlockscript contains an incorrect information (contract or pubkey)) "})
+			console.log({ error: err + " Not allowed (the unlockscript contains an incorrect information (contract or pubkey))" })
+			return res.status(400).json({ error: err + " Not allowed (the unlockscript contains an incorrect information (contract or pubkey)) " })
 		}
 		//save contractALgorithm to contract.js and execute that contract.js
 		try {
@@ -90,10 +90,10 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 							}
 							try {
 								require(randFile).contract(newId, async (errInContract) => {
-									if (errInContract){
+									if (errInContract) {
 										console.log({ error: errInContract })
 										return res.json({ error: errInContract })
-									} 
+									}
 									transactions.PSBT(id, pubkeyInUTXO, contractAlgorithm, newPubkeyId, newId, pubkeyNewId, circleId, function (PSBT, err) {
 										if (err) {
 											console.log({ error: err })
@@ -120,7 +120,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										return res.status(200).json({ error: "none", PSBT: PSBT.toHex() })
 									})
 								})
-							} 
+							}
 							catch (e2) {
 								//client error = status 400
 								console.log({
@@ -143,6 +143,26 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 			return res.status(400).json({ error: "invalid contract syntax. Include \"contract\": in jour JSON. " + e });
 		}
 	})
+});
+
+app.post('/api/GiveTxIdToOracle', (req, res) => {
+	const instanceCircles = req.body.instanceCircles;
+	const id = req.body.id;
+
+	const txId = req.body.txId;
+
+	//update mongoDB here for instanceCircles, id   combination with valuyes txId and address (ToUnlock)
+	CirclesCollection.updateOne(
+		// { "Attribute": "good" },
+		{ instanceCircles: instanceCircles, saltedHashedIdentification: id },
+		{ $set: { txId: txId, addressToUnlock: address } },
+		function (err, circles) {
+			if (err) { return res.status(500).json({ error: "Something went wrong while updating!" + err }) }
+			// addressToUnlock=circles[0].BTCaddress;
+			// txId = circles[0].txId;
+			// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+			return res.status(200).json({ error: "none" })
+		})
 });
 
 
@@ -177,19 +197,19 @@ require("glob").glob("contractTMP*.js", function (er, files) {
 
 // Make only one mongodb connection per session:  BY TOM:
 // Initialize connection once
-MongoClient.connect("mongodb://localhost:27017", { useNewUrlParser: true, useUnifiedTopology: true }, function(err, database) {
-  if(err) throw err;
+MongoClient.connect("mongodb://localhost:27017", { useNewUrlParser: true, useUnifiedTopology: true }, function (err, database) {
+	if (err) throw err;
 
-  db = database.db("carebycircles");
-  // console.log(db);
-  CirclesCollection = db.collection("circles");
-  // console.log(CirclesCollection);
+	db = database.db("carebycircles");
+	// console.log(db);
+	CirclesCollection = db.collection("circles");
+	// console.log(CirclesCollection);
 
 
-  // Start the application after the database connection is ready
-  app.listen(3000);
+	// Start the application after the database connection is ready
+	app.listen(3000);
 
-  console.log("Listening on port 3000");
+	console.log("Listening on port 3000");
 });
 
 
