@@ -107,7 +107,7 @@ async function run() {
                         .then(function (response) {
                             const psbt = response.data.PSBT;
                             // const psbtObj = new Function('return ' + psbt.toString()+'')()
-                            const dummy = psbt.signInput(0, aClientSignTxNEWID)
+                            const dummy = psbt.signInput(0, aClientSignTxID)
                             console.log(dummy)
                         })
                         .catch(function
