@@ -104,17 +104,17 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 
 
 										////temp:
-										const regtestClient = require('regtest-client');
-										const APIPASS = process.env.APIPASS || 'sastoshi';
-										const APIURL = process.env.APIURL || 'http://localhost:8080/1';
-										const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
-										const regtest = regtestUtils.network;
-										const bitcoin = require('bitcoinjs-lib');
-										var aClientSignTx = bitcoin.ECPair.fromWIF(
-											'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
-											regtest,
-										);
-										const dummy =PSBT.signInput(0, aClientSignTx)
+										// const regtestClient = require('regtest-client');
+										// const APIPASS = process.env.APIPASS || 'sastoshi';
+										// const APIURL = process.env.APIURL || 'http://localhost:8080/1';
+										// const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
+										// const regtest = regtestUtils.network;
+										// const bitcoin = require('bitcoinjs-lib');
+										// var aClientSignTx = bitcoin.ECPair.fromWIF(
+										// 	'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
+										// 	regtest,
+										// );
+										// const dummy =PSBT.signInput(0, aClientSignTx)
 
 										return res.status(200).json({ error: "none", PSBT: PSBT })
 									})
