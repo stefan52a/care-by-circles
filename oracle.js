@@ -101,6 +101,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										}
 										// const dummy = PSBT.data.inputs[0].partialSig[0].signature  // this is the signature of the Oracle oracleSignTx
 										console.log({ error: "none", PSBT: PSBT })
+										console.log({ error: "none", PSBT: PSBT.toHex() })
 
 
 										////temp:
@@ -116,10 +117,10 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										// );
 										// const dummy =PSBT.signInput(0, aClientSignTx)
 
-										return res.status(200).json({ error: "none", PSBT: PSBT })
+										return res.status(200).json({ error: "none", PSBT: PSBT.toHex() })
 									})
 								})
-							}
+							} 
 							catch (e2) {
 								//client error = status 400
 								console.log({

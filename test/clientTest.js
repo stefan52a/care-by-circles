@@ -10,7 +10,6 @@ async function run() {
         db = database.db("carebycircles");
         CirclesCollection = db.collection("circles");
 
-
         const axios = require('axios')
         const bitcoin = require('bitcoinjs-lib');
         const prompt = require('prompt-sync')({ sigint: true })
@@ -105,10 +104,34 @@ async function run() {
                         contract: "const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
                     })
                         .then(function (response) {
-                            const psbt = response.data.PSBT;
+                            var psbt = bitcoin.Psbt.fromHex(response.data.PSBT);
                             // const psbtObj = new Function('return ' + psbt.toString()+'')()
-                            const dummy = psbt.signInput(0, aClientSignTxID)
-                            console.log(dummy)
+                            psbt.signInput(0, aClientSignTxID)
+
+                            //todo broadcast it
+                            // you can use validate signature method provided by library to make sure generated signature is valid
+                            psbt.validateSignaturesOfAllInputs() // if this returns false, then you can throw the error
+                            psbt.finalizeAllInputs()
+                            // signed transaction hex
+                            const transaction = psbt.extractTransaction()
+                            const signedTransaction = transaction.toHex()
+                            const transactionId = transaction.getId()
+                            // sign transaction end
+
+                            const axiosInstance = axios.create({
+                                baseURL: 'http://localhost:8080/1/',  ////?????????
+                                timeout: 10000
+                            });
+
+                            axiosInstance.post('/sendrawtransaction', {
+                                params: [signedTransaction],
+                                id: '1'
+                            }
+
+                            ).then(function (response) {
+                                console.log(response)
+                                console.log(transactionId)
+                            })
                         })
                         .catch(function
                             (error) {
