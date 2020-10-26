@@ -61,8 +61,11 @@ and then inside the docker you can execute commands like:
 bitcoin-cli 
 
 5.  Run the Oracle server 
-node oracle.js    # or use your favorite debugger
+
+node oracle.js    #or use your favorite debugger
 
 6. Run a client or a test e.g.:
+
 cd test
-node clientTest   # or use your favorite debugger
+
+node clientTest   #or use your favorite debugger
