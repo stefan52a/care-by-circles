@@ -104,20 +104,45 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										console.log({ error: "none", PSBT: PSBT.toHex() })
 
 
-										////temp:
-										// const regtestClient = require('regtest-client');
-										// const APIPASS = process.env.APIPASS || 'sastoshi';
-										// const APIURL = process.env.APIURL || 'http://localhost:8080/1';
-										// const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
-										// const regtest = regtestUtils.network;
-										// const bitcoin = require('bitcoinjs-lib');
-										// var aClientSignTx = bitcoin.ECPair.fromWIF(
-										// 	'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
-										// 	regtest,
-										// );
-										// const dummy =PSBT.signInput(0, aClientSignTx)
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 										//temp:
+// 										const regtestClient = require('regtest-client');
+// 										const APIPASS = process.env.APIPASS || 'sastoshi';
+// 										const APIURL = process.env.APIURL || 'http://localhost:8080/1';
+// 										const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
+// 										const regtest = regtestUtils.network;
+// 										const bitcoin = require('bitcoinjs-lib');
+// 										var aClientSignTxID = bitcoin.ECPair.fromWIF(
+// 											'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
+// 											regtest,
+// 										);
 
+// 										const psbt = require('./test/psbtMod/psbtMod').Psbt.fromHex(PSBT.toHex());
+// 										// const psbtObj = new Function('return ' + psbt.toString()+'')()
+// 										psbt.signInput(0, aClientSignTxID)
+
+// 										// you can use validate signature method provided by library to make sure generated signature is valid
+// 										if (!psbt.validateSignaturesOfAllInputs()) // if this returns false, then you can throw the error
+// 										{
+// 											console.log("could not validate signatures of psbt ")
+// 										}
+
+// 										psbt.finalizeAllInputs(regtest)
+
+
+// 										// signed transaction hex
+// 										const transaction = psbt.extractTransaction()
+// 										const signedTransaction = transaction.toHex()
+// 										const transactionId = transaction.getId()
+// 										// sign transaction end
+
+// 										// // build and broadcast to the Bitcoin RegTest network
+// 										async function dum() {console.log (await regtestUtils.broadcast(signedTransaction))}
+// 										dum();
+// 										//endtemp 
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										return res.status(200).json({ error: "none", PSBT: PSBT.toHex() })
+
 									})
 								})
 							}

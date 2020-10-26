@@ -14,6 +14,7 @@ const axios = require('axios')
 const assert = require('assert')
 
 const bitcoin = require('bitcoinjs-lib');
+const PsbtMod = require('./test/psbtMod/psbtMod')
 
 const regtestClient = require('regtest-client');
 // const e = require('express');
@@ -43,7 +44,7 @@ module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, algor
 		if (err) return "500" + err;
 		else {
 
-			const address = ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
+			const {address, redeemScript} = ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
 
 			var txId;
 			var unspentMINT;
@@ -71,7 +72,7 @@ module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, algor
 			catch (e) { return "500" + e; }
 			randCircle = "Circle" + buf.toString('hex');
 
-			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: txId, pubKey: toPubkeyStr, addressToUnlock: address });
+			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: txId, pubKey: toPubkeyStr, addressToUnlock: address, redeemScript: redeemScript.toString('hex') });
 			CirclesCollection.save(doc1, function (err, circles) {
 				if (err) { return calback("", "", "500" + "Could not store the Circle." + err) }
 				// console.log(result);
@@ -159,15 +160,17 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 				const tx = bitcoin.Transaction.fromHex(TX_HEX)
 
 				const TX_VOUT = 0
-				const psbt = new bitcoin.Psbt({ network: regtest });
+				const psbt = new PsbtMod.Psbt({ network: regtest });
+				// const psbt = new bitcoin.Psbt({ network: regtest });
 				try {
 					psbt
 						.addInput({
 							hash: txId,
 							index: TX_VOUT,
-							// sequence: 0xfffffffe,   todo needeD?
-							nonWitnessUtxo: Buffer.from(TX_HEX, 'hex'),
-							redeemScript: Buffer.from(redeemScript, 'hex')
+							sequence: 0xfffffffe,
+							nonWitnessUtxo: Buffer.from(TX_HEX, 'hex'),// works for witness inputs too!
+							redeemScript: Buffer.from(redeemScript, 'hex'), // only if there's redeem script
+							// witnessScript: input.witnessScript // only if there's witness script							
 							//Use SEGWIT later:
 							//   witnessUtxo: {
 							// 	script: Buffer.from('0020' +
@@ -183,16 +186,29 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 					const minersFee = 5000;
 					psbt
 						.addOutput({
-							address: ID.createAddressLockedWithCirclesScript(newPubkeyId, algorithm, oracleSignTx, oracleBurnTx),
+							address: ID.createAddressLockedWithCirclesScript(newPubkeyId, algorithm, oracleSignTx, oracleBurnTx).address,
 							value: tx.outs[0].value - minersFee,
 						})
 					psbt
 						.addOutput({
-							address: ID.createAddressLockedWithCirclesScript(pubkeyNewId,  algorithm, oracleSignTx, oracleBurnTx),  
+							address: ID.createAddressLockedWithCirclesScript(pubkeyNewId, algorithm, oracleSignTx, oracleBurnTx).address,
 							value: 0,
 						})
-					psbt
-						.signInput(0, oracleSignTx)
+
+					// ************** signing **************
+
+					psbt.data.inputs.forEach((input, index) => {
+						//// sign regular inputs that can be simply signed
+						// if (!input.redeemScript && !input.witnessScript) {
+							psbt.signInput(index, oracleSignTx)
+
+							// give error if signature failed
+							if (!psbt.validateSignaturesOfInput(index)) {
+								throw new Error('Signature validation failed for input index ' + index.toString())
+							}
+						
+
+					})
 
 					// TODO scan blockchain for confirmed signature by Id, then
 
@@ -210,8 +226,8 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 								// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
 								CirclesCollection.updateOne(
 									// { "Attribute": "good" },
-									{ instanceCircles: circleId, saltedHashedIdentification: newId},
-									{ $set:  {txId: "determine when fully signed", pubKey: pubkeyNewId, addressToUnlock: "determine when fully signed" } },
+									{ instanceCircles: circleId, saltedHashedIdentification: newId },
+									{ $set: { txId: "determine when fully signed", pubKey: pubkeyNewId, addressToUnlock: "determine when fully signed" } },
 									{ upsert: true },
 									function (err, circles) {
 										if (err) { return callback("", "Something went wrong terribly while inserting!" + err) }

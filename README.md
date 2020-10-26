@@ -42,7 +42,23 @@ docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 https://docs.mongodb.com/manual/administration/install-community/
 
 4. Run a regtest server, e.g.:
+
 docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
+
+
+BTW you can go into the docker by:
+
+a. get the CONTAINER_ID by
+
+docker container ls
+
+b. then
+
+docker exec -it CONTAINER_ID bash
+
+and then inside the docker you can execute commands like:
+
+bitcoin-cli 
 
 5.  Run the Oracle server 
 node oracle.js    # or use your favorite debugger

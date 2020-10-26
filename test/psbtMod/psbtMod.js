@@ -21,7 +21,8 @@ const DEFAULT_OPTS = {
    * A bitcoinjs Network object. This is only used if you pass an `address`
    * parameter to addOutput. Otherwise it is not needed and can be left default.
    */
-  network: networks_1.bitcoin,
+//todo change this to    network: networks_1.bitcoin,
+network: networks_1.regtest,
   /**
    * When extractTransaction is called, the fee rate is checked.
    * THIS IS NOT TO BE RELIED ON.
@@ -1152,8 +1153,8 @@ function getSortedSigs(script, partialSig, ntwrk) {
       console.log(p2ms.pubkeys[i]+"  probably not a pubkey")
     }
   }
-  // todo when doing the multisig for freeing the boitcoin by majority include those signature as well
-  const temp = [p2ms.pubkeys[4], p2ms.pubkeys[5]]
+  // todo when doing the multisig for freeing the bitcoin by majority include those signature as well
+  const temp = [p2ms.pubkeys[1], p2ms.pubkeys[2]]
   return temp
     .map(pk => {
       // filter partialSig array by pubkey being equal

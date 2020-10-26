@@ -48,10 +48,34 @@ module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, algorithm, o
 		redeem: { output: redeemScript, network: regtest },
 		network: regtest,
 	});
-	return address;
+	return {address, redeemScript};
 }
 
-module.exports.circlesLockScript = (
+// to test scripts:  https://github.com/kallewoof/btcdeb
+module.exports.circlesLockScript = (  //TODO FTM this script because don't knwo hopw to sign the other yet
+	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
+	toPubkey,
+	algorithm,
+	oraclePleaseSignTxQ,  //: KeyPair,
+	oracleBurnTxQ  //: KeyPair,
+) => {
+	//returns a buffer:
+	return bitcoin.script.fromASM(
+		`
+			OP_0
+			OP_2
+			${toPubkey.toString('hex')}
+			${oraclePleaseSignTxQ.publicKey.toString('hex')}
+			OP_2
+			OP_CHECKMULTISIGVERIFY
+			${crypto.SHA256(algorithm).toString()} 
+    `
+			.trim()
+			.replace(/\s+/g, ' '),
+	);
+}
+// to test scripts:  https://github.com/kallewoof/btcdeb
+module.exports.circlesLockScriptFULL = (
 	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	toPubkey,
 	algorithm,
