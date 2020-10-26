@@ -23,8 +23,6 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 	const salt = req.body.salt; // a secret number which only the user controls
 	// todo study changing with a timestamp, like done in Corona BLE apps.
 	const pubkey = req.body.pubkey; //a HD wallet changing public key
-	// bitcoin.ECPair.makeRandom({ network: regtest }).publicKey.toString('hex')
-	// pubkey'02cd1e024ea5660dfe4c44221ad32e96d9bf57151d7105d90070c5b56f9df59e5e'  //FTM
 	ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
 		if (err) {
 			console.log("error: " + err + " Not allowed (id does not exist, id is not a person)");
@@ -36,18 +34,15 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 				console.log("error: " + err);
 				return res.status(400).json({ error: err });
 			}
-			transactions.createAndBroadcastCircleGenesisTx(id, pubkey, algorithm, 1e5, function (unspent, CircleId, err) {
+			transactions.createAndBroadcastCircleGenesisTx(id, pubkey, algorithm, 1e5, function (unspent, CircleId, status, err) {
 				if (err) {
-					console.log("Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err)
-					return res.status(400).json({ error: "Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err });
+					console.log("status "+status+" Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err)
+					return res.status(status).json({ error: "Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err });
 				}
 				//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
-				if (unspent.toString().startsWith("500")) return res.status(500).json({ error: unspent });
-				else {
-					console.log({ error: "none", Circle: CircleId, tokens: (1e5 / 1e8), txId: unspent.txId, contract: algorithm })
-					return res.status(200).json({ error: "none", Circle: CircleId, tokens: (1e5 / 1e8), txId: unspent.txId, contract: algorithm });// xx e.g. could e.g. be be the same as the current blockchain reward
-					// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
-				}
+				console.log({ error: "none", Circle: CircleId, tokens: (1e5 / 1e8), txId: unspent.txId, contract: algorithm })
+				return res.status(200).json({ error: "none", Circle: CircleId, tokens: (1e5 / 1e8), txId: unspent.txId, contract: algorithm });// xx e.g. could e.g. be be the same as the current blockchain reward
+				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 			})
 		});
 	});
@@ -104,43 +99,43 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										console.log({ error: "none", PSBT: PSBT.toHex() })
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 										//temp:
-// 										const regtestClient = require('regtest-client');
-// 										const APIPASS = process.env.APIPASS || 'sastoshi';
-// 										const APIURL = process.env.APIURL || 'http://localhost:8080/1';
-// 										const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
-// 										const regtest = regtestUtils.network;
-// 										const bitcoin = require('bitcoinjs-lib');
-// 										var aClientSignTxID = bitcoin.ECPair.fromWIF(
-// 											'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
-// 											regtest,
-// 										);
+										//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+										// 										//temp:
+										// 										const regtestClient = require('regtest-client');
+										// 										const APIPASS = process.env.APIPASS || 'sastoshi';
+										// 										const APIURL = process.env.APIURL || 'http://localhost:8080/1';
+										// 										const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
+										// 										const regtest = regtestUtils.network;
+										// 										const bitcoin = require('bitcoinjs-lib');
+										// 										var aClientSignTxID = bitcoin.ECPair.fromWIF(
+										// 											'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
+										// 											regtest,
+										// 										);
 
-// 										const psbt = require('./test/psbtMod/psbtMod').Psbt.fromHex(PSBT.toHex());
-// 										// const psbtObj = new Function('return ' + psbt.toString()+'')()
-// 										psbt.signInput(0, aClientSignTxID)
+										// 										const psbt = require('./test/psbtMod/psbtMod').Psbt.fromHex(PSBT.toHex());
+										// 										// const psbtObj = new Function('return ' + psbt.toString()+'')()
+										// 										psbt.signInput(0, aClientSignTxID)
 
-// 										// you can use validate signature method provided by library to make sure generated signature is valid
-// 										if (!psbt.validateSignaturesOfAllInputs()) // if this returns false, then you can throw the error
-// 										{
-// 											console.log("could not validate signatures of psbt ")
-// 										}
+										// 										// you can use validate signature method provided by library to make sure generated signature is valid
+										// 										if (!psbt.validateSignaturesOfAllInputs()) // if this returns false, then you can throw the error
+										// 										{
+										// 											console.log("could not validate signatures of psbt ")
+										// 										}
 
-// 										psbt.finalizeAllInputs(regtest)
+										// 										psbt.finalizeAllInputs(regtest)
 
 
-// 										// signed transaction hex
-// 										const transaction = psbt.extractTransaction()
-// 										const signedTransaction = transaction.toHex()
-// 										const transactionId = transaction.getId()
-// 										// sign transaction end
+										// 										// signed transaction hex
+										// 										const transaction = psbt.extractTransaction()
+										// 										const signedTransaction = transaction.toHex()
+										// 										const transactionId = transaction.getId()
+										// 										// sign transaction end
 
-// 										// // build and broadcast to the Bitcoin RegTest network
-// 										async function dum() {console.log (await regtestUtils.broadcast(signedTransaction))}
-// 										dum();
-// 										//endtemp 
-// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+										// 										// // build and broadcast to the Bitcoin RegTest network
+										// 										async function dum() {console.log (await regtestUtils.broadcast(signedTransaction))}
+										// 										dum();
+										// 										//endtemp 
+										// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										return res.status(200).json({ error: "none", PSBT: PSBT.toHex() })
 
 									})

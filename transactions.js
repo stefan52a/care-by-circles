@@ -41,7 +41,7 @@ const axiosInstance = axios.create({
 
 module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, algorithm, satoshis, callback) => {
 	randomBytes(256, async (err, buf) => {
-		if (err) return "500" + err;
+		if (err) return callback ("","","500",err);
 		else {
 
 			const {address, redeemScript} = ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
@@ -69,14 +69,14 @@ module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, algor
 
 				txId = unspentMINT.txId; // e.g. 65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6 vout=1  for address 2N213DaFM1Mpx2mH3qPyGYvGA3R1DoY1pJc
 			}
-			catch (e) { return "500" + e; }
+			catch (e) { return callback ("","","500",e); }
+
 			randCircle = "Circle" + buf.toString('hex');
 
 			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: txId, pubKey: toPubkeyStr, addressToUnlock: address, redeemScript: redeemScript.toString('hex') });
 			CirclesCollection.save(doc1, function (err, circles) {
-				if (err) { return calback("", "", "500" + "Could not store the Circle." + err) }
-				// console.log(result);
-				return callback(unspentMINT, randCircle);
+				if (err) { return calback("", "", "500", "Could not store the Circle." + err) }
+				return callback(unspentMINT, randCircle, "200");
 			})
 		}
 	})

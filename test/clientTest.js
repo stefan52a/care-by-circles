@@ -70,13 +70,9 @@ async function run() {
             if (answ === "a") {
 
                 axiosInstance.post('/oracleGetAirdrop', {
-
-
                     // generate another pubkey from a WIF
-
                     pubkey: pubKeyID,
                     id: '+31-6-233787929',
-
                 })
                     .then(function (response) {
                         console.log(response.data);
@@ -179,7 +175,7 @@ async function run() {
                         });
                 });
             } else {
-                answ = prompt('(a)irdrop or ask (o)rale to sign?')
+                answ = prompt('(a)irdrop or ask (o)racle to sign?')
             }
         }
     })

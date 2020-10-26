@@ -36,8 +36,6 @@ docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 
 2. Clone or download and run **npm install** 
 
-(and if you want then **node app** to start the web application  (WIP))
-
 3. Install and run mongodb locally:
 https://docs.mongodb.com/manual/administration/install-community/
 
@@ -46,7 +44,7 @@ https://docs.mongodb.com/manual/administration/install-community/
 docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 
 
-BTW you can go into the docker by:
+For your information: you can go into the docker by:
 
 a. get the CONTAINER_ID by
 
@@ -58,7 +56,7 @@ docker exec -it CONTAINER_ID bash
 
 and then inside the docker you can execute commands like:
 
-bitcoin-cli 
+bitcoin-cli -regtest help
 
 5.  Run the Oracle server 
 

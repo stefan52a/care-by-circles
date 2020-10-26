@@ -41,7 +41,7 @@ module.exports.noGenesisCircle = (id, callback) => {
 
 module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx ) => {
 	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
-	const toPubkey = Buffer.from(toPubkeyStr, 'hex'); //new Buffer.alloc(32, toPubkeyStr, 'hex');// TODO unsure whether this works   
+	const toPubkey = Buffer.from(toPubkeyStr, 'hex');   
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
 	const redeemScript = this.circlesLockScript(toPubkey, algorithm, oracleSignTx, oracleBurnTx);
 	const { address } = bitcoin.payments.p2sh({
@@ -52,7 +52,7 @@ module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, algorithm, o
 }
 
 // to test scripts:  https://github.com/kallewoof/btcdeb
-module.exports.circlesLockScript = (  //TODO FTM this script because don't knwo hopw to sign the other yet
+module.exports.circlesLockScript = (  //TODO FTM this script because don't know how to sign the other yet
 	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	toPubkey,
 	algorithm,
