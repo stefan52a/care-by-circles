@@ -163,7 +163,7 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 					const TX_VOUT = 0
 					const psbt = new PsbtMod.Psbt({ network: regtest });
 					// const psbt = new bitcoin.Psbt({ network: regtest });
-					try {
+					try {du
 						psbt
 							.addInput({
 								hash: txId,
