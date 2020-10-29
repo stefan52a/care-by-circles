@@ -44,36 +44,52 @@ module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, algor
 		if (err) return callback("", "", "500", err);
 		else {
 
-			const { address, redeemScript } = ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
+			const { p2sh } = ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
 
 			var txId;
 			var unspentMINT;
 			try {
 				// fund the P2SH address
-				unspentMINT = await regtestUtils.faucet(address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
-
-				// to get TX_HEX
-				// by http://localhost:8080/1/t/65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6    (BTW you can find more endpoints in https://github.com/bitcoinjs/regtest-server/blob/master/routes/1.js)
-				// whcih gives
-				//02000000000101885e1f124e2d0d4ca6f2c5fb87055515a7ba8c9c1d1484b832f5ff2f4c20029800000000171600141bded115d49c7e95eb9d2a5da8ad931e11c07105feffffff0200ca9a3b0000000017a914600a51497a5d235fc9d2faf28fba1db81daa663087082268590000000017a9147ed2effc94497c719222b1b13dc4a68363a2dfe9870247304402201195a7c1b79a1a8cff8b4fc43999ab4e7e68dfa0069d61662d56864fbbae9bf3022042bdd8527cf5119cdb6313acfc4dcc7e127e77f6166938a313d19cf5f39e5d28012103f4f015e0e304b8946de00ee57757427100949b05ca03133e9c3118185998bb0f00000000
-				//
-				// OR
-				//
-				// createrawtransaction
-				// '[
-				// 	{ "txid": "7bd079f15deeff70566cd7078666c557d21d799d7ab3fe3110772dbe9c05e8e7", "vout": 1 }
-				// ]'
-				// '{
-				// 	"14rbFswzZfkPGkbFZ7Ffj2qhQA1omvgiUx": sathoshis/1e8
-				// }'
-
-				txId = unspentMINT.txId; // e.g. 65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6 vout=1  for address 2N213DaFM1Mpx2mH3qPyGYvGA3R1DoY1pJc
+				unspentMINT = await regtestUtils.faucet(p2sh.address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
+				utx = await regtestUtils.fetch(unspentMINT.txId) // gets json of txid
 			}
 			catch (e) { return callback("", "", "500", e); }
+			// for non segwit inputs, you must pass the full transaction buffer
+			const nonWitnessUtxo = Buffer.from(utx.txHex, 'hex');
+
+			const tx = new bitcoin.Psbt({ network: regtest })
+				.setVersion(2)
+				.addInput({
+					hash: unspent.txId,
+					index: unspent.vout,
+					sequence,
+					redeemScript: p2sh.redeem.output,
+					nonWitnessUtxo,
+				})
+				.addOutput({
+					address: addressToUnlock,// regtestUtils.RANDOM_ADDRESS,
+					value: //7e4,
+				})
+				.signInput(0, alice)
+				// This is an example of using the finalizeInput second parameter to
+				// define how you finalize the inputs, allowing for any type of script.
+				.finalizeInput(0, csvGetFinalScripts) // See csvGetFinalScripts below
+				.extractTransaction();
+
+			await regtestUtils.mine(10);
+
+			await regtestUtils.broadcast(tx.toHex());
+
+			await regtestUtils.verify({
+				txId: tx.getId(),
+				address: addressToUnlock,// regtestUtils.RANDOM_ADDRESS,
+				vout: 0,
+				value: //7e4,
+			});
 
 			randCircle = "Circle" + buf.toString('hex');
 
-			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: txId, pubKey: toPubkeyStr, addressToUnlock: address, redeemScript: redeemScript.toString('hex') });
+			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: unspentMINT.txId, pubKey: toPubkeyStr, addressToUnlock: address, redeemScript: redeemScript.toString('hex') });
 			CirclesCollection.save(doc1, function (err, circles) {
 				if (err) { return calback("", "", "500", "Could not store the Circle." + err) }
 				return callback(unspentMINT, randCircle, "200");
@@ -102,7 +118,7 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, pubkeyUsedInUTXO,
 		}
 		// make hash of the redeemscript
 		try {
-			const redeemScript = ID.circlesLockScript(pubkeyUsedInUTXO,
+			const redeemScript = ID.circlesLockScriptSigOutput(pubkeyUsedInUTXO,
 				algorithm,
 				oracleSignTx,  //: KeyPair,
 				oracleBurnTx  //: KeyPair,
@@ -148,11 +164,16 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 			// addressToUnlock=circles[0].BTCaddress;
 			txId = circles[0].txId;
 			// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-			const redeemScript = ID.circlesLockScript(pubkeyUsedInUTXO,
-				algorithm,
-				oracleSignTx,  //: KeyPair,
-				oracleBurnTx  //: KeyPair,
-			)
+			const p2sh = bitcoin.payments.p2sh({
+				redeem: {
+					output: ID.circlesLockScriptSigOutput(pubkeyUsedInUTXO,
+						algorithm,
+						oracleSignTx,  //: KeyPair,
+						oracleBurnTx  //: KeyPair,
+					),
+				},
+				network: regtest,
+			})
 			axiosInstance.get('/t/' + txId)
 				.then(function (response) {
 					// console.log(response);
