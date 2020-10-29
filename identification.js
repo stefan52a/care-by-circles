@@ -43,12 +43,18 @@ module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, algorithm, o
 	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	const toPubkey = Buffer.from(toPubkeyStr, 'hex');   
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
-	const redeemScript = this.circlesLockScript(toPubkey, algorithm, oracleSignTx, oracleBurnTx);
-	const { address } = bitcoin.payments.p2sh({
-		redeem: { output: redeemScript, network: regtest },
+	const p2sh = bitcoin.payments.p2sh({
+		redeem: {
+			output:  ID.circlesLockScriptSigOutput(toPubkey,
+				algorithm,
+				oracleSignTx,  //: KeyPair,
+				oracleBurnTx  //: KeyPair,
+			),
+		},
 		network: regtest,
-	});
-	return {address, redeemScript};
+	})
+
+	return {p2sh};
 }
 
 // // to test scripts:  https://github.com/kallewoof/btcdeb
@@ -78,7 +84,7 @@ module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, algorithm, o
 
 // written along the lines of https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
 // to test scripts:  https://github.com/kallewoof/btcdeb
-module.exports.circlesLockScript = (
+module.exports.circlesLockScriptSigOutput = (
 	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	toPubkey,
 	algorithm,
