@@ -51,31 +51,34 @@ module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, algorithm, o
 	return {address, redeemScript};
 }
 
+// // to test scripts:  https://github.com/kallewoof/btcdeb
+// module.exports.circlesLockScript = (  //TODO FTM this script because don't know how to sign the other yet
+// 	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
+// 	toPubkey,
+// 	algorithm,
+// 	oraclePleaseSignTxQ,  //: KeyPair,
+// 	oracleBurnTxQ  //: KeyPair,
+// ) => {
+// 	//returns a buffer:
+// 	return bitcoin.script.fromASM(
+// 		`
+// 			OP_0
+// 			OP_2
+// 			${toPubkey.toString('hex')}
+// 			${oraclePleaseSignTxQ.publicKey.toString('hex')}
+// 			OP_2
+// 			OP_CHECKMULTISIGVERIFY
+// 			${crypto.SHA256(algorithm).toString()} 
+//     `
+// 			.trim()
+// 			.replace(/\s+/g, ' '),
+// 	);
+// }
+
+
+// written along the lines of https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
 // to test scripts:  https://github.com/kallewoof/btcdeb
-module.exports.circlesLockScript = (  //TODO FTM this script because don't know how to sign the other yet
-	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
-	toPubkey,
-	algorithm,
-	oraclePleaseSignTxQ,  //: KeyPair,
-	oracleBurnTxQ  //: KeyPair,
-) => {
-	//returns a buffer:
-	return bitcoin.script.fromASM(
-		`
-			OP_0
-			OP_2
-			${toPubkey.toString('hex')}
-			${oraclePleaseSignTxQ.publicKey.toString('hex')}
-			OP_2
-			OP_CHECKMULTISIGVERIFY
-			${crypto.SHA256(algorithm).toString()} 
-    `
-			.trim()
-			.replace(/\s+/g, ' '),
-	);
-}
-// to test scripts:  https://github.com/kallewoof/btcdeb
-module.exports.circlesLockScriptFULL = (
+module.exports.circlesLockScript = (
 	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	toPubkey,
 	algorithm,

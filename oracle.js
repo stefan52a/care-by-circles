@@ -28,6 +28,7 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 			console.log("error: " + err + " Not allowed (id does not exist, id is not a person)");
 			return res.status(400).json({ error: err + " Not allowed (id does not exist, id is not a person)" });
 		}
+		//http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
 		const algorithm = "const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
 		ID.noGenesisCircle(id, (ans, err) => {
 			if (err) {
@@ -171,6 +172,7 @@ app.post('/api/GiveTxIdToOracle', (req, res) => {
 
 	const txId = req.body.txId;
 
+	//get address of public key:  https://bitcoin.stackexchange.com/a/54999/45311
 	//update mongoDB here for instanceCircles, id   combination with valuyes txId and address (ToUnlock)
 	CirclesCollection.updateOne(
 		// { "Attribute": "good" },

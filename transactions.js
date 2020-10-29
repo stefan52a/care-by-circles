@@ -41,10 +41,10 @@ const axiosInstance = axios.create({
 
 module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, algorithm, satoshis, callback) => {
 	randomBytes(256, async (err, buf) => {
-		if (err) return callback ("","","500",err);
+		if (err) return callback("", "", "500", err);
 		else {
 
-			const {address, redeemScript} = ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
+			const { address, redeemScript } = ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
 
 			var txId;
 			var unspentMINT;
@@ -69,7 +69,7 @@ module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, algor
 
 				txId = unspentMINT.txId; // e.g. 65c5802f45db571718b53baad72619778fe0dee8bb046d02c1700fb2342a56e6 vout=1  for address 2N213DaFM1Mpx2mH3qPyGYvGA3R1DoY1pJc
 			}
-			catch (e) { return callback ("","","500",e); }
+			catch (e) { return callback("", "", "500", e); }
 
 			randCircle = "Circle" + buf.toString('hex');
 
@@ -132,123 +132,124 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, pubkeyUsedInUTXO,
 
 }
 
+// along the lines of https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
+//broadcast via a 3rd Party Blockchain Provider (3PBP)
 module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubkeyNewId, circleId, callback) => {
 	// Signs PSBT by oracle
-	// const addressToUnlock = "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; //TODO get addressToUnlock from mongodb
-	// const txid = '7bd079f15deeff70566cd7078666c557d21d799d7ab3fe3110772dbe9c05e8e7' 
 
 	var pubkeyUsedInUTXO
 	var txId;
 	var TX_HEX;
 
-	CirclesCollection.find({ "saltedHashedIdentification": id }).toArray(function (err, circles) {
-		if (err) { return callback("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
-		if (circles.length != 1) { return callback("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
-		// addressToUnlock=circles[0].BTCaddress;
-		txId = circles[0].txId;
-		// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-		const redeemScript = ID.circlesLockScript(pubkeyUsedInUTXO,
-			algorithm,
-			oracleSignTx,  //: KeyPair,
-			oracleBurnTx  //: KeyPair,
-		)
-		axiosInstance.get('/t/' + txId)
-			.then(function (response) {
-				// console.log(response);
-				TX_HEX = response.data;
+	async () => {
+		CirclesCollection.find({ "saltedHashedIdentification": id }).toArray(function (err, circles) {
+			if (err) { return callback("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
+			if (circles.length != 1) { return callback("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
+			// addressToUnlock=circles[0].BTCaddress;
+			txId = circles[0].txId;
+			// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+			const redeemScript = ID.circlesLockScript(pubkeyUsedInUTXO,
+				algorithm,
+				oracleSignTx,  //: KeyPair,
+				oracleBurnTx  //: KeyPair,
+			)
+			axiosInstance.get('/t/' + txId)
+				.then(function (response) {
+					// console.log(response);
+					TX_HEX = response.data;
 
-				const tx = bitcoin.Transaction.fromHex(TX_HEX)
+					const tx = bitcoin.Transaction.fromHex(TX_HEX)
 
-				const TX_VOUT = 0
-				const psbt = new PsbtMod.Psbt({ network: regtest });
-				// const psbt = new bitcoin.Psbt({ network: regtest });
-				try {
-					psbt
-						.addInput({
-							hash: txId,
-							index: TX_VOUT,
-							sequence: 0xfffffffe,
-							nonWitnessUtxo: Buffer.from(TX_HEX, 'hex'),// works for witness inputs too!
-							redeemScript: Buffer.from(redeemScript, 'hex'), // only if there's redeem script
-							// witnessScript: input.witnessScript // only if there's witness script							
-							//Use SEGWIT later:
-							//   witnessUtxo: {
-							// 	script: Buffer.from('0020' +
-							// 	  bitcoin.crypto.sha256(Buffer.from(WITNESS_SCRIPT, 'hex')).toString('hex'),
-							// 	  'hex'),
-							// 	value: 12e2
-							//   },
-							//   witnessScript: Buffer.from(WITNESS_SCRIPT, 'hex')
-						})
+					const TX_VOUT = 0
+					const psbt = new PsbtMod.Psbt({ network: regtest });
+					// const psbt = new bitcoin.Psbt({ network: regtest });
+					try {
+						psbt
+							.addInput({
+								hash: txId,
+								index: TX_VOUT,
+								sequence: 0xfffffffe,
+								nonWitnessUtxo: Buffer.from(TX_HEX, 'hex'),// works for witness inputs too!
+								redeemScript: Buffer.from(redeemScript, 'hex'), // only if there's redeem script
+								// witnessScript: input.witnessScript // only if there's witness script							
+								//Use SEGWIT later:
+								//   witnessUtxo: {
+								// 	script: Buffer.from('0020' +
+								// 	  bitcoin.crypto.sha256(Buffer.from(WITNESS_SCRIPT, 'hex')).toString('hex'),
+								// 	  'hex'),
+								// 	value: 12e2
+								//   },
+								//   witnessScript: Buffer.from(WITNESS_SCRIPT, 'hex')
+							})
 
-					// todo get miner's fee from a servce
-					// ftm take 5 000  satoshi
-					const minersFee = 5000;
-					psbt
-						.addOutput({
-							address: ID.createAddressLockedWithCirclesScript(newPubkeyId, algorithm, oracleSignTx, oracleBurnTx).address,
-							value: tx.outs[0].value - minersFee,
-						})
-					psbt
-						.addOutput({
-							address: ID.createAddressLockedWithCirclesScript(pubkeyNewId, algorithm, oracleSignTx, oracleBurnTx).address,
-							value: 0,
-						})
+						// todo get miner's fee from a servce
+						// ftm take 5 000  satoshi
+						const minersFee = 5000;
+						psbt
+							.addOutput({
+								address: ID.createAddressLockedWithCirclesScript(newPubkeyId, algorithm, oracleSignTx, oracleBurnTx).address,
+								value: tx.outs[0].value - minersFee,
+							})
+						psbt
+							.addOutput({
+								address: ID.createAddressLockedWithCirclesScript(pubkeyNewId, algorithm, oracleSignTx, oracleBurnTx).address,
+								value: 0,
+							})
 
-					// ************** signing **************
+						// ************** signing **************
 
-					psbt.data.inputs.forEach((input, index) => {
-						//// sign regular inputs that can be simply signed
-						// if (!input.redeemScript && !input.witnessScript) {
+						psbt.data.inputs.forEach((input, index) => {
+							//// sign regular inputs that can be simply signed
+							// if (!input.redeemScript && !input.witnessScript) {
 							psbt.signInput(index, oracleSignTx)
 
 							// give error if signature failed
 							if (!psbt.validateSignaturesOfInput(index)) {
 								throw new Error('Signature validation failed for input index ' + index.toString())
 							}
-						
 
-					})
 
-					// TODO scan blockchain for confirmed signature by Id, then
-
-					CirclesCollection.updateOne(
-						// { "Attribute": "good" },
-						{ saltedHashedIdentification: id },
-						{ $set: { pubKey: newPubkeyId } },
-						// { upsert: true },
-						function (err, circles) {
-							if (err) { return callback("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash!" + err) }
-							if (circles.matchedCount != 1) return callback("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
-							else {
-								// addressToUnlock=circles[0].BTCaddress;
-								// txId = circles[0].txId;
-								// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-								CirclesCollection.updateOne(
-									// { "Attribute": "good" },
-									{ instanceCircles: circleId, saltedHashedIdentification: newId },
-									{ $set: { txId: "determine when fully signed", pubKey: pubkeyNewId, addressToUnlock: "determine when fully signed" } },
-									{ upsert: true },
-									function (err, circles) {
-										if (err) { return callback("", "Something went wrong terribly while inserting!" + err) }
-										// addressToUnlock=circles[0].BTCaddress;
-										// txId = circles[0].txId;
-										// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-										return callback(psbt);
-									})
-							}
 						})
 
-				} catch (e) {
-					return callback("", "500" + e)
-				}
-			})
-			.catch(function (error) {
-				return callback("", "very strange there is no TX_HEX of the txId:" + txId + " " + error);
-			});
+						// TODO scan blockchain for confirmed signature by Id, then
 
-	})
+						CirclesCollection.updateOne(
+							// { "Attribute": "good" },
+							{ saltedHashedIdentification: id },
+							{ $set: { pubKey: newPubkeyId } },
+							// { upsert: true },
+							function (err, circles) {
+								if (err) { return callback("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash!" + err) }
+								if (circles.matchedCount != 1) return callback("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
+								else {
+									// addressToUnlock=circles[0].BTCaddress;
+									// txId = circles[0].txId;
+									// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+									CirclesCollection.updateOne(
+										// { "Attribute": "good" },
+										{ instanceCircles: circleId, saltedHashedIdentification: newId },
+										{ $set: { txId: "determine when fully signed", pubKey: pubkeyNewId, addressToUnlock: "determine when fully signed" } },
+										{ upsert: true },
+										function (err, circles) {
+											if (err) { return callback("", "Something went wrong terribly while inserting!" + err) }
+											// addressToUnlock=circles[0].BTCaddress;
+											// txId = circles[0].txId;
+											// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+											return callback(psbt);
+										})
+								}
+							})
 
+					} catch (e) {
+						return callback("", "500" + e)
+					}
+				})
+				.catch(function (error) {
+					return callback("", "very strange there is no TX_HEX of the txId:" + txId + " " + error);
+				});
+
+		})
+	}
 	// Connection.db.collection('Circles').find({saltedHashedIdentification: id})
 	// .then(circles => 
 	//     {   
