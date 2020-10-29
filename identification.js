@@ -29,13 +29,13 @@ module.exports.hasGenesisCircle = (id, callback) => {
     // }
 }
 
-module.exports.noGenesisCircle = (id, callback) => {
+module.exports.hasNoGenesisCircle = (id, callback) => {
     // Connect to Mongoose
     CirclesCollection.find({ "saltedHashedIdentification": id }).toArray(function (err, circles) {
-        if (err) { return callback(err, "NotFound") }
-        if (circles.length == 0) return callback("No circles assigned to a user!")
-        if (circles.length != 1) return callback("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle")
-        else return callback(circles[0].instanceCircles, "exactly 1 Circle already exists");
+        if (err) { callback(err, "NotFound") }
+        if (circles.length == 0) callback("No circles assigned to a user!")
+        if (circles.length != 1) callback("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle")
+        else callback(circles[0].instanceCircles, "exactly 1 Circle already exists");
     })
 }
 
@@ -45,7 +45,7 @@ module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, algorithm, o
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
 	const p2sh = bitcoin.payments.p2sh({
 		redeem: {
-			output:  ID.circlesLockScriptSigOutput(toPubkey,
+			output: this.circlesLockScriptSigOutput(toPubkey,
 				algorithm,
 				oracleSignTx,  //: KeyPair,
 				oracleBurnTx  //: KeyPair,
@@ -54,7 +54,7 @@ module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, algorithm, o
 		network: regtest,
 	})
 
-	return {p2sh};
+	return p2sh;
 }
 
 // // to test scripts:  https://github.com/kallewoof/btcdeb
@@ -84,7 +84,7 @@ module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, algorithm, o
 
 // written along the lines of https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
 // to test scripts:  https://github.com/kallewoof/btcdeb
-module.exports.circlesLockScriptSigOutput = (
+module.exports.circlesLockScriptSigOutput =  (
 	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	toPubkey,
 	algorithm,
@@ -92,7 +92,7 @@ module.exports.circlesLockScriptSigOutput = (
 	oracleBurnTxQ  //: KeyPair,
 ) => {
 	//returns a buffer:
-	return bitcoin.script.fromASM(
+	return  bitcoin.script.fromASM(
 		`
 	  OP_IF
 			${crypto.SHA256(algorithm).toString()} 

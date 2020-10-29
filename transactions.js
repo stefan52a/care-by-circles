@@ -39,60 +39,60 @@ const axiosInstance = axios.create({
 });
 
 
-module.exports.createAndBroadcastCircleGenesisTx = async (id, toPubkeyStr, algorithm, satoshis, callback) => {
-	randomBytes(256, async (err, buf) => {
-		if (err) return callback("", "", "500", err);
+module.exports.createAndBroadcastCircleGenesisTx = (id, toPubkeyStr, algorithm, satoshis, cb) => {
+	var returnValue = "";
+	randomBytes(256, (err, buf) => {
+		if (err) return cb({ unspent: "", CircleId: "", status: "500", err: err });
 		else {
+			const p2sh = ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
 
-			const { p2sh } = ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
-
-			var txId;
 			var unspentMINT;
 			try {
 				// fund the P2SH address
-				unspentMINT = await regtestUtils.faucet(p2sh.address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
-				utx = await regtestUtils.fetch(unspentMINT.txId) // gets json of txid
+				unspentMINT = regtestUtils.faucet(p2sh.address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
+				utx = regtestUtils.fetch(unspentMINT.txId) // gets json of txid
 			}
-			catch (e) { return callback("", "", "500", e); }
+			catch (e) { cb({ unspent: "", CircleId: "", status: "500", err: e }) }
 			// for non segwit inputs, you must pass the full transaction buffer
-			const nonWitnessUtxo = Buffer.from(utx.txHex, 'hex');
+			var nonWitnessUtxo;
+			nonWitnessUtxo = Buffer.from(utx.txHex, 'hex');
 
 			const tx = new bitcoin.Psbt({ network: regtest })
 				.setVersion(2)
 				.addInput({
 					hash: unspent.txId,
 					index: unspent.vout,
-					sequence,
+					sequence: 0xfffffffe,
 					redeemScript: p2sh.redeem.output,
 					nonWitnessUtxo,
 				})
 				.addOutput({
-					address: addressToUnlock,// regtestUtils.RANDOM_ADDRESS,
-					value: //7e4,
+					address: p2sh,// regtestUtils.RANDOM_ADDRESS,
+					value: satoshis, //7e4,
 				})
-				.signInput(0, alice)
+				.signInput(0, oracleSignTx)
 				// This is an example of using the finalizeInput second parameter to
 				// define how you finalize the inputs, allowing for any type of script.
-				.finalizeInput(0, csvGetFinalScripts) // See csvGetFinalScripts below
+				.finalizeInput(0, getFinalScripts) // See csvGetFinalScripts below
 				.extractTransaction();
 
-			await regtestUtils.mine(10);
+			regtestUtils.mine(10);
 
-			await regtestUtils.broadcast(tx.toHex());
+			regtestUtils.broadcast(tx.toHex());
 
-			await regtestUtils.verify({
+			regtestUtils.verify({
 				txId: tx.getId(),
-				address: addressToUnlock,// regtestUtils.RANDOM_ADDRESS,
+				address: address,// regtestUtils.RANDOM_ADDRESS,
 				vout: 0,
-				value: //7e4,
+				value: satoshis,//7e4,
 			});
 
 			randCircle = "Circle" + buf.toString('hex');
 
-			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: unspentMINT.txId, pubKey: toPubkeyStr, addressToUnlock: address, redeemScript: redeemScript.toString('hex') });
+			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: unspentMINT.txId, pubKey: toPubkeyStr, addressToUnlock: p2sh, redeemScript: redeemScript.toString('hex') });
 			CirclesCollection.save(doc1, function (err, circles) {
-				if (err) { return calback("", "", "500", "Could not store the Circle." + err) }
-				return callback(unspentMINT, randCircle, "200");
+				if (err) { cb({ unspent: "", CircleId: "", status: "500", err: "Could not store the Circle." + err }) }
+				cb({ unspent: unspentMINT, CircleId: randCircle, status: "200" });
 			})
 		}
 	})
@@ -184,7 +184,8 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 					const TX_VOUT = 0
 					const psbt = new PsbtMod.Psbt({ network: regtest });
 					// const psbt = new bitcoin.Psbt({ network: regtest });
-					try {du
+					try {
+						du
 						psbt
 							.addInput({
 								hash: txId,
@@ -284,4 +285,102 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 	//     })
 	// .catch(err => {return callback (err,  "Something went wrong terribly: no circles assigned to a user, in the function when checking the contract hash!")})
 	// var pubkeyUsedInUTXO = "02cd1e024ea5660dfe4c44221ad32e96d9bf57151d7105d90070c5b56f9df59e5e"; //todo also from mongodb????, do we lose some anonimity here?
+
+
+
+	//from  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
+	// This function is used to finalize a CSV transaction using PSBT.
+	// See  above.
+	function getFinalScripts(
+		inputIndex,//: number,
+		input,//: PsbtInput,
+		script,//: Buffer,
+		isSegwit,//: boolean,
+		isP2SH,//: boolean,
+		isP2WSH,//: boolean,
+	)
+	//   : {
+	// 	finalScriptSig;//: Buffer | undefined;
+	// 	finalScriptWitness;//: Buffer | undefined;
+	//   } 
+	{
+		// Step 1: Check to make sure the meaningful script matches what you expect.
+		const decompiled = bitcoin.script.decompile(script);
+		//TODO:
+		// Checking if first OP is OP_IF... should do better check in production!
+		// You may even want to check the public keys in the script against a
+		// whitelist depending on the circumstances!!!
+		// You also want to check the contents of the input to see if you have enough
+		// info to actually construct the scriptSig and Witnesses.
+		if (!decompiled || decompiled[0] !== bitcoin.opcodes.OP_IF) {
+			throw new Error(`Can not finalize input #${inputIndex}`);
+		}
+
+		// Step 2: Create final scripts
+		let payment//: bitcoin.Payment 
+			= {
+			network: regtest,
+			output: script,
+			// This logic should be more strict and make sure the pubkeys in the
+			// meaningful script are the ones signing in the PSBT etc.
+			input: bitcoin.script.compile([
+				// input.partialSig![0].signature,
+				input,
+				bitcoin.opcodes.OP_TRUE,
+			]),
+		};
+		if (isP2WSH && isSegwit)
+			payment = bitcoin.payments.p2wsh({
+				network: regtest,
+				redeem: payment,
+			});
+		if (isP2SH)
+			payment = bitcoin.payments.p2sh({
+				network: regtest,
+				redeem: payment,
+			});
+
+		function witnessStackToScriptWitness(witness)//: Buffer[]): Buffer 
+		{
+			let buffer = Buffer.allocUnsafe(0);
+
+			function writeSlice(slice)//: Buffer): void 
+			{
+				buffer = Buffer.concat([buffer, Buffer.from(slice)]);
+			}
+
+			function writeVarInt(i)//: number): void 
+			{
+				const currentLen = buffer.length;
+				const varintLen = varuint.encodingLength(i);
+
+				buffer = Buffer.concat([buffer, Buffer.allocUnsafe(varintLen)]);
+				varuint.encode(i, buffer, currentLen);
+			}
+
+			function writeVarSlice(slice)//: Buffer): void 
+			{
+				writeVarInt(slice.length);
+				writeSlice(slice);
+			}
+
+			function writeVector(vector)//: Buffer[]): void 
+			{
+				writeVarInt(vector.length);
+				vector.forEach(writeVarSlice);
+			}
+
+			writeVector(witness);
+
+			return buffer;
+		}
+
+		return {
+			finalScriptSig: payment.input,
+			finalScriptWitness:
+				payment.witness && payment.witness.length > 0
+					? witnessStackToScriptWitness(payment.witness)
+					: undefined,
+		};
+	}
 }

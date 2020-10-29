@@ -18,26 +18,30 @@ app.use(bodyParser.json());
 
 
 // Airdrop tokens to an identity that does not have a genesis Circle yet
-app.post('/api/oracleGetAirdrop', (req, res) => {
+app.post('/api/oracleGetAirdrop', async (req, res) => {
 	const id = req.body.id; // telephone number FTM
 	const salt = req.body.salt; // a secret number which only the user controls
 	// todo study changing with a timestamp, like done in Corona BLE apps.
 	const pubkey = req.body.pubkey; //a HD wallet changing public key
-	ID.checkExists(id, (err) => { //best would be to use an existing DID system preferably as trustless as possible
-		if (err) {
-			console.log("error: " + err + " Not allowed (id does not exist, id is not a person)");
-			return res.status(400).json({ error: err + " Not allowed (id does not exist, id is not a person)" });
+	ID.checkExists(id, (error) => { //best would be to use an existing DID system preferably as trustless as possible
+		if (error) {
+			console.log("error: " + error + " Not allowed (id does not exist, id is not a person)");
+			return res.status(400).json({ error: error + " Not allowed (id does not exist, id is not a person)" });
 		}
 		//http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
 		const algorithm = "const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
-		ID.noGenesisCircle(id, (ans, err) => {
-			if (err) {
-				console.log("error: " + err);
-				return res.status(400).json({ error: err });
+		ID.hasNoGenesisCircle(id, (ans, error) => {
+			if (error) {
+				console.log("error: " + error);
+				return res.status(400).json({ error: error });
 			}
-			transactions.createAndBroadcastCircleGenesisTx(id, pubkey, algorithm, 1e5, function (unspent, CircleId, status, err) {
+			const answ = transactions.createAndBroadcastCircleGenesisTx(id, pubkey, algorithm, 1e5, () => {
+				const unspent = answ.unspent
+				const CircleId = answ.CircleId
+				const status = answ.status
+				const err = answ.err
 				if (err) {
-					console.log("status "+status+" Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err)
+					console.log("status " + status + " Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err)
 					return res.status(status).json({ error: "Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err });
 				}
 				//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
@@ -45,7 +49,7 @@ app.post('/api/oracleGetAirdrop', (req, res) => {
 				return res.status(200).json({ error: "none", Circle: CircleId, tokens: (1e5 / 1e8), txId: unspent.txId, contract: algorithm });// xx e.g. could e.g. be be the same as the current blockchain reward
 				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 			})
-		});
+		})
 	});
 });
 
