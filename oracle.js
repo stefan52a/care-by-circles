@@ -30,13 +30,13 @@ app.post('/api/oracleGetAirdrop', async (req, res) => {
 		}
 		//http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
 		const algorithm = "const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
-		ID.hasNoGenesisCircle(id, (ans, error) => {
+		ID.hasNoGenesisCircle(id, async (ans, error) => {
 			if (error) {
 				console.log("error: " + error);
 				return res.status(400).json({ error: error });
 			}
-			const answ = transactions.createAndBroadcastCircleGenesisTx(id, pubkey, algorithm, 1e5, () => {
-				const unspent = answ.unspent
+			const answ = await transactions.createAndBroadcastCircleGenesisTx(id, pubkey, algorithm, 1e5, async () => {
+				const unspent = await answ.unspent
 				const CircleId = answ.CircleId
 				const status = answ.status
 				const err = answ.err
