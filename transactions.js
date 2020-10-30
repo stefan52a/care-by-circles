@@ -15,6 +15,7 @@ const assert = require('assert')
 
 const bitcoin = require('bitcoinjs-lib');
 const PsbtMod = require('./test/psbtMod/psbtMod')
+const psbtHelper = require('./btcInputHelper')
 
 const regtestClient = require('regtest-client');
 // const e = require('express');
@@ -32,6 +33,9 @@ const oracleBurnTx = bitcoin.ECPair.fromWIF(
 	'cRs1KTufxBpY4wcexxaQEULA4CFT3hKTqENEy7KZtpR5mqKeijwU',  ///// TODO KEEP SECRET
 	regtest,
 );
+// todo get miner's fee from a servce
+// ftm take 5 000  satoshi
+const minersFee = 5000;
 
 const axiosInstance = axios.create({
 	baseURL: APIURL,
@@ -39,61 +43,55 @@ const axiosInstance = axios.create({
 });
 
 
-module.exports.createAndBroadcastCircleGenesisTx = (id, toPubkeyStr, algorithm, satoshis, cb) => {
+module.exports.createAndBroadcastCircleGenesisTx = (id, toPubkeyStr, algorithm, satoshis, cb) => {// see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts  for basic transactions
 	var returnValue = "";
 	randomBytes(256, async (err, buf) => {
 		if (err) return cb({ unspent: "", CircleId: "", status: "500", err: err });
 		else {
+			//for the output  lock
 			const p2sh = await ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
 
 			var unspent;
+			// var utx;
 			try {
-				// fund the P2SH address
-				unspent = await regtestUtils.faucet(p2sh.address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
-				utx = await regtestUtils.fetch(unspent.txId) // gets json of txid
-			}
-			catch (e) { cb({ unspent: "", CircleId: "", status: "500", err: e }) }
-			// for non segwit inputs, you must pass the full transaction buffer
-			var nonWitnessUtxo;
-			nonWitnessUtxo = Buffer.from(utx.txHex, 'hex');
+				// fund the P2SH address, make an output to refer to 
+				// unspent = await regtestUtils.faucet(p2sh.address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
+				// utx = await regtestUtils.fetch(unspent.txId) // gets json of txid
+				const { payment, keys } = psbtHelper.createPayment('p2pkh', '', regtest)
+				const psbt = new bitcoin.Psbt({ network: regtest });
+				// .setVersion(2) // These are defaults. This line is not needed.
+				// .setLocktime(0) // These are defaults. This line is not needed.
+				psbt.addInput(await psbtHelper.getInputData(regtestUtils, satoshis, payment, false, 'p2pkh'))
+					.addOutput({
+						address: p2sh.address,// regtestUtils.RANDOM_ADDRESS,
+						value: satoshis - minersFee, //7e4,
+					})
+					.signInput(0, keys[0])
+					// This is an example of using the finalizeInput second parameter to
+					// define how you finalize the inputs, allowing for any type of script.
+					.finalizeInput(0, getFinalScripts) // See csvGetFinalScripts below
+					.extractTransaction();
 
-			const tx = new bitcoin.Psbt({ network: regtest })
-				.setVersion(2)
-				.addInput({
-					hash: unspent.txId,
-					index: unspent.vout,
-					sequence: 0xfffffffe,
-					redeemScript: p2sh.redeem.output,
-					nonWitnessUtxo,
-				})
-				.addOutput({
+				regtestUtils.mine(10);
+
+				regtestUtils.broadcast(psbt.toHex());
+
+				regtestUtils.verify({
+					txId: psbt.extractTransaction().toHex(),
 					address: p2sh.address,// regtestUtils.RANDOM_ADDRESS,
-					value: satoshis, //7e4,
+					vout: 0,
+					value: satoshis,//7e4,
+				});
+
+				randCircle = "Circle" + buf.toString('hex');
+
+				var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: psbt.extractTransaction().toHex(), pubKey: toPubkeyStr, addressToUnlock: p2sh.address });//, redeemScript: redeemScript.toString('hex') });
+				CirclesCollection.insertOne(doc1, function (err, circles) {
+					if (err) { cb({ psbt: "", CircleId: "", status: "500", err: "Could not store the Circle." + err }) }
+					cb({ psbt: psbt.toHex(), CircleId: randCircle, status: "200" });
 				})
-				.signInput(0, oracleSignTx)
-				// This is an example of using the finalizeInput second parameter to
-				// define how you finalize the inputs, allowing for any type of script.
-				.finalizeInput(0, getFinalScripts) // See csvGetFinalScripts below
-				.extractTransaction();
-
-			regtestUtils.mine(10);
-
-			regtestUtils.broadcast(tx.toHex());
-
-			regtestUtils.verify({
-				txId: tx.getId(),
-				address: address,// regtestUtils.RANDOM_ADDRESS,
-				vout: 0,
-				value: satoshis,//7e4,
-			});
-
-			randCircle = "Circle" + buf.toString('hex');
-
-			var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: unspentMINT.txId, pubKey: toPubkeyStr, addressToUnlock: p2sh, redeemScript: redeemScript.toString('hex') });
-			CirclesCollection.save(doc1, function (err, circles) {
-				if (err) { cb({ unspent: "", CircleId: "", status: "500", err: "Could not store the Circle." + err }) }
-				cb({ unspent: unspentMINT, CircleId: randCircle, status: "200" });
-			})
+			}
+			catch (e) { cb({ psbt: "", CircleId: "", status: "500", err: e }) }// if you get Error: mandatory-script-verify-flag-failed (Operation not valid with the current stack size) (code 16) , then e.g. see https://bitcoin.stackexchange.com/a/81740/45311
 		}
 	})
 }
@@ -204,9 +202,6 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 								//   witnessScript: Buffer.from(WITNESS_SCRIPT, 'hex')
 							})
 
-						// todo get miner's fee from a servce
-						// ftm take 5 000  satoshi
-						const minersFee = 5000;
 						psbt
 							.addOutput({
 								address: ID.createAddressLockedWithCirclesScript(newPubkeyId, algorithm, oracleSignTx, oracleBurnTx).address,
@@ -288,17 +283,18 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 
 }
 
+
 //from  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
-// This function is used to finalize a CSV transaction using PSBT.
+// This function is used to finalize a transaction using PSBT.
 // See  above.
-function getFinalScripts(
+getFinalScripts = (
 	inputIndex,//: number,
 	input,//: PsbtInput,
 	script,//: Buffer,
 	isSegwit,//: boolean,
 	isP2SH,//: boolean,
 	isP2WSH,//: boolean,
-)
+) =>
 //   : {
 // 	finalScriptSig;//: Buffer | undefined;
 // 	finalScriptWitness;//: Buffer | undefined;
@@ -312,9 +308,9 @@ function getFinalScripts(
 	// whitelist depending on the circumstances!!!
 	// You also want to check the contents of the input to see if you have enough
 	// info to actually construct the scriptSig and Witnesses.
-	if (!decompiled || decompiled[0] !== bitcoin.opcodes.OP_IF) {
-		throw new Error(`Can not finalize input #${inputIndex}`);
-	}
+	// if (!decompiled || decompiled[0] !== bitcoin.opcodes.OP_IF) {
+	// 	throw new Error(`Can not finalize input #${inputIndex}`);
+	// }
 
 	// Step 2: Create final scripts
 	let payment//: bitcoin.Payment 
@@ -383,4 +379,3 @@ function getFinalScripts(
 				: undefined,
 	};
 }
-

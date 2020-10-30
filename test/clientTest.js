@@ -77,9 +77,8 @@ async function run() {
                 })
                     .then(function (response) {
                         console.log(response.data);
-                        const circleID = response.data.Circle;//store them persistent on client
-                        const txID = response.data.txId;//store them persistent on client
-                        const address = response.data.addressToUnlock;//store them persistent on client
+                        const circleID = response.data.CircleId;//store them persistent on client
+                        const psbt = response.data.psbt;//store them persistent on client, this should still fromhex, tobase64  (e.g. with cyberchef)
                     })
                     .catch(function (error) {
                         console.log(error.message);

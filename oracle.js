@@ -30,23 +30,23 @@ app.post('/api/oracleGetAirdrop', async (req, res) => {
 		}
 		//http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
 		const algorithm = "const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
-		ID.hasNoGenesisCircle(id, async (ans, error) => {
+		ID.hasNoGenesisCircle(id, (ans, error) => {
 			if (error) {
 				console.log("error: " + error);
 				return res.status(400).json({ error: error });
 			}
-			const answ = await transactions.createAndBroadcastCircleGenesisTx(id, pubkey, algorithm, 1e5, async () => {
-				const unspent = await answ.unspent
+			transactions.createAndBroadcastCircleGenesisTx(id, pubkey, algorithm, 1e5, (answ) => {
+				const psbt = answ.psbt
 				const CircleId = answ.CircleId
 				const status = answ.status
 				const err = answ.err
 				if (err) {
-					console.log("status " + status + " Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err)
-					return res.status(status).json({ error: "Not allowed (maybe the Id already has a genesis Circle(id)) " + CircleId + " " + err });
+					console.log("status " + status + " " + err)
+					return res.status(status).json({ error: "status " + status + " " + err });
 				}
 				//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
-				console.log({ error: "none", Circle: CircleId, tokens: (1e5 / 1e8), txId: unspent.txId, contract: algorithm })
-				return res.status(200).json({ error: "none", Circle: CircleId, tokens: (1e5 / 1e8), txId: unspent.txId, contract: algorithm });// xx e.g. could e.g. be be the same as the current blockchain reward
+				console.log({ error: "none", CircleId: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: algorithm })
+				return res.status(200).json({ error: "none", Circle: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: algorithm });// xx e.g. could e.g. be be the same as the current blockchain reward
 				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 			})
 		})
