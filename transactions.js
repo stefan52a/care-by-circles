@@ -15,7 +15,7 @@ const assert = require('assert')
 
 const bitcoin = require('bitcoinjs-lib');
 const PsbtMod = require('./test/psbtMod/psbtMod')
-const psbtHelper = require('./btcInputHelper')
+const psbtHelper = require('./psbtHelper')
 
 const regtestClient = require('regtest-client');
 // const e = require('express');
@@ -48,28 +48,29 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, toPubkeyStr, algorithm, 
 	randomBytes(256, async (err, buf) => {
 		if (err) return cb({ unspent: "", CircleId: "", status: "500", err: err });
 		else {
-			//for the output  lock
-			const p2sh = await ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
+			//for the output  lock of the airdropped tokens
+			const p2shOutputLock = await ID.createAddressLockedWithCirclesScript(toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx)
 
-			var unspent;
-			// var utx;
 			try {
 				// fund the P2SH address, make an output to refer to 
 				// unspent = await regtestUtils.faucet(p2sh.address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
 				// utx = await regtestUtils.fetch(unspent.txId) // gets json of txid
-				const { payment, keys } = psbtHelper.createPayment('p2pkh', '', regtest)
+				const { payment, keys } = psbtHelper.createPayment('p2sh-p2pkh', '', regtest)
 				const psbt = new bitcoin.Psbt({ network: regtest });
 				// .setVersion(2) // These are defaults. This line is not needed.
 				// .setLocktime(0) // These are defaults. This line is not needed.
-				psbt.addInput(await psbtHelper.getInputData(regtestUtils, satoshis, payment, false, 'p2pkh'))
+				const inputData = await psbtHelper.getInputData(regtestUtils, satoshis, payment, false, 'p2sh')
+				psbt.addInput(inputData)
 					.addOutput({
-						address: p2sh.address,// regtestUtils.RANDOM_ADDRESS,
-						value: satoshis - minersFee, //7e4,
+						address: p2shOutputLock.address,// regtestUtils.RANDOM_ADDRESS,
+						value: satoshis - minersFee, //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
+													//   "estimated_feerate" : feerate   (numeric, optional) Estimated feerate of the final signed transaction in BTC/kB. Shown only if all UTXO slots in the PSBT have been filled.
 					})
 					.signInput(0, keys[0])
+					// psbt.validateSignaturesOfInput(0);
 					// This is an example of using the finalizeInput second parameter to
 					// define how you finalize the inputs, allowing for any type of script.
-					.finalizeInput(0, getFinalScripts) // See csvGetFinalScripts below
+					.finalizeInput(0, getFinalScripts) // See getFinalScripts below
 					.extractTransaction();
 
 				regtestUtils.mine(10);
@@ -78,14 +79,14 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, toPubkeyStr, algorithm, 
 
 				regtestUtils.verify({
 					txId: psbt.extractTransaction().toHex(),
-					address: p2sh.address,// regtestUtils.RANDOM_ADDRESS,
+					address: p2shOutputLock.address,// regtestUtils.RANDOM_ADDRESS,
 					vout: 0,
 					value: satoshis,//7e4,
 				});
 
 				randCircle = "Circle" + buf.toString('hex');
 
-				var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, txId: psbt.extractTransaction().toHex(), pubKey: toPubkeyStr, addressToUnlock: p2sh.address });//, redeemScript: redeemScript.toString('hex') });
+				var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, psbt:psbt.toHex(), txId: psbt.extractTransaction().toHex(), pubKey: toPubkeyStr, addressToUnlock: p2shOutputLock.address });//, redeemScript: redeemScript.toString('hex') });
 				CirclesCollection.insertOne(doc1, function (err, circles) {
 					if (err) { cb({ psbt: "", CircleId: "", status: "500", err: "Could not store the Circle." + err }) }
 					cb({ psbt: psbt.toHex(), CircleId: randCircle, status: "200" });

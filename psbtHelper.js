@@ -34,10 +34,9 @@ module.exports.createPayment = (_type, myKeys, network) => {
                 redeem: payment,
                 network,
             });
-        } else 
-        {
+        } else {
             payment = (bitcoin.payments)[type]({
-               pubkey: keys[0].publicKey,
+                pubkey: keys[0].publicKey,
                 network,
             });
         }

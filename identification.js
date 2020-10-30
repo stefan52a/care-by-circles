@@ -43,13 +43,14 @@ module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, algori
 	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	const toPubkey = Buffer.from(toPubkeyStr, 'hex');   
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
+	const redeemscript = this.circlesLockScriptSigOutput(toPubkey,
+		algorithm,
+		oracleSignTx,  //: KeyPair,
+		oracleBurnTx  //: KeyPair,
+	)
 	const p2sh = await bitcoin.payments.p2sh({
 		redeem: {
-			output: this.circlesLockScriptSigOutput(toPubkey,
-				algorithm,
-				oracleSignTx,  //: KeyPair,
-				oracleBurnTx  //: KeyPair,
-			),
+			output: redeemscript,
 		},
 		network: regtest,
 	})

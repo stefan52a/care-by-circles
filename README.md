@@ -4,7 +4,7 @@ Express RESTful API server for CirclesOracle.
 
 Oracle server for Care by Circles, social inclusion.
 
-Circles are tribes with a maximum of 150 people each.
+Circles are tribes with a maximum of 150 (Dunbar's number) people each.
 
 All transactions are locked by the following scriptPub (to lock output):
 
