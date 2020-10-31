@@ -55,13 +55,13 @@ module.exports.getWitnessUtxo = (out) => {
 }
 
 module.exports.getInputData = async (
+    unspent,
     regtestUtils,
     amount,
     payment,
     isSegwit,
     redeemType,
 ) => {
-    const unspent = await regtestUtils.faucetComplex(payment.output, amount);
     const utx = await regtestUtils.fetch(unspent.txId);
     // for non segwit inputs, you must pass the full transaction buffer
     const nonWitnessUtxo = Buffer.from(utx.txHex, 'hex');

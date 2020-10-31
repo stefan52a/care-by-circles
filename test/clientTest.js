@@ -1,5 +1,4 @@
 const bitcoin = require('bitcoinjs-lib');
-const PsbtMod = require('./psbtMod/psbtMod')
 const regtestClient = require('regtest-client');
 // const e = require('express');
 const APIPASS = process.env.APIPASS || 'sastoshi';
@@ -114,7 +113,7 @@ async function run() {
 
                             // for bitcoin-cli decodepsbt use the psbt fromhex then to base64 (e.g. with cyberchef)
 
-                            const psbt = PsbtMod.Psbt.fromHex(response.data.PSBT);
+                            const psbt = bitcoin.Psbt.fromHex(response.data.PSBT);
                             // const psbt = bitcoin.Psbt.fromHex(response.data.PSBT);
 
                             // https://bitcoin.stackexchange.com/a/93436/45311
