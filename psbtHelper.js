@@ -70,7 +70,11 @@ module.exports.getInputData = async (
     const mixin2 = {};
     switch (redeemType) {
         case 'p2sh':
-            mixin2.redeemScript = payment.redeem.output;
+            if (payment.redeem.output.data) {
+                mixin2.redeemScript = Buffer.from(payment.redeem.output.data,'hex');
+            } else {
+                mixin2.redeemScript = payment.redeem.output;
+            }
             break;
         case 'p2wsh':
             mixin2.witnessScript = payment.redeem.output;

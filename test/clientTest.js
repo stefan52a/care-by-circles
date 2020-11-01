@@ -97,8 +97,8 @@ async function run() {
                     const filenameContract = '../ExamplecontractExample.js';
                     fs.readFile(filenameContract, 'utf8', function (err, contract) {
                         if (err) throw err;
-                        console.log('OK: ' + filenameContract);
-                        console.log(contract)
+                        // console.log('OK: ' + filenameContract);
+                        // console.log(contract)
                         axiosInstance.post('/oraclePleaseSignTx', {
                             AliceId: AliceId,
                             pubkeyInUTXO: circles[0].pubKey,

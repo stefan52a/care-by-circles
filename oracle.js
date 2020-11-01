@@ -192,7 +192,7 @@ app.post('/api/GiveTxIdToOracle', (req, res) => {
 	CirclesCollection.updateOne(
 		// { "Attribute": "good" },
 		{ instanceCircles: instanceCircles, saltedHashedIdentification: id,  "version": constants.VERSION  },
-		{ $set: { txId: txId, addressToUnlock: address } },
+		{ $set: { txId: txId, addressToUnlock: address, updateDate: Date.now } },
 		function (err, circles) {
 			if (err) { return res.status(500).json({ error: "Something went wrong while updating!" + err }) }
 			// addressToUnlock=circles[0].BTCaddress;
