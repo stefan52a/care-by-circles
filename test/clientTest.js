@@ -33,18 +33,18 @@ async function run() {
 
 
         // const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
-        const aClientSignTxID = bitcoin.ECPair.fromWIF(
+        const AliceClientSignTxID = bitcoin.ECPair.fromWIF(
             'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
             regtest,
         );
-        const ID = '+31-6-233787929'
+        const AliceId = '+31-6-233787929'
 
-        const aClientSignTxNEWID = bitcoin.ECPair.fromWIF(
+        const BobaClientSignTxID = bitcoin.ECPair.fromWIF(
             'cU4suhCk1LDHEksGRen2293CmZE1GdfSA4V4A6GmwZvmVRC7Vpvu', ///// TODO KEEP SECRET
             regtest,
         );
-        const NewID = '+31-6-231610011'
-        const pubkeyNewId = aClientSignTxNEWID.publicKey.toString('hex');
+        const BobId = '+31-6-231610011'
+        const BobPubkey = BobaClientSignTxID.publicKey.toString('hex');
 
         // const path = "m/0'/0/0"
         // var mnemonic = 'praise you muffin enable lion neck crumble super myself grocery license ghost'  //id
@@ -64,7 +64,7 @@ async function run() {
         // const bp = child2.privateKey.toString('hex')
 
         // var answ = prompt('(a)irdrop or ask (o)racle to sign?')
-        answ="a"
+        answ="o"
         stop = false
         while (!stop) {
             stop = true
@@ -72,8 +72,8 @@ async function run() {
 
                 axiosInstance.post('/oracleGetAirdrop', {
                     // generate another pubkey from a WIF
-                    pubkey: aClientSignTxID.publicKey.toString('hex'),
-                    id: '+31-6-233787929',
+                    AlicePubkey: AliceClientSignTxID.publicKey.toString('hex'),
+                    AliceId: '+31-6-233787929',
                 })
                     .then(function (response) {
                         console.log(response.data);
@@ -88,26 +88,26 @@ async function run() {
                 stop = true
 
                 //should be stored in persistent storage, in this example we use mongodb:
-                CirclesCollection.find({ "saltedHashedIdentification": ID,  "version": constants.version  }).toArray(function (err, circles) {
-                    if (err) { return console.log("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
+                CirclesCollection.find({ "saltedHashedIdentification": AliceId,  "version": constants.VERSION  }).toArray(function (err, circles) {
+                    if (err) { return console.log("", "Something went terribly wrong: " + err) }
                     if (circles.length != 1) { return console.log("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!, maybe your forget to create a Circle first") }
                     // addressToUnlock=circles[0].BTCaddress;
                     const addressToUnlock = circles[0].addressToUnlock
 
-                    filename = '../ExamplecontractExample.js';
-                    fs.readFile(filename, 'utf8', function (err, contract) {
+                    const filenameContract = '../ExamplecontractExample.js';
+                    fs.readFile(filenameContract, 'utf8', function (err, contract) {
                         if (err) throw err;
-                        console.log('OK: ' + filename);
+                        console.log('OK: ' + filenameContract);
                         console.log(contract)
                         axiosInstance.post('/oraclePleaseSignTx', {
-                            id: ID,
+                            AliceId: AliceId,
                             pubkeyInUTXO: circles[0].pubKey,
                             txId: circles[0].txId,//get txID from persistent storage on client
-                            newPubkeyId: aClientSignTxID.publicKey.toString('hex'),
+                            AliceNewPubkey: AliceClientSignTxID.publicKey.toString('hex'),
 
-                            newId: NewID,
+                            BobId: BobId,
                             circleId: circles[0].instanceCircles,//get circleID from persistent storage on client
-                            pubkeyNewId: pubkeyNewId,
+                            BobPubkey: BobPubkey,
 
                             // http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
                             contract: contract.trim().replace(/\s+/g, ' '),
@@ -122,7 +122,7 @@ async function run() {
                                 // https://bitcoin.stackexchange.com/a/93436/45311
 
                                 // ************ sign input by client *************
-                                psbt.signInput(0, aClientSignTxID)
+                                psbt.signInput(0, AliceClientSignTxID)
 
                                 // ************** finalizing inputs **************
 
@@ -161,7 +161,7 @@ async function run() {
 
                                 axiosInstance.post('/GiveTxIdToOracle', {
                                     instanceCircles: circleID,
-                                    id: pubkeyNewId,
+                                    id: BobPubkey,
 
                                     txId: txid,
                                 }

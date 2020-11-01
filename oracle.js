@@ -22,28 +22,28 @@ app.use(bodyParser.json());
 
 // Airdrop tokens to an identity that does not have a genesis Circle yet
 app.post('/api/oracleGetAirdrop', async (req, res) => {  //Alice wil get an airdrop form a faucet
-	const id = req.body.id; // telephone number FTM
+	const AliceId = req.body.AliceId; // telephone number FTM
 	const salt = req.body.salt; // a secret number which only the user controls
 	// todo study changing with a timestamp, like done in Corona BLE apps.
-	const AlicePubkey = req.body.pubkey; //a HD wallet changing public key
-	ID.checkExists(id, (error) => { //best would be to use an existing DID system preferably as trustless as possible
+	const AlicePubkey = req.body.AlicePubkey; //a HD wallet changing public key
+	ID.checkExists(AliceId, (error) => { //best would be to use an existing DID system preferably as trustless as possible
 		if (error) {
 			console.log("error: " + error + " Not allowed (id does not exist, id is not a person)");
 			return res.status(400).json({ error: error + " Not allowed (id does not exist, id is not a person)" });
 		}
 		//http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
 		filename = './ExamplecontractExample.js'; 
-		fs.readFile(filename, 'utf8', function (err, contract) {
+		fs.readFile(filename, 'utf8', function (err, contractFromFile) {
 			if (err) throw err;
 			console.log('OK: ' + filename);
-			console.log(contract)
-			const algorithm=contract.trim().replace(/\s+/g, ' ')
-			ID.hasNoGenesisCircle(id, (ans, error) => {
+			console.log(contractFromFile)
+			const contract=contractFromFile.trim().replace(/\s+/g, ' ')
+			ID.hasNoGenesisCircle(AliceId, (ans, error) => {
 				if (error) {
 					console.log("error: " + error);
 					return res.status(400).json({ error: error });
 				}
-				transactions.createAndBroadcastCircleGenesisTx(id, AlicePubkey, algorithm, 1e5, (answ) => {
+				transactions.createAndBroadcastCircleGenesisTx(AliceId, AlicePubkey, contract, 1e5, (answ) => {
 					const status = answ.status
 					const err = answ.err
 					if (err) {
@@ -53,8 +53,9 @@ app.post('/api/oracleGetAirdrop', async (req, res) => {  //Alice wil get an aird
 					const psbt = answ.psbt
 					const CircleId = answ.CircleId
 					//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
-					console.log({version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: algorithm })
-					return res.status(200).json({version: constants.VERSION , error: "none", Circle: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: algorithm });// xx e.g. could e.g. be be the same as the current blockchain reward
+					console.log({version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: contract })
+					res.status(200).json({version: constants.VERSION , error: "none", Circle: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: contract });// xx e.g. could e.g. be be the same as the current blockchain reward
+					return
 					// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 				})
 			})
@@ -64,19 +65,19 @@ app.post('/api/oracleGetAirdrop', async (req, res) => {  //Alice wil get an aird
 
 app.post('/api/oraclePleaseSignTx', (req, res) => {
 	// const addressToUnlock = req.body.addressToUnlock;// "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; // example address
-	const id = req.body.id;
+	const AliceId = req.body.AliceId;
 	const circleId = req.body.circleId;
 
 	const pubkeyInUTXO = req.body.pubkeyInUTXO; //For Privacyreasons: The client also has to keep track of the pubkey belonging to his last Circle transaction
 	//instead of this pubkeyInUTXO we better transfer the hash of the script in transaction.PubScriptToUnlockContainsAHashOfContract
-	const newPubkeyId = req.body.newPubkeyId;
+	const AliceNewPubkey = req.body.AliceNewPubkey;
 
-	const pubkeyNewId = req.body.pubkeyNewId;
-	const newId = req.body.newId;
+	const BobPubkey = req.body.BobPubkey;
+	const BobId = req.body.BobId;
 
-	const contractAlgorithm = req.body.contract;
+	const contract = req.body.contract;
 	// execute the contract if has its hash is in the pubscript to be unlocked
-	transactions.PubScriptToUnlockContainsAHashOfContract(id, pubkeyInUTXO, contractAlgorithm, circleId, (err) => {
+	transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, pubkeyInUTXO, contract, circleId, (err) => {
 		if (err) {
 			console.log({ error: err + " Not allowed (the unlockscript contains an incorrect information (contract or pubkey))" })
 			return res.status(400).json({ error: err + " Not allowed (the unlockscript contains an incorrect information (contract or pubkey)) " })
@@ -91,19 +92,19 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 				}
 				else {
 					randFile = path.join(__dirname, "contractTMP" + buf.toString('hex') + ".js");
-					createTempContractFile(randFile, contractAlgorithm,
+					createTempContractFile(randFile, contract,
 						function (err) {
 							if (err) {
 								console.log({ error: err });
 								return res.status(500).json({ error: err });
 							}
 							try {
-								require(randFile).contract(newId, async (errInContract) => {
+								require(randFile).contract(BobId, async (errInContract) => {
 									if (errInContract) {
 										console.log({ error: errInContract })
 										return res.json({ error: errInContract })
 									}
-									transactions.PSBT(id, pubkeyInUTXO, contractAlgorithm, newPubkeyId, newId, pubkeyNewId, circleId, function (PSBT, err) {
+									transactions.PSBT(AliceId, pubkeyInUTXO, contract, AliceNewPubkey, BobId, BobPubkey, circleId, function (PSBT, err) {
 										if (err) {
 											console.log({ error: err })
 											return res.status(500).json({ error: err })
@@ -150,7 +151,8 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										// 										dum();
 										// 										//endtemp 
 										// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-										return res.status(200).json({ error: "none", PSBT: PSBT.toHex() })
+										res.status(200).json({ error: "none", PSBT: PSBT.toHex() })
+										return
 
 									})
 								})

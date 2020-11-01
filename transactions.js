@@ -111,7 +111,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, algorith
 					value: satoshisFromFaucet,
 				});
 
-				console.log ((satoshisFromFaucet - minersFee)+" airdropped satoshi is now locked with:\n"+bitcoin.script.toASM(Alice_p2shOutputLock.redeem.output)+"\n at address "+AliceAddressToUnlockLater)
+				console.log ((satoshisFromFaucet - minersFee)+" airdropped satoshi is now locked with:\n"+bitcoin.script.toASM(Alice_p2shOutputLock.redeem.output)+"\nat address "+AliceAddressToUnlockLater)
 
 				randCircle = "Circle" + buf.toString('hex');
 
@@ -120,11 +120,11 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, algorith
 					redeem: Alice_p2shOutputLock.redeem.output.toString('hex'), payment: JSON.stringify(Alice_p2shOutputLock), "version": constants.VERSION
 				});//, redeemScript: redeemScript.toString('hex') });
 				CirclesCollection.insertOne(doc1, function (err, circles) {
-					if (err) { cb({ "version": constants.VERSION, psbt: "", CircleId: "", status: "500", err: "Could not store the Circle." + err }) }
-					cb({ psbt: psbt.toHex(), CircleId: randCircle, status: "200" });
+					if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", status: "500", err: "Could not store the Circle." + err }) }
+					return cb({ psbt: psbt.toHex(), CircleId: randCircle, status: "200" });
 				})
 			}
-			catch (e) { cb({ psbt: "", CircleId: "", status: "500", err: e }) }// if you get Error: mandatory-script-verify-flag-failed (Operation not valid with the current stack size) (code 16) , then e.g. see https://bitcoin.stackexchange.com/a/81740/45311
+			catch (e) { return cb({ psbt: "", CircleId: "", status: "500", err: e }) }// if you get Error: mandatory-script-verify-flag-failed (Operation not valid with the current stack size) (code 16) , then e.g. see https://bitcoin.stackexchange.com/a/81740/45311
 		}
 	})
 }
@@ -181,30 +181,31 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, pubkeyUsedInUTXO,
 
 // along the lines of https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
 //broadcast via a 3rd Party Blockchain Provider (3PBP)
-module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubkeyNewId, circleId, callback) => {
+module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkeyId, BobId, BobPubkeyId, circleId, callback) => {
 	// Signs PSBT by oracle
 
-	CirclesCollection.find({ "saltedHashedIdentification": id, "version": constants.VERSION }).toArray(async function (err, circles) {
+	CirclesCollection.find({ "saltedHashedIdentification": AliceId, "version": constants.VERSION }).toArray(async function (err, circles) {
 		if (err) { return callback("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
 		if (circles.length != 1) { return callback("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
 		// addressToUnlock=circles[0].BTCaddress;
-		const txId = circles[0].txId;
-		const addressToUnlock = circles[0].addressToUnlock;
+		const txIdToUnlock = circles[0].txId;
+		const AliceAddressToUnlock = circles[0].addressToUnlock;
 
-		const oldPayment = JSON.parse(circles[0].payment)
+		const paymentToUnlock = JSON.parse(circles[0].payment)
+		console.log("output lock of Alice's transaction: "+bitcoin.script.toASM(paymentToUnlock.output.data))
 
 		//for the output  lock of the airdropped tokens
-		const p2shOutputLock = await ID.createAddressLockedWithCirclesScript(newPubkeyId, algorithm, oracleSignTx, oracleBurnTx, regtest)
-		const txIdHash = bitcoin.Transaction.fromHex(txId).getId()
-		const unspents = await regtestUtils.unspents(addressToUnlock)
+		const p2shOutputLock = await ID.createAddressLockedWithCirclesScript(AlicePubkeyId, contract, oracleSignTx, oracleBurnTx, regtest)
+		const txIdToUnlockHash = bitcoin.Transaction.fromHex(txIdToUnlock).getId()
+		const unspents = await regtestUtils.unspents(AliceAddressToUnlock)
 
 
 		//Todo turn on later:
 		// if (unspents.length != 1) return callback("", 'not exactly 1 unspent tx for the address to unlock')
 		// and then not needed:
-		const unspent = unspents.filter(x => x.txId === txIdHash);
+		const unspentToUnlock = unspents.filter(x => x.txId === txIdToUnlockHash);
 
-		var satoshis = decRawTx.vout[0].value; if (satoshis == 0) satoshis = decRawTx.vout[1].value
+		var satoshisToUnlock = decRawTx.vout[0].value; if (satoshisToUnlock == 0) satoshisToUnlock = decRawTx.vout[1].value
 
 		try {
 			// make an output to refer to 
@@ -213,15 +214,15 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 			const psbt = new bitcoin.Psbt({ network: regtest });
 			// .setVersion(2) // These are defaults. This line is not needed.
 			// .setLocktime(0) // These are defaults. This line is not needed.
-			const inputData = await psbtHelper.getInputData(unspent, regtestUtils, oldPayment, false, 'p2sh')
+			const inputData = await psbtHelper.getInputData(unspentToUnlock, regtestUtils, paymentToUnlock, false, 'p2sh')
 			psbt.addInput(inputData)
 				.addOutput({
 					address: p2shOutputLock.address,// regtestUtils.RANDOM_ADDRESS,
-					value: satoshis - minersFee, //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
+					value: satoshisToUnlock - minersFee, //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
 					//   "estimated_feerate" : feerate   (numeric, optional) Estimated feerate of the final signed transaction in BTC/kB. Shown only if all UTXO slots in the PSBT have been filled.
 				})
 				.addOutput({
-					address: ID.createAddressLockedWithCirclesScript(pubkeyNewId, algorithm, oracleSignTx, oracleBurnTx, regtest).address,
+					address: ID.createAddressLockedWithCirclesScript(BobPubkeyId, contract, oracleSignTx, oracleBurnTx, regtest).address,
 					value: 0,
 				})
 			// no change output!
@@ -254,14 +255,14 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 				txId: psbt.extractTransaction().toHex(),
 				address: p2shOutputLock.address,// regtestUtils.RANDOM_ADDRESS,
 				vout: 0,
-				value: satoshis,//7e4,
+				value: satoshisToUnlock,//7e4,
 			});
 			// TODO scan blockchain for confirmed signature by Id, then
 
 			CirclesCollection.updateOne(
 				// { "Attribute": "good" },
-				{ saltedHashedIdentification: id, "version": constants.VERSION },
-				{ $set: { pubKey: newPubkeyId } },
+				{ saltedHashedIdentification: AliceId, "version": constants.VERSION },
+				{ $set: { pubKey: AlicePubkeyId } },
 				// { upsert: true },
 				function (err, circles) {
 					if (err) { return callback("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash!" + err) }
@@ -272,8 +273,8 @@ module.exports.PSBT = (id, pubkeyUsedInUTXO, algorithm, newPubkeyId, newId, pubk
 						// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
 						CirclesCollection.updateOne(
 							// { "Attribute": "good" },
-							{ instanceCircles: circleId, saltedHashedIdentification: newId, "version": constants.VERSION },
-							{ $set: { txId: "determine when fully signed", pubKey: pubkeyNewId, addressToUnlock: "determine when fully signed" } },
+							{ instanceCircles: circleId, saltedHashedIdentification: BobId, "version": constants.VERSION },
+							{ $set: { txId: "determine when fully signed", pubKey: BobPubkeyId, addressToUnlock: "determine when fully signed" } },
 							{ upsert: true },
 							function (err, circles) {
 								if (err) { return callback("", "Something went wrong terribly while inserting!" + err) }
