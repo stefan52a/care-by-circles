@@ -1,5 +1,7 @@
+const constants = require('../constants');
+const fs = require('fs');
 const bitcoin = require('bitcoinjs-lib');
-const regtestClient = require('regtest-client');
+const regtestClient = require('regtest-client'); /// seee https://github.com/bitcoinjs/regtest-client
 // const e = require('express');
 const APIPASS = process.env.APIPASS || 'sastoshi';
 const APIURL = process.env.APIURL || 'http://localhost:8080/1';
@@ -36,7 +38,6 @@ async function run() {
             regtest,
         );
         const ID = '+31-6-233787929'
-        const pubKeyID = aClientSignTxID.publicKey.toString('hex')
 
         const aClientSignTxNEWID = bitcoin.ECPair.fromWIF(
             'cU4suhCk1LDHEksGRen2293CmZE1GdfSA4V4A6GmwZvmVRC7Vpvu', ///// TODO KEEP SECRET
@@ -62,7 +63,8 @@ async function run() {
         // const ap = child1.privateKey.toString('hex') 
         // const bp = child2.privateKey.toString('hex')
 
-        var answ = prompt('(a)irdrop or ask (o)racle to sign?')
+        // var answ = prompt('(a)irdrop or ask (o)racle to sign?')
+        answ="a"
         stop = false
         while (!stop) {
             stop = true
@@ -70,8 +72,7 @@ async function run() {
 
                 axiosInstance.post('/oracleGetAirdrop', {
                     // generate another pubkey from a WIF
-                    pubkey: pubKeyID,
-       
+                    pubkey: aClientSignTxID.publicKey.toString('hex'),
                     id: '+31-6-233787929',
                 })
                     .then(function (response) {
@@ -87,92 +88,95 @@ async function run() {
                 stop = true
 
                 //should be stored in persistent storage, in this example we use mongodb:
-                CirclesCollection.find({ "saltedHashedIdentification": ID }).toArray(function (err, circles) {
+                CirclesCollection.find({ "saltedHashedIdentification": ID,  "version": constants.version  }).toArray(function (err, circles) {
                     if (err) { return console.log("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
                     if (circles.length != 1) { return console.log("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!, maybe your forget to create a Circle first") }
                     // addressToUnlock=circles[0].BTCaddress;
-                    const txID = circles[0].txId;
-                    const circleID = circles[0].instanceCircles;
                     const addressToUnlock = circles[0].addressToUnlock
 
+                    filename = '../ExamplecontractExample.js';
+                    fs.readFile(filename, 'utf8', function (err, contract) {
+                        if (err) throw err;
+                        console.log('OK: ' + filename);
+                        console.log(contract)
+                        axiosInstance.post('/oraclePleaseSignTx', {
+                            id: ID,
+                            pubkeyInUTXO: circles[0].pubKey,
+                            txId: circles[0].txId,//get txID from persistent storage on client
+                            newPubkeyId: aClientSignTxID.publicKey.toString('hex'),
 
-                    axiosInstance.post('/oraclePleaseSignTx', {
-                        id: ID,
-                        pubkeyInUTXO: pubKeyID,
-                        txId: txID,//get txID from persistent storage on client
-                        newPubkeyId: aClientSignTxID.publicKey.toString('hex'),
+                            newId: NewID,
+                            circleId: circles[0].instanceCircles,//get circleID from persistent storage on client
+                            pubkeyNewId: pubkeyNewId,
 
-                        newId: NewID,
-                        circleId: circleID,//get circleID from persistent storage on client
-                        pubkeyNewId: pubkeyNewId,
-
-                        // http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
-                        contract: "const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
-                    })
-                        .then(async function (response) {
-
-                            // for bitcoin-cli decodepsbt use the psbt fromhex then to base64 (e.g. with cyberchef)
-
-                            const psbt = bitcoin.Psbt.fromHex(response.data.PSBT);
-                            // const psbt = bitcoin.Psbt.fromHex(response.data.PSBT);
-
-                            // https://bitcoin.stackexchange.com/a/93436/45311
-
-                            // ************ sign input by client *************
-                            psbt.signInput(0, aClientSignTxID)
-
-                            // ************** finalizing inputs **************
-
-                            psbt.data.inputs.forEach((input, index) => {
-
-                                // sign regular inputs that can be simply signed
-                                if (!input.redeemScript && !input.witnessScript) {
-                                    psbt.finalizeInput(index)
-                                }
-
-                                // for p2sh or p2wsh script inputs
-                                if (input.redeemScript || input.witnessScript) {
-                                    psbt.finalizeInput(
-                                        index,
-                                        input.redeemScript
-                                    )
-                                }
-                            })
-
-                            // ************** make tx **************
-
-                            const tx = psbt.extractTransaction()
-
-                            const virtualSize = tx.virtualSize()
-                            const txid = tx.getId()
-                            const hex = tx.toHex()
-
-                            console.log('tx virtualSize:', virtualSize)
-                            console.log('tx txid:', txid)
-                            console.log('tx hex:', hex)
-
-                            // // build and broadcast to the Bitcoin RegTest network
-                            await regtestUtils.broadcast(hex);
-
-                            console.log(txid)
-
-                            axiosInstance.post('/GiveTxIdToOracle', {
-                                instanceCircles: circleID,
-                                id: pubkeyNewId,
-
-                                txId: txid,
-                            }
-                            ).then(function (response) {
-                                console.log(response.data);
-                            })
-                                .catch(function (error) {
-                                    console.log(error.message);
-                                });
+                            // http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
+                            contract: contract.trim().replace(/\s+/g, ' '),
                         })
-                        .catch(function
-                            (error) {
-                            console.log(error.message);
-                        });
+                            .then(async function (response) {
+
+                                // for bitcoin-cli decodepsbt use the psbt fromhex then to base64 (e.g. with cyberchef)
+
+                                const psbt = bitcoin.Psbt.fromHex(response.data.PSBT);
+                                // const psbt = bitcoin.Psbt.fromHex(response.data.PSBT);
+
+                                // https://bitcoin.stackexchange.com/a/93436/45311
+
+                                // ************ sign input by client *************
+                                psbt.signInput(0, aClientSignTxID)
+
+                                // ************** finalizing inputs **************
+
+                                psbt.data.inputs.forEach((input, index) => {
+
+                                    // sign regular inputs that can be simply signed
+                                    if (!input.redeemScript && !input.witnessScript) {
+                                        psbt.finalizeInput(index)
+                                    }
+
+                                    // for p2sh or p2wsh script inputs
+                                    if (input.redeemScript || input.witnessScript) {
+                                        psbt.finalizeInput(
+                                            index,
+                                            input.redeemScript
+                                        )
+                                    }
+                                })
+
+                                // ************** make tx **************
+
+                                const tx = psbt.extractTransaction()
+
+                                const virtualSize = tx.virtualSize()
+                                const txid = tx.getId()
+                                const hex = tx.toHex()
+
+                                console.log('tx virtualSize:', virtualSize)
+                                console.log('tx txid:', txid)
+                                console.log('tx hex:', hex)
+
+                                // // build and broadcast to the Bitcoin RegTest network
+                                await regtestUtils.broadcast(hex);
+
+                                console.log(txid)
+
+                                axiosInstance.post('/GiveTxIdToOracle', {
+                                    instanceCircles: circleID,
+                                    id: pubkeyNewId,
+
+                                    txId: txid,
+                                }
+                                ).then(function (response) {
+                                    console.log(response.data);
+                                })
+                                    .catch(function (error) {
+                                        console.log(error.message);
+                                    });
+                            })
+                            .catch(function
+                                (error) {
+                                console.log(error.message);
+                            });
+                    });
                 });
             } else {
                 answ = prompt('(a)irdrop or ask (o)racle to sign?')

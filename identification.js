@@ -1,14 +1,9 @@
+const constants = require('./constants');
+
+const transactions  = require('./transactions');
 const bitcoin = require('bitcoinjs-lib');
 const crypto = require('crypto-js');
 const Circles = require('./lib/Circles');
-
-const regtestClient = require('regtest-client');
-// const e = require('express');
-const APIPASS = process.env.APIPASS || 'sastoshi';
-const APIURL = process.env.APIURL || 'http://localhost:8080/1';
-//e.g.   localhost:8080/1/r/generate?432  see https://github.com/bitcoinjs/regtest-server/blob/master/routes/1.js
-const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
-const regtest = regtestUtils.network;
 
 // Checkexists does this by returning a message with a random Hash256 (H256), towards the telephone number of id and 
 // let that user id send H256 back to the server by posting endpoint validateMyId(Id, H256), which returns:
@@ -31,7 +26,7 @@ module.exports.hasGenesisCircle = (id, callback) => {// needed by contract
 
 module.exports.hasNoGenesisCircle = (id, callback) => {
     // Connect to Mongoose
-    CirclesCollection.find({ "saltedHashedIdentification": id }).toArray(function (err, circles) {
+    CirclesCollection.find({ "saltedHashedIdentification": id, "version": constants.VERSION }).toArray(function (err, circles) {
         if (err) { callback(err, "NotFound") } else
         if (circles.length == 0) {callback("No circles assigned to a user!")} else 
         if (circles.length != 1) callback("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle")
@@ -39,7 +34,7 @@ module.exports.hasNoGenesisCircle = (id, callback) => {
     })
 }
 
-module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx ) => {
+module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx, regtest ) => { //todo how get new HD address?
 	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	const toPubkey = Buffer.from(toPubkeyStr, 'hex');   
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
@@ -51,6 +46,7 @@ module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, algori
 	const p2sh = await bitcoin.payments.p2sh({
 		redeem: {
 			output: redeemscript,
+			regtest,
 		},
 		network: regtest,
 	})

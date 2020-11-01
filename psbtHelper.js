@@ -56,11 +56,10 @@ module.exports.getWitnessUtxo = (out) => {
 
 module.exports.getInputData = async (
     unspent,
-    regtestUtils,
-    amount,
     payment,
     isSegwit,
     redeemType,
+    regtestUtils,
 ) => {
     const utx = await regtestUtils.fetch(unspent.txId);
     // for non segwit inputs, you must pass the full transaction buffer
@@ -84,8 +83,40 @@ module.exports.getInputData = async (
     return {
         hash: unspent.txId,
         index: unspent.vout,
-        ...mixin,
+        sequence: 0xFFFFFFFF, //https://bitcoin.stackexchange.com/questions/87372/what-does-the-sequence-in-a-transaction-input-mean
         ...mixin2,
+        ...mixin,
     };
+}
+
+module.exports.decoderawtransaction = (hex) => {
+    const tx = bitcoin.Transaction.fromHex(hex)
+    return {
+        txId: tx.getId(),
+        hash: tx.getHash(true).toString('hex'),
+        size: tx.byteLength(),
+        vsize: tx.virtualSize(),
+        weight: tx.weight(),
+        version: tx.version,
+        locktime: tx.locktime,
+        vin: tx.ins.map(input => ({
+            txid: Buffer.from(input.hash).reverse().toString('hex'),
+            vout: input.index,
+            scriptSig: {
+                asm: bitcoin.script.toASM(input.script),
+                hex: input.script.toString('hex'),
+            },
+            txinwitness: input.witness.map(b => b.toString('hex')),
+            sequence: input.sequence,
+        })),
+        vout: tx.outs.map((output, i) => ({
+            value: output.value,
+            n: i,
+            scriptPubKey: {
+                asm: bitcoin.script.toASM(output.script),
+                hex: output.script.toString('hex'),
+            },
+        })),
+    }
 }
 
