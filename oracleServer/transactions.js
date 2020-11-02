@@ -229,7 +229,8 @@ module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkey, BobId, 
 			const psbt = new bitcoin.Psbt({ network: regtest });
 			// .setVersion(2) // These are defaults. This line is not needed.
 			// .setLocktime(0) // These are defaults. This line is not needed.
-			const inputDataToUnlockALiceTransaction = await psbtHelper.getInputData(unspentToUnlock[voutIndex], paymentToUnlock, false, 'p2sh', regtestUtils)
+			// const inputDataToUnlockALiceTransaction = await psbtHelper.getInputData(unspentToUnlock[voutIndex], paymentToUnlock, false, 'p2sh', regtestUtils)
+			const inputDataToUnlockALiceTransaction = await psbtHelper.getInputData(unspentToUnlock[voutIndex], paymentToUnlock, false, 'p2ms', regtestUtils)
 			psbt.addInput(inputDataToUnlockALiceTransaction)
 
 				.addOutput({
