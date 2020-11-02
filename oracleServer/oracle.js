@@ -104,14 +104,13 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										console.log({ error: errInContract })
 										return res.json({ error: errInContract })
 									}
-									transactions.PSBT(AliceId, pubkeyInUTXO, contract, AliceNewPubkey, BobId, BobPubkey, circleId, function (PSBT, err) {
+									transactions.PSBT(AliceId, pubkeyInUTXO, contract, AliceNewPubkey, BobId, BobPubkey, circleId, function (PSBT, OracleFinal, err) {
 										if (err) {
 											console.log({ error: err })
 											return res.status(500).json({ error: err })
 										}
 										// const dummy = PSBT.data.inputs[0].partialSig[0].signature  // this is the signature of the Oracle oracleSignTx
-										console.log({ error: "none", PSBT: PSBT })
-										console.log({ error: "none", PSBT: PSBT.toHex() })
+										console.log({ error: "none", psbtBaseText: PSBT, OracleText: OracleFinal })
 
 
 										//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +150,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										// 										dum();
 										// 										//endtemp 
 										// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-										res.status(200).json({ error: "none", PSBT: PSBT.toHex() })
+										res.status(200).json({ error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal })
 										return
 
 									})

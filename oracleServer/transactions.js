@@ -1,5 +1,5 @@
 const constants = require('./constants');
-const Circles = require('./lib/Circles');
+const Circles = require('../lib/Circles');
 const ID = require('./identification');
 
 const randomBytes = require('randombytes');
@@ -56,7 +56,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, algorith
 				// unspent = await regtestUtils.faucet(p2sh.address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
 				// utx = await regtestUtils.fetch(unspent.txId) // gets json of txid
 				const { payment: faucetPayment, keys: faucetKeys } = psbtHelper.createPayment('p2sh-p2pk', '', regtest)
-				console.log("output lock of the airdrop: "+bitcoin.script.toASM(faucetPayment.output))
+				console.log("output lock of the airdrop: " + bitcoin.script.toASM(faucetPayment.output))
 				const psbt = new bitcoin.Psbt({ network: regtest });
 				// .setVersion(2) // These are defaults. This line is not needed.
 				// .setLocktime(0) // These are defaults. This line is not needed.
@@ -79,7 +79,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, algorith
 				const results = await regtestUtils.mine(10);
 
 				const inputDataToUnlockFaucet = await psbtHelper.getInputData(faucetUnspent, faucetPayment, false, 'p2sh', regtestUtils)
-				console.log("redeem for the airdrop: "+bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript))
+				console.log("redeem for the airdrop: " + bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript))
 				psbt.addInput(inputDataToUnlockFaucet)
 					.addOutput({
 						address: AliceAddressToUnlockLater,
@@ -91,7 +91,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, algorith
 					// psbt.validateSignaturesOfInput(0);
 					// This is an example of using the finalizeInput second parameter to
 					// define how you finalize the inputs, allowing for any type of script.
-					.finalizeInput(0, getFinalScripts) // See getFinalScripts below
+					.finalizeInput(0, psbtHelper.getFinalScripts) // See getFinalScripts below
 					.extractTransaction();
 
 				// Mine 10 blocks, returns an Array of the block hashes
@@ -111,7 +111,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, algorith
 					value: satoshisFromFaucet,
 				});
 
-				console.log ((satoshisFromFaucet - minersFee)+" airdropped satoshi is now locked with:\n"+bitcoin.script.toASM(Alice_p2shOutputLock.redeem.output)+"\nat address "+AliceAddressToUnlockLater)
+				console.log((satoshisFromFaucet - minersFee) + " airdropped satoshi is now locked with:\n" + bitcoin.script.toASM(Alice_p2shOutputLock.redeem.output) + "\nat address " + AliceAddressToUnlockLater)
 
 				randCircle = "Circle" + buf.toString('hex');
 
@@ -181,26 +181,26 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, pubkeyUsedInUTXO,
 
 // along the lines of https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
 //broadcast via a 3rd Party Blockchain Provider (3PBP)
-module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkeyId, BobId, BobPubkeyId, circleId, callback) => {
+module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkey, BobId, BobPubkey, circleId, callback) => {
 	// Signs PSBT by oracle
 
-	const dustSatoshis= 547
+	const dustSatoshis = 547
 	CirclesCollection.find({ "saltedHashedIdentification": AliceId, "version": constants.VERSION }).toArray(async function (err, circles) {
-		if (err) { return callback("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
-		if (circles.length != 1) { return callback("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
+		if (err) { return callback("", "", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
+		if (circles.length != 1) { return callback("", "", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
 		// addressToUnlock=circles[0].BTCaddress;
 		const txIdToUnlock = circles[0].txId;
 		const AliceAddressToUnlock = circles[0].addressToUnlock;
 
 		const paymentToUnlock = JSON.parse(circles[0].payment)
-		console.log("output lock of Alice's transaction: "+bitcoin.script.toASM(Buffer.from(paymentToUnlock.output.data,'hex')))
+		console.log("output lock of Alice's transaction: " + bitcoin.script.toASM(Buffer.from(paymentToUnlock.output.data, 'hex')))
 		console.log("We will create a script for this, which hash160 is equal to the above hexadecimal number")
 
 		//for the output  lock of the airdropped tokens
-		const p2shOutputLockGoesBackToAlice = await ID.createAddressLockedWithCirclesScript(AlicePubkeyId, contract, oracleSignTx, oracleBurnTx, regtest)
-		const p2shOutputLockGoesToBob= await ID.createAddressLockedWithCirclesScript(BobPubkeyId, contract, oracleSignTx, oracleBurnTx, regtest)
-				
-		console.log("it might be: "+bitcoin.script.toASM(p2shOutputLockGoesBackToAlice.redeem.output))
+		const p2shOutputLockGoesBackToAlice = await ID.createAddressLockedWithCirclesScript(AlicePubkey, contract, oracleSignTx, oracleBurnTx, regtest)
+		const p2shOutputLockGoesToBob = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
+
+		console.log("it might be: " + bitcoin.script.toASM(p2shOutputLockGoesBackToAlice.redeem.output))
 		const txIdToUnlockHash = bitcoin.Transaction.fromHex(txIdToUnlock).getId()
 		const unspents = await regtestUtils.unspents(AliceAddressToUnlock)
 
@@ -210,19 +210,17 @@ module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkeyId, BobId
 		// and then not needed:
 		const unspentToUnlock = unspents.filter(x => x.txId === txIdToUnlockHash);
 
-		var satoshisToUnlock=0;
+		var satoshisToUnlock = 0;
 		var voutIndex
-		for (voutIndex =0;voutIndex<unspentToUnlock.length;voutIndex++)
-		{
+		for (voutIndex = 0; voutIndex < unspentToUnlock.length; voutIndex++) {
 			const sat = unspentToUnlock[unspentToUnlock[voutIndex].vout].value
-			if (sat>dustSatoshis) 
-			{
+			if (sat > dustSatoshis) {
 				satoshisToUnlock = sat  //TODO ATM there is exactly 1 output greater than dust+1, 
-										//which is Alice's value, find out another way???
+				//which is Alice's value, find out another way???
 				break
 			}
 		}
-		console.log ("which locks "+satoshisToUnlock+" satoshi")
+		console.log("which locks " + satoshisToUnlock + " satoshi")
 
 		try {
 			// make an output to refer to 
@@ -233,6 +231,7 @@ module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkeyId, BobId
 			// .setLocktime(0) // These are defaults. This line is not needed.
 			const inputDataToUnlockALiceTransaction = await psbtHelper.getInputData(unspentToUnlock[voutIndex], paymentToUnlock, false, 'p2sh', regtestUtils)
 			psbt.addInput(inputDataToUnlockALiceTransaction)
+
 				.addOutput({
 					// address: bitcoin.address.toOutputScript(p2shOutputLockGoesBackToAlice.address, regtest),// regtestUtils.RANDOM_ADDRESS,
 					address: p2shOutputLockGoesBackToAlice.address,// regtestUtils.RANDOM_ADDRESS,
@@ -246,6 +245,58 @@ module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkeyId, BobId
 				})
 			// no change output!
 
+
+			// encode to send out to the signers
+			const psbtBaseText = psbt.toBase64();
+
+			// each signer imports
+			// const psbt = bitcoin.Psbt.fromBase64(psbtBaseText);
+			// const Alice = bitcoin.Psbt.fromBase64(psbtBaseText);
+
+			// Alice and Oracle signs their input with the respective private keys
+			// signInput and signInputAsync are better
+			// (They take the input index explicitly as the first arg)
+			psbt.signAllInputs(oracleSignTx);//alice1.keys[0]);
+			// Alice.signAllInputs(AliceClientSignTxID.privateKey);//alice2.keys[0]);  
+
+
+			// If your signer object's sign method returns a promise, use the following
+			// await Alice.signAllInputsAsync(alice2.keys[0])
+
+			// encode to send back to combiner (Oracle and Alice are not near each other)
+			const psbtSignedByOracleText = psbt.toBase64();
+			// const s2text = Alice.toBase64();
+
+			// const OracleFinal = bitcoin.Psbt.fromBase64(OracleText);
+			// const final2 = bitcoin.Psbt.fromBase64(s2text);
+
+			// If your signer object's sign method returns a promise, use the following
+			// await Alice.signAllInputsAsync(alice2.keys[0])
+
+			// encode to send back to combiner (Oracle and Alice are not near each other)
+			// const s1text = Oracle.toBase64();
+			// const s2text = Alice.toBase64();
+
+			// const final1 = bitcoin.Psbt.fromBase64(s1text);
+			// const final2 = bitcoin.Psbt.fromBase64(s2text);
+
+			// final1.combine(final2) would give the exact same result
+			// psbt.combine(final1, final2);
+
+			// Finalizer wants to check all signatures are valid before finalizing.
+			// If the finalizer wants to check for specific pubkeys, the second arg
+			// can be passed. See the first multisig example below.
+			// assert.strictEqual(psbt.validateSignaturesOfInput(0), true);
+			// assert.strictEqual(psbt.validateSignaturesOfInput(1), true);
+
+			// This step it new. Since we separate the signing operation and
+			// the creation of the scriptSig and witness stack, we are able to
+			// psbt.finalizeAllInputs();
+
+			// build and broadcast our RegTest network
+			// await regtestUtils.broadcast(psbt.extractTransaction().toHex());
+			// to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
+
 			// ************** signing **************
 
 			// psbt.data.inputs.forEach((input, index) => {
@@ -253,68 +304,71 @@ module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkeyId, BobId
 			// 	// if (!input.redeemScript && !input.witnessScript) {
 			// 	psbt.signInput(index, oracleSignTx)
 
-			psbt.signInput(voutIndex, oracleSignTx)
-			// give error if signature failed
-				if (!psbt.validateSignaturesOfInput(voutIndex)) {
-					return callback("", 'Signature validation failed for input index ' + voutIndex.toString())
-				}
+			// psbt.signInput(voutIndex, oracleSignTx)
+			// // give error if signature failed
+			// if (!psbt.validateSignaturesOfInput(voutIndex)) {
+			// 	return callback("", 'Signature validation failed for input index ' + voutIndex.toString())
+			// }
 
 
 			// })
 
-				// This is an example of using the finalizeInput second parameter to
-				// define how you finalize the inputs, allowing for any type of script.
-				psbt.finalizeInput(0, getFinalScripts) // See getFinalScripts below
-				.extractTransaction();
+			// // This is an example of using the finalizeInput second parameter to
+			// // define how you finalize the inputs, allowing for any type of script.
+			// psbt.finalizeInput(0, getFinalScripts) // See getFinalScripts below
+			// 	.extractTransaction();
 
 
-				// const resultsCircle = await regtestUtils.mine(10);
-				//Only partially signed so we cannot broadcast yet:
-				// const resultBroadcast = await regtestUtils.broadcast(psbt.extractTransaction().toHex());
+			// const resultsCircle = await regtestUtils.mine(10);
+			//Only partially signed so we cannot broadcast yet:
+			// const resultBroadcast = await regtestUtils.broadcast(psbt.extractTransaction().toHex());
 
-			regtestUtils.verify({
-				txId: psbt.extractTransaction().toHex(),
-				address: regtestUtils.RANDOM_ADDRESS,
-				vout: 0,  //todo is this the right vout?
-				value: satoshisToUnlock,
-			});
-			// TODO scan blockchain for confirmed signature by Id, then
+			// regtestUtils.verify({
+			// 	txId: psbt.extractTransaction().toHex(),
+			// 	address: regtestUtils.RANDOM_ADDRESS,
+			// 	vout: 0,  //todo is this the right vout?
+			// 	value: satoshisToUnlock,
+			// });
 
-			console.log ((satoshisToUnlock)+" satoshi transferred from Alice to Alice, who gets "+(satoshisToUnlock - minersFee - dustSatoshis)+" is now locked with:\n"+bitcoin.script.toASM(p2shOutputLockGoesBackToAlice.redeem.output)+"\nat address "+p2shOutputLockGoesBackToAlice.address)
-			console.log (dustSatoshis+" satoshi transferred from Alice to Bob is now locked with:\n"+bitcoin.script.toASM(p2shOutputLockGoesToBob.redeem.output)+"\nat address "+p2shOutputLockGoesToBob.address)
+			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " + (satoshisToUnlock - minersFee - dustSatoshis) + " is now locked with:\n" + bitcoin.script.toASM(p2shOutputLockGoesBackToAlice.redeem.output) + "\nat address " + p2shOutputLockGoesBackToAlice.address)
+			console.log(dustSatoshis + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(p2shOutputLockGoesToBob.redeem.output) + "\nat address " + p2shOutputLockGoesToBob.address)
 
 			CirclesCollection.updateOne(
 				// { "Attribute": "good" },
 				{ saltedHashedIdentification: AliceId, "version": constants.VERSION },
-				{ $set: { pubKey: AlicePubkeyId, updateDate: Date.now } },
+				{ $set: { pubKey: AlicePubkey, updateDate: Date.now } },
 				// { upsert: true },
 				function (err, circles) {
-					if (err) { return callback("", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash!" + err) }
-					if (circles.matchedCount != 1) return callback("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
+					if (err) { return callback("", "", "Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash!" + err) }
+					if (circles.matchedCount != 1) return callback("", "", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
 					else {
 						// addressToUnlock=circles[0].BTCaddress;
 						// txId = circles[0].txId;
 						// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
 						CirclesCollection.updateOne(
 							// { "Attribute": "good" },
-							{  "version": constants.VERSION, instanceCircles: circleId, saltedHashedIdentification: BobId },
-							{ $set: { psbt: psbt.toHex(), txId: "determine when fully signed", pubKey: BobPubkeyId, addressToUnlock: "determine when fully signed",
-							redeem: p2shOutputLockGoesToBob.redeem.output.toString('hex'), payment: JSON.stringify(p2shOutputLockGoesToBob),
-							updateDate: Date.now()} },
+							{ "version": constants.VERSION, instanceCircles: circleId, saltedHashedIdentification: BobId },
+							{
+								$set: {
+									psbt: psbt.toHex(), txId: "determine when fully signed", pubKey: BobPubkey, addressToUnlock: "determine when fully signed",
+									redeem: p2shOutputLockGoesToBob.redeem.output.toString('hex'), payment: JSON.stringify(p2shOutputLockGoesToBob),
+									updateDate: Date.now()
+								}
+							},
 							{ upsert: true },
 							function (err, circles) {
-								if (err) { return callback("", "Something went wrong terribly while inserting!" + err) }
+								if (err) { return callback("", "", "Something went wrong terribly while inserting!" + err) }
 								// addressToUnlock=circles[0].BTCaddress;
 								// txId = circles[0].txId;
 								// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-								return callback(psbt);
+								return callback(psbtBaseText, psbtSignedByOracleText);
 							})
 					}
 				})
 
 		}
 		catch (e) {
-			return callback("", "500" + e)
+			return callback("", "", "500" + e)
 		}
 
 	})
@@ -419,89 +473,3 @@ module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkeyId, BobId
 // 	};
 // }
 
-//from  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
-// This function is used to finalize a transaction using PSBT.
-// See  above.
-function getFinalScripts(
-	inputIndex,//: number,
-	input,//: PsbtInput,
-	script,//: Buffer,
-	isSegwit,//: boolean,
-	isP2SH,//: boolean,
-	isP2WSH,//: boolean,
-) {
-	// Step 1: Check to make sure the meaningful script matches what you expect.
-	const decompiled = bitcoin.script.decompile(script);
-	// Checking if first OP is OP_IF... should do better check in production!
-	// You may even want to check the public keys in the script against a
-	// whitelist depending on the circumstances!!!
-	// You also want to check the contents of the input to see if you have enough
-	// info to actually construct the scriptSig and Witnesses.
-
-	//todo: uncomment:
-	// if (!decompiled || decompiled[0] !== bitcoin.opcodes.OP_IF) {
-	// 	throw new Error(`Can not finalize input #${inputIndex} not starting with OP_IF`);
-	// }
-	console.log("unlock: "+bitcoin.script.toASM(decompiled))
-
-
-	// Step 2: Create final scripts
-	let payment = {
-		network: regtest,
-		output: script,
-		// This logic should be more strict and make sure the pubkeys in the
-		// meaningful script are the ones signing in the PSBT etc.
-		input: bitcoin.script.compile([
-			input.partialSig[0].signature,
-			// bitcoin.opcodes.OP_TRUE,
-		]),
-	};
-	if (isP2WSH && isSegwit)
-		payment = bitcoin.payments.p2wsh({
-			network: regtest,
-			redeem: payment,
-		});
-	if (isP2SH)
-		payment = bitcoin.payments.p2sh({
-			network: regtest,
-			redeem: payment,
-		});
-
-	function witnessStackToScriptWitness(witness) {
-		let buffer = Buffer.allocUnsafe(0);
-
-		function writeSlice(slice) {
-			buffer = Buffer.concat([buffer, Buffer.from(slice)]);
-		}
-
-		function writeVarInt(i) {
-			const currentLen = buffer.length;
-			const varintLen = varuint.encodingLength(i);
-
-			buffer = Buffer.concat([buffer, Buffer.allocUnsafe(varintLen)]);
-			varuint.encode(i, buffer, currentLen);
-		}
-
-		function writeVarSlice(slice) {
-			writeVarInt(slice.length);
-			writeSlice(slice);
-		}
-
-		function writeVector(vector) {
-			writeVarInt(vector.length);
-			vector.forEach(writeVarSlice);
-		}
-
-		writeVector(witness);
-
-		return buffer;
-	}
-
-	return {
-		finalScriptSig: payment.input,
-		finalScriptWitness:
-			payment.witness && payment.witness.length > 0
-				? witnessStackToScriptWitness(payment.witness)
-				: undefined,
-	};
-}

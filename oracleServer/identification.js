@@ -3,7 +3,7 @@ const constants = require('./constants');
 const transactions  = require('./transactions');
 const bitcoin = require('bitcoinjs-lib');
 const crypto = require('crypto-js');
-const Circles = require('./lib/Circles');
+const Circles = require('../lib/Circles');
 
 // Checkexists does this by returning a message with a random Hash256 (H256), towards the telephone number of id and 
 // let that user id send H256 back to the server by posting endpoint validateMyId(Id, H256), which returns:
@@ -94,7 +94,6 @@ module.exports.circlesLockScriptSigOutput =  (
 	  OP_IF
 			${crypto.SHA256(algorithm).toString()} 
 		  	OP_DROP
-			OP_0
 			OP_2
 			${toPubkey.toString('hex')}
 			${oraclePleaseSignTxQ.publicKey.toString('hex')}
@@ -103,7 +102,6 @@ module.exports.circlesLockScriptSigOutput =  (
 	  OP_ELSE
 		  	abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd
 	  		OP_DROP
-			OP_0
 			OP_1
 			${oracleBurnTxQ.publicKey.toString('hex')}
 			OP_1

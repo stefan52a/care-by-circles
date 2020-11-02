@@ -5,15 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            // "console": "integratedTerminal",
-            "console": "externalTerminal",
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}/clientTest.js"
+            "program": "${workspaceFolder}/oracle.js"
         }
     ]
 }
