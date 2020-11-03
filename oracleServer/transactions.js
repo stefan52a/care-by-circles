@@ -92,7 +92,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 						// network: { regtest },
 					})
 					//nbo change output, all goes to output 0
-					.signInput(0, faucetKeys[0]) //sign coins given by faucet by its key
+					.signInput(0, faucetKeys[0],[hashType]) //sign coins given by faucet by its key
 					// psbt.validateSignaturesOfInput(0);
 					// This is an example of using the finalizeInput second parameter to
 					// define how you finalize the inputs, allowing for any type of script.
@@ -101,7 +101,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 
 				// Mine 10 blocks, returns an Array of the block hashes
 				// the above psbt will confirm
-				// const resultsCircle = await regtestUtils.mine(10);
+				const resultsCircle = await regtestUtils.mine(10);
 
 				const resultBroadcast = await regtestUtils.broadcast(psbt.extractTransaction().toHex());
 
@@ -133,7 +133,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 				randCircle = "Circle" + buf.toString('hex');
 
 				var doc1 = Circles({
-					instanceCircles: randCircle, saltedHashedIdentification: id, psbt: psbt.toHex(), txId: psbt.extractTransaction().toHex(), pubKey: AlicePubkeyStr, addressToUnlock: address,
+					instanceCircles: randCircle, saltedHashedIdentification: id, psbt: psbt.toHex(), txId: psbt.extractTransaction().getId(), pubKey: AlicePubkeyStr, addressToUnlock: address,
 					redeem: inputDataToUnlockFaucet.redeemScript.toString('hex'),  "version": constants.VERSION, //payment: JSON.stringify(Alice_p2shOutputLock),
 				});
 				CirclesCollection.insertOne(doc1, function (err, circles) {
@@ -233,7 +233,7 @@ const dustSatoshis = 547
 		//Todo turn on later:
 		// if (unspents.length != 1) return callback("", 'not exactly 1 unspent tx for the address to unlock')
 		// and then not needed:
-		const unspentToUnlock = unspents.filter(x => x.txId ===  bitcoin.Transaction.fromHex(txIdToUnlock).getId());
+		const unspentToUnlock = unspents.filter(x => x.txId ===  txIdToUnlock);
 
 		// const txIdToUnlockHash = bitcoin.Transaction.fromHex(txIdToUnlock).getId()
 

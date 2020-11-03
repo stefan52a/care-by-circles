@@ -72,7 +72,7 @@ async function run() {
   const hashType = bitcoin.Transaction.SIGHASH_ALL;
 
         // var answ = prompt('(a)irdrop or ask (o)racle to sign?')
-        answ = "a"
+        answ = "o"
         stop = false
         while (!stop) {
             stop = true
@@ -102,7 +102,7 @@ async function run() {
                     // addressToUnlock=circles[0].BTCaddress;
                     const addressToUnlock = circles[0].addressToUnlock
                     const unspents = await regtestUtils.unspents(addressToUnlock)
-                    const unspentToUnlock = unspents.filter(x => x.txId === bitcoin.Transaction.fromHex(circles[0].txId).getId());
+                    const unspentToUnlock = unspents.filter(x => x.txId === circles[0].txId);
 
                     const filenameContract = './oracleServer/ExamplecontractExample.js';
                     fs.readFile(filenameContract, 'utf8', function (err, contract) {
