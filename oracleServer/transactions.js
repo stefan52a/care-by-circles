@@ -85,7 +85,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 				// the above faucet payments will confirm
 				const results = await regtestUtils.mine(10);
 
-				const inputDataToUnlockFaucet = await psbtHelper.getInputData(faucetUnspent, faucetPayment, false, 'p2sh', regtestUtils)
+				const inputDataToUnlockFaucet = await psbtHelper.getInputData(faucetUnspent, faucetPayment.redeem.output, false, 'p2sh', regtestUtils)
 				console.log("redeem for the airdrop: " + bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript))
 				psbt.addInput(inputDataToUnlockFaucet)
 					.addOutput({
@@ -121,22 +121,22 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 
 
 
-				const redeemScript = ID.circlesLockScriptSigOutput(AlicePubkeyStr,
-					contract,
-					oracleSignTx,  //: KeyPair,
-					oracleBurnTx  //: KeyPair,
-				)
-				const address = bitcoin.payments.p2sh({
-					redeem: { output: redeemScript, network: regtest },
-					network: regtest,
-				});
+				// const redeemScript = ID.circlesLockScriptSigOutput(AlicePubkeyStr,
+				// 	contract,
+				// 	oracleSignTx,  //: KeyPair,
+				// 	oracleBurnTx  //: KeyPair,
+				// )
+				// const address = bitcoin.payments.p2sh({
+				// 	redeem: { output: inputDataToUnlockFaucet.redeemScript, network: regtest },
+				// 	network: regtest,
+				// });
 	
-				console.log((satoshisFromFaucet - minersFee) + " airdropped satoshi is now locked with:\n" + bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript) + "\nat address " + address)
+				console.log((satoshisFromFaucet - minersFee) + " airdropped satoshi is now locked with:\n" + bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript) + "\nat address " + AliceAddressToUnlockLater)
 
 				randCircle = "Circle" + buf.toString('hex');
 
 				var doc1 = Circles({
-					instanceCircles: randCircle, saltedHashedIdentification: id, psbt: psbt.toHex(), txId: psbt.extractTransaction().getId(), pubKey: AlicePubkeyStr, addressToUnlock: address,
+					instanceCircles: randCircle, saltedHashedIdentification: id, psbt: psbt.toHex(), txId: psbt.extractTransaction().getId(), pubKey: AlicePubkeyStr, addressToUnlock: AliceAddressToUnlockLater,
 					redeem: inputDataToUnlockFaucet.redeemScript.toString('hex'),  "version": constants.VERSION, //payment: JSON.stringify(Alice_p2shOutputLock),
 				});
 				CirclesCollection.insertOne(doc1, function (err, circles) {
