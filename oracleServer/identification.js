@@ -34,20 +34,39 @@ module.exports.hasNoGenesisCircle = (id, callback) => {
     })
 }
 
-module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, algorithm, oracleSignTx, oracleBurnTx, regtest ) => { //todo how get new HD address?
+module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest ) => { //todo how get new HD address?
 	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	const toPubkey = Buffer.from(toPubkeyStr, 'hex');   
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
-	const redeemscript = this.circlesLockScriptSigOutput(toPubkey,
-		algorithm,
-		oracleSignTx,  //: KeyPair,
-		oracleBurnTx  //: KeyPair,
-	)
+	// const redeemscript = this.circlesLockScriptSigOutput(toPubkey,
+	// 	algorithm,
+	// 	oracleSignTx,  //: KeyPair,
+	// 	oracleBurnTx  //: KeyPair,
+	// )
+	// const p2sh = await bitcoin.payments.p2sh({
+	// 	redeem: {
+	// 		output: redeemscript,
+	// 	},
+	// 	network: regtest,
+	// }
+	let payment = {
+        network: regtest,
+        output:  this.circlesLockScriptSigOutput(toPubkey,
+			contract,
+			oracleSignTx,  //: KeyPair,
+			oracleBurnTx  //: KeyPair,
+		),
+        // This logic should be more strict and make sure the pubkeys in the
+        // meaningful script are the ones signing in the PSBT etc.
+        input: bitcoin.script.compile([
+            bitcoin.opcodes.OP_0,// because of multisig bug, don't do this in case of gneesis transaction
+            input.partialSig[0].signature,
+            input.partialSig[1].signature,
+            bitcoin.opcodes.OP_TRUE,// don't do this in case of gneesis transaction
+        ]),
+    };
 	const p2sh = await bitcoin.payments.p2sh({
-		redeem: {
-			output: redeemscript,
-			regtest,
-		},
+		redeem: {output:  redeemscript},
 		network: regtest,
 	})
 
@@ -84,7 +103,7 @@ module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, algori
 module.exports.circlesLockScriptSigOutput =  (
 	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	toPubkey,
-	algorithm,
+	contract,
 	oraclePleaseSignTxQ,  //: KeyPair,
 	oracleBurnTxQ  //: KeyPair,
 ) => {
@@ -92,7 +111,7 @@ module.exports.circlesLockScriptSigOutput =  (
 	return  bitcoin.script.fromASM(
 		`
 	  OP_IF
-			${crypto.SHA256(algorithm).toString()} 
+			${crypto.SHA256(contract).toString()} 
 		  	OP_DROP
 			OP_2
 			${toPubkey.toString('hex')}

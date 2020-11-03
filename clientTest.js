@@ -1,3 +1,5 @@
+//Handy:  https://github.com/BlockchainCommons/Learning-Bitcoin-from-the-Command-Line
+
 const constants = require('./oracleServer/constants');
 const fs = require('fs');
 const bitcoin = require('bitcoinjs-lib');
@@ -64,6 +66,10 @@ async function run() {
         // //private keys:
         // const ap = child1.privateKey.toString('hex') 
         // const bp = child2.privateKey.toString('hex')
+ // force update MTP  (Merkle Tree Proof?)
+    await regtestUtils.mine(11);
+
+  const hashType = bitcoin.Transaction.SIGHASH_ALL;
 
         // var answ = prompt('(a)irdrop or ask (o)racle to sign?')
         answ = "o"
@@ -95,7 +101,6 @@ async function run() {
                     if (circles.length != 1) { return console.log("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!, maybe your forget to create a Circle first") }
                     // addressToUnlock=circles[0].BTCaddress;
                     const addressToUnlock = circles[0].addressToUnlock
-                    const paymentToUnlock = JSON.parse(circles[0].payment)
                     const unspents = await regtestUtils.unspents(addressToUnlock)
                     const unspentToUnlock = unspents.filter(x => x.txId === bitcoin.Transaction.fromHex(circles[0].txId).getId());
 
@@ -131,7 +136,7 @@ async function run() {
                                 //////////////////////////////
                                 // each signer imports
                                 // const Oracle = bitcoin.Psbt.fromBase64(psbtBaseText); //the Oracle
-                                const psbtFromOracleForAliceToSign = bitcoin.Psbt.fromBase64(response.data.psbtBaseText);//Alice = me
+                                const psbtFromOracleForAliceToSign = bitcoin.Psbt.fromBase64(response.data.psbtBaseText, {network: regtest});//Alice = me
 
                                 // Alice and Oracle signs their input with the respective private keys
                                 // signInput and signInputAsync are better
@@ -150,7 +155,7 @@ async function run() {
                                 // const OracleFinal = bitcoin.Psbt.fromBase64(response.data.psbtSignedByOracleBaseText);
                                 // const Alicefinal =  psbtFromOracleForAliceToSign;//bitcoin.Psbt.fromBase64(psbtSignedByAliceText);
 
-                                psbtFromOracleForAliceToSign.combine(bitcoin.Psbt.fromBase64(response.data.psbtSignedByOracleBaseText));
+                                psbtFromOracleForAliceToSign.combine(bitcoin.Psbt.fromBase64(response.data.psbtSignedByOracleBaseText, {network: regtest}));
 
                                 // Finalizer wants to check all signatures are valid before finalizing.
                                 // If the finalizer wants to check for specific pubkeys, the second arg
@@ -160,14 +165,14 @@ async function run() {
 
                                 // This step it new. Since we separate the signing operation and
                                 // the creation of the scriptSig and witness stack, we are able to
-                                // psbtFromOracleForAliceToSign.finalizeAllInputs();
-                                psbtFromOracleForAliceToSign.finalizeInput(0, psbtHelper.getFinalScripts) 
+                                // psbtFromOracleForAliceToSign.finalizeAllInputs()//psbtHelper.p2mscGetFinalScripts);
+                                // psbtFromOracleForAliceToSign.finalizeInput(0, psbtHelper.p2mscGetFinalScripts) 
 
                                 console.log('\npsbt can be decoded with "  bitcoin-cli -regtest decodepsbt ', psbtFromOracleForAliceToSign.toBase64() + '   "')
 
                                 // Mine 10 blocks, returns an Array of the block hashes
                                 // the above psbt will confirm
-                                await regtestUtils.mine(10);
+                                // await regtestUtils.mine(10);
                                 // build and broadcast our RegTest network
                                 await regtestUtils.broadcast(psbtFromOracleForAliceToSign.extractTransaction().toHex());
                                 // to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
@@ -283,18 +288,18 @@ async function run() {
 
                                 // console.log(txid)
 
-                                axiosInstance.post('/GiveTxIdToOracle', {
-                                    instanceCircles: circleID,
-                                    id: BobPubkey,
+                                // axiosInstance.post('/GiveTxIdToOracle', {
+                                //     instanceCircles: circleID,
+                                //     id: BobPubkey,
 
-                                    txId: txid,
-                                }
-                                ).then(function (response) {
-                                    console.log(response.data);
-                                })
-                                    .catch(function (error) {
-                                        console.log(error.message);
-                                    });
+                                //     txId: txid,
+                                // }
+                                // ).then(function (response) {
+                                //     console.log(response.data);
+                                // })
+                                //     .catch(function (error) {
+                                //         console.log(error.message);
+                                //     });
                             })
                             .catch(function
                                 (error) {
