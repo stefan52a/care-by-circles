@@ -49,24 +49,26 @@ module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, contra
 	// 	},
 	// 	network: regtest,
 	// }
-	let payment = {
-        network: regtest,
-        output:  this.circlesLockScriptSigOutput(toPubkey,
+	// let payment = {
+    //     network: regtest,
+		// output:  
+		const redeemscript = this.circlesLockScriptSigOutput(toPubkey,
 			contract,
 			oracleSignTx,  //: KeyPair,
 			oracleBurnTx  //: KeyPair,
-		),
+		)
         // This logic should be more strict and make sure the pubkeys in the
         // meaningful script are the ones signing in the PSBT etc.
-        input: bitcoin.script.compile([
-            bitcoin.opcodes.OP_0,// because of multisig bug, don't do this in case of gneesis transaction
-            input.partialSig[0].signature,
-            input.partialSig[1].signature,
-            bitcoin.opcodes.OP_TRUE,// don't do this in case of gneesis transaction
-        ]),
-    };
+        // input: bitcoin.script.compile([
+        //     bitcoin.opcodes.OP_0,// because of multisig bug, don't do this in case of gneesis transaction
+        //     input.partialSig[0].signature,
+        //     input.partialSig[1].signature,
+        //     bitcoin.opcodes.OP_TRUE,// don't do this in case of gneesis transaction
+        // ]),
+    // };
 	const p2sh = await bitcoin.payments.p2sh({
-		redeem: {output:  redeemscript},
+		redeem: {output:  redeemscript,
+					network: regtest},
 		network: regtest,
 	})
 

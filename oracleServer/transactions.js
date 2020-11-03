@@ -51,8 +51,11 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 				await regtestUtils.mine(11);
 				const hashType = bitcoin.Transaction.SIGHASH_ALL;
 
+//for the output  lock of the airdropped tokens^
+                       const Alice_p2shOutputLock = await ID.createAddressLockedWithCirclesScript(AlicePubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest) // Alice  will get the airdrop
+                       const AliceAddressToUnlockLater = Alice_p2shOutputLock.address;
 
-			try {
+					   try {
 				// fund the P2SH address, make an output to refer to 
 				// unspent = await regtestUtils.faucet(p2sh.address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
 				// utx = await regtestUtils.fetch(unspent.txId) // gets json of txid
@@ -86,7 +89,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 				console.log("redeem for the airdrop: " + bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript))
 				psbt.addInput(inputDataToUnlockFaucet)
 					.addOutput({
-						script: Buffer.from(inputDataToUnlockFaucet.redeemScript,'hex'),
+						address: AliceAddressToUnlockLater,//script: Buffer.from(inputDataToUnlockFaucet.redeemScript,'hex'),
 						value: satoshisFromFaucet - minersFee, //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
 						//   "estimated_feerate" : feerate   (numeric, optional) Estimated feerate of the final signed transaction in BTC/kB. Shown only if all UTXO slots in the PSBT have been filled.
 						// network: { regtest },
@@ -123,7 +126,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 					oracleSignTx,  //: KeyPair,
 					oracleBurnTx  //: KeyPair,
 				)
-				const { address } = bitcoin.payments.p2sh({
+				const address = bitcoin.payments.p2sh({
 					redeem: { output: redeemScript, network: regtest },
 					network: regtest,
 				});
@@ -230,6 +233,15 @@ const dustSatoshis = 547
 		});
 
 		const unspents = await regtestUtils.unspents(AliceAddressToUnlock.address)
+
+
+
+
+			   const unspent2s = await regtestUtils.unspents(redeemScriptToAlice.toString('hex'))
+
+
+
+
 		//Todo turn on later:
 		// if (unspents.length != 1) return callback("", 'not exactly 1 unspent tx for the address to unlock')
 		// and then not needed:
@@ -266,20 +278,31 @@ const dustSatoshis = 547
 			    // for non segwit inputs, you must pass the full transaction buffer
 				const nonWitnessUtxo = Buffer.from(utx.txHex, 'hex');
 
-			psbt.addInput({hash: unspentToUnlock[voutIndex].txId, index: unspentToUnlock[voutIndex].vout, sequence: 0xFFFFFFFF, //https://bitcoin.stackexchange.com/questions/87372/what-does-the-sequence-in-a-transaction-input-mean)
-							nonWitnessUtxo: nonWitnessUtxo,
-							redeemScript: Buffer.from(redeem, 'hex')
-						})
+				                       const inputDataToUnlockALiceTransaction = await psbtHelper.getInputData(unspentToUnlock[voutIndex], redeemScriptToAlice, false, 'p2ms', regtestUtils)
+				                       psbt.addInput(inputDataToUnlockALiceTransaction)
+				
+			// psbt.addInput({hash: unspentToUnlock[voutIndex].txId, index: unspentToUnlock[voutIndex].vout, sequence: 0xFFFFFFFF, //https://bitcoin.stackexchange.com/questions/87372/what-does-the-sequence-in-a-transaction-input-mean)
+			// 				nonWitnessUtxo: nonWitnessUtxo,
+			// 				redeemScript: Buffer.from(redeem, 'hex')
+			// 			})
 			// psbt.addInput({hash: Buffer.from((unspentToUnlock[voutIndex].txId), 'hex').reverse(), index: unspentToUnlock[voutIndex].vout, seq: 0xffffffff})
 				psbt.addOutput({
 					// address: bitcoin.address.toOutputScript(p2shOutputLockGoesBackToAlice.address, regtest),// regtestUtils.RANDOM_ADDRESS,
 					script: Buffer.from(redeemScriptToAlice, 'hex'),// regtestUtils.RANDOM_ADDRESS,
+
+					// address: p2shOutputLockGoesBackToAlice.address,// regtestUtils.RANDOM_ADDRESS,^M
+
+
 					// address: regtestUtils.RANDOM_ADDRESS,
 					value: (satoshisToUnlock - dustSatoshis - minersFee), //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
 					//   "estimated_feerate" : feerate   (numeric, optional) Estimated feerate of the final signed transaction in BTC/kB. Shown only if all UTXO slots in the PSBT have been filled.
 				})
 				.addOutput({
 					script: Buffer.from(redeemScriptToBob, 'hex'),// regtestUtils.RANDOM_ADDRESS,
+
+
+// address: p2shOutputLockGoesToBob.address,^M
+
 					value: dustSatoshis,  //547  =  1 more than dust https://bitcoin.stackexchange.com/a/76157/45311
 				})
 			// no change output!
@@ -326,8 +349,8 @@ const dustSatoshis = 547
 
 
 
-			// psbt.signAllInputs(oracleSignTx);//alice1.keys[0]);
-				psbt.signInput(0,oracleSignTx,[hashType])
+			psbt.signAllInputs(oracleSignTx);//alice1.keys[0]);
+				// psbt.signInput(0,oracleSignTx,[hashType])
 		
 		
 		
@@ -404,8 +427,8 @@ const dustSatoshis = 547
 			// 	value: satoshisToUnlock,
 			// });
 
-			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " + (satoshisToUnlock - minersFee - dustSatoshis) + " is now locked with:\n" + bitcoin.script.toASM(redeemScriptToAlice) + "\nat address " + redeemScriptToAlice.address)
-			console.log(dustSatoshis + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob) + "\nat address " + redeemScriptToBob.address)
+			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " + (satoshisToUnlock - minersFee - dustSatoshis) + " is now locked with:\n" + bitcoin.script.toASM(redeemScriptToAlice))// + "\nat address " + redeemScriptToAlice.address)
+			console.log(dustSatoshis + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
 
 			CirclesCollection.updateOne(
 				// { "Attribute": "good" },

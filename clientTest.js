@@ -166,13 +166,13 @@ async function run() {
                                 // This step it new. Since we separate the signing operation and
                                 // the creation of the scriptSig and witness stack, we are able to
                                 // psbtFromOracleForAliceToSign.finalizeAllInputs()//psbtHelper.p2mscGetFinalScripts);
-                                // psbtFromOracleForAliceToSign.finalizeInput(0, psbtHelper.p2mscGetFinalScripts) 
+                                psbtFromOracleForAliceToSign.finalizeInput(0, psbtHelper.getFinalScripts2) 
 
                                 console.log('\npsbt can be decoded with "  bitcoin-cli -regtest decodepsbt ', psbtFromOracleForAliceToSign.toBase64() + '   "')
 
                                 // Mine 10 blocks, returns an Array of the block hashes
                                 // the above psbt will confirm
-                                // await regtestUtils.mine(10);
+                                await regtestUtils.mine(10);
                                 // build and broadcast our RegTest network
                                 await regtestUtils.broadcast(psbtFromOracleForAliceToSign.extractTransaction().toHex());
                                 // to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839

@@ -64,7 +64,7 @@ module.exports.getWitnessUtxo = (out) => {
 
 module.exports.getInputData = async (
     unspent,
-    payment,
+    redeem,
     isSegwit,
     redeemType,
     regtestUtils,
@@ -78,25 +78,25 @@ module.exports.getInputData = async (
     const mixin2 = {};
     switch (redeemType) {
         case 'p2ms':
-            if (payment.redeem.output.data) {
-                mixin2.redeemScript = Buffer.from(payment.redeem.output.data, 'hex');
+            if (redeem.data) {
+                mixin2.redeemScript = Buffer.from(redeem.data, 'hex');
             } else {
-                mixin2.redeemScript = payment.redeem.output;
+                mixin2.redeemScript = redeem;
             }
             break;
         case 'p2sh':
-            if (payment.redeem.output.data) {
-                mixin2.redeemScript = Buffer.from(payment.redeem.output.data, 'hex');
+            if (redeem.data) {
+                mixin2.redeemScript = Buffer.from(redeem.data, 'hex');
             } else {
-                mixin2.redeemScript = payment.redeem.output;
+                mixin2.redeemScript = redeem;
             }
             break;
         case 'p2wsh':
-            mixin2.witnessScript = payment.redeem.output;
+            mixin2.witnessScript = redeem;
             break;
         case 'p2sh-p2wsh':
-            mixin2.witnessScript = payment.redeem.redeem.output;
-            mixin2.redeemScript = payment.redeem.output;
+            mixin2.witnessScript = redeem.output;
+            mixin2.redeemScript = redeem;
             break;
     }
     return {
@@ -141,7 +141,7 @@ module.exports.decoderawtransaction = (hex) => {
 
 //from  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
 // This function is used to finalize a transaction using PSBT.
-module.exports.p2mscGetFinalScripts = (
+module.exports.getFinalScripts2 = (
     inputIndex,//: number,
     input,//: PsbtInput,
     script,//: Buffer,
