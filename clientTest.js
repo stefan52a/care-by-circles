@@ -72,7 +72,7 @@ async function run() {
   const hashType = bitcoin.Transaction.SIGHASH_ALL;
 
         // var answ = prompt('(a)irdrop or ask (o)racle to sign?')
-        answ = "o"
+        answ = "a"
         stop = false
         while (!stop) {
             stop = true
@@ -113,7 +113,7 @@ async function run() {
                         axiosInstance.post('/oraclePleaseSignTx', {
                             AliceId: AliceId,
                             pubkeyInUTXO: circles[0].pubKey,
-                            txId: circles[0].txId,//get txID from persistent storage on client
+                            // txId: circles[0].txId,//get txID from persistent storage on client
                             AliceNewPubkey: AliceNewPubkey,
 
                             BobId: BobId,
