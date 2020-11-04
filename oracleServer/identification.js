@@ -36,7 +36,7 @@ module.exports.hasNoGenesisCircle = (id, callback) => {
 
 module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest ) => { //todo how get new HD address?
 	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
-	const toPubkey = Buffer.from(toPubkeyStr, 'hex');   
+	// const toPubkey = Buffer.from(toPubkeyStr, 'hex');   
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
 	// const redeemscript = this.circlesLockScriptSigOutput(toPubkey,
 	// 	algorithm,
@@ -52,7 +52,7 @@ module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, contra
 	// let payment = {
     //     network: regtest,
 		// output:  
-		const redeemscript = this.circlesLockScriptSigOutput(toPubkey,
+		const redeemscript = this.circlesLockScriptSigOutput(toPubkeyStr,
 			contract,
 			oracleSignTx,  //: KeyPair,
 			oracleBurnTx  //: KeyPair,
@@ -104,30 +104,28 @@ module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, contra
 // to test scripts:  https://github.com/kallewoof/btcdeb
 module.exports.circlesLockScriptSigOutput =  (
 	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
-	toPubkey,
+	alice,
 	contract,
 	oraclePleaseSignTxQ,  //: KeyPair,
 	oracleBurnTxQ  //: KeyPair,
 ) => {
 	//returns a buffer:
-	return  bitcoin.script.fromASM(
-		`
-	  OP_IF
-			${crypto.SHA256(contract).toString()} 
-		  	OP_DROP
-			OP_2
-			${toPubkey.toString('hex')}
-			${oraclePleaseSignTxQ.publicKey.toString('hex')}
-			OP_2
-			OP_CHECKMULTISIGVERIFY
-	  OP_ELSE
-		  	abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd
-	  		OP_DROP
-			OP_1
-			${oracleBurnTxQ.publicKey.toString('hex')}
-			OP_1
-			OP_CHECKMULTISIGVERIFY
-      OP_ENDIF
+	return bitcoin.script.fromASM(`
+	OP_IF
+		${bitcoin.crypto.hash256(Buffer.from(contract)).toString('hex')} 
+		OP_DROP
+		OP_2
+		${alice}			
+		${oraclePleaseSignTxQ.publicKey.toString('hex')}
+		OP_2
+	OP_ELSE
+		${bitcoin.crypto.hash256(Buffer.from("programmaatje")).toString('hex')} 
+		OP_DROP
+		OP_1
+		${oracleBurnTxQ.publicKey.toString('hex')}
+		OP_1
+	OP_ENDIF
+	OP_CHECKMULTISIG
     `
 			.trim()
 			.replace(/\s+/g, ' '),

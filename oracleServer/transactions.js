@@ -234,18 +234,16 @@ const dustSatoshis = 547
 
 		const unspents = await regtestUtils.unspents(AliceAddressToUnlock.address)
 
-
-
-
-			   const unspent2s = await regtestUtils.unspents(redeemScriptToAlice.toString('hex'))
+			//    const unspent2s = await regtestUtils.unspents(redeemScriptToAlice.toString('hex'))
 
 
 
 
-		//Todo turn on later:
-		// if (unspents.length != 1) return callback("", 'not exactly 1 unspent tx for the address to unlock')
-		// and then not needed:
-		const unspentToUnlock = unspents.filter(x => x.txId ===  txIdToUnlock);
+			if (unspents.length == 0) return callback("", "", "400", 'the ttransaction is already spent:  no unspent tx for the address to unlock')
+			if (unspents.length > 1) return callback("", "", "500", 'more than 1 unspent tx for the address to unlock')
+
+
+		const unspentToUnlock = [unspents[0]]//TODTODOTDOTDO  .filter(x => x.txId ===  txIdToUnlock);
 
 		// const txIdToUnlockHash = bitcoin.Transaction.fromHex(txIdToUnlock).getId()
 

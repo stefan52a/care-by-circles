@@ -4,6 +4,7 @@ const constants = require('./oracleServer/constants');
 const fs = require('fs');
 const bitcoin = require('bitcoinjs-lib');
 const ID = require('./oracleServer/identification');
+const crypto = require('./oracleServer/crypto');
 const psbtHelper = require('./oracleServer/psbtHelper');
 const regtestClient = require('regtest-client'); /// seee https://github.com/bitcoinjs/regtest-client
 // const e = require('express');
@@ -73,6 +74,7 @@ async function run() {
 
         // var answ = prompt('(a)irdrop or ask (o)racle to sign?')
         answ = "o"
+        // console.log(crypto.hash160("blbalbal").toString('hex'))
         stop = false
         while (!stop) {
             stop = true
@@ -98,7 +100,7 @@ async function run() {
                 //should be stored in persistent storage, in this example we use mongodb:
                 CirclesCollection.find({ "saltedHashedIdentification": AliceId, "version": constants.VERSION }).toArray(async function (err, circles) {
                     if (err) { return console.log("", "Something went terribly wrong: " + err) }
-                    if (circles.length != 1) { return console.log("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!, maybe your forget to create a Circle first") }
+                    if (circles.length != 1) { return console.log("", "Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!, maybe you forgot to create a Circle first") }
                     // addressToUnlock=circles[0].BTCaddress;
                     const addressToUnlock = circles[0].addressToUnlock
                     const unspents = await regtestUtils.unspents(addressToUnlock)
@@ -176,10 +178,15 @@ async function run() {
                                 // build and broadcast our RegTest network
                                 await regtestUtils.broadcast(psbtFromOracleForAliceToSign.extractTransaction().toHex());
                                 // to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
-
                                 // for bitcoin-cli decodepsbt use the psbt fromhex then to base64 (e.g. with cyberchef)
 
-
+                                await regtestUtils.verify({
+                                    txId: AliceClientSignTxID,
+                                    address: AliceNewPubkey,
+                                    vout: 0,
+                                    value: 7e4,
+                                });
+                
                                 // const inputDataToUnlockALiceTransaction = await psbtHelper.getInputData(unspentToUnlock[0], paymentToUnlock, false, 'p2sh', regtestUtils)  //todo find out which indexe to take
                                 // psbt.addInput(inputDataToUnlockALiceTransaction)  //should result in :    'Can not modify transaction, signatures exist.'
 
