@@ -202,14 +202,14 @@ module.exports.getFinalScripts2 = (
     console.log ("or use https://github.com/crm416/script")
 
 
-    var evaluate = require('bitcoin-script').evaluate;
-    var script = 'OP_2 OP_3 OP_MUL OP_6 OP_EQUAL OP_VERIFY';
-    // console.log(evaluate(script, /* enableDisabled */ true));
-    // => true
-    script = "3045022100a427e9a4c4f6bd14068bf30d6932a9160b25136e30153102395ccb1fe618e6d40220175e3fb101eaad3710c6e5d39a0f53f2cb477ccaab62388caac8610ea1d6bfa001 1 02758bfe7f2b8e61821e3e32b47be516193117daddde3c3f9126b8f2bd3ae40e1d 02a211312047f4ed82628df97148cccbbaba8927fce3f47061e841536fc5a3ee1e 2 OP_CHECKMULTISIG OP_VERIFY"
-    console.log (script + "\nevaluates to: "+evaluate(script, true)); 
-    script= bitcoin.script.toASM(bitcoin.script.decompile(payment.redeem.input)) + " " + bitcoin.script.toASM(decompiled)
-    console.log (script + "\nevaluates to: "+evaluate(script, true)); 
+    // var evaluate = require('bitcoin-script').evaluate;
+    // var script = 'OP_2 OP_3 OP_MUL OP_6 OP_EQUAL OP_VERIFY';
+    // // console.log(evaluate(script, /* enableDisabled */ true));
+    // // => true
+    // script = "3045022100a427e9a4c4f6bd14068bf30d6932a9160b25136e30153102395ccb1fe618e6d40220175e3fb101eaad3710c6e5d39a0f53f2cb477ccaab62388caac8610ea1d6bfa001 1 02758bfe7f2b8e61821e3e32b47be516193117daddde3c3f9126b8f2bd3ae40e1d 02a211312047f4ed82628df97148cccbbaba8927fce3f47061e841536fc5a3ee1e 2 OP_CHECKMULTISIG OP_VERIFY"
+    // console.log (script + "\nevaluates to: "+evaluate(script, true)); 
+    // script= bitcoin.script.toASM(bitcoin.script.decompile(payment.redeem.input)) + " " + bitcoin.script.toASM(decompiled)
+    // console.log (script + "\nevaluates to: "+evaluate(script, true)); 
 
 
 

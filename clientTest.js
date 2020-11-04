@@ -13,8 +13,8 @@ async function run() {
     // Make only one mongodb connection per session:  BY TOM:
     const axios = require('axios')
     const axiosInstance = axios.create({
-        baseURL: 'http://localhost:3000/api/',
-        // baseURL: 'https://www.carebycircle.com/api',
+        // baseURL: 'http://localhost:3000/api/',
+        baseURL: 'https://www.carebycircle.com/api',
         timeout: 10000
     });
     // const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
@@ -59,7 +59,7 @@ async function run() {
             const circleID = response.data.Circle;//store circleID persistent on client
             //Now ALice will let Bob in her circle:
             const filenameContract = './oracleServer/ExamplecontractExample.js';
-            fs.readFile(filenameContract, 'utf8', function (err, contract) {
+            fs.readFile(filenameContract, 'utf8',  function (err, contract) {
                 if (err) throw err;
                 const AliceNewPubkey = AliceClientSignTxID.publicKey.toString('hex')
                 axiosInstance.post('/oraclePleaseSignTx', {
@@ -83,7 +83,7 @@ async function run() {
                         // each signer imports & signs Psbt.fromBase64(psbtBaseText)
                         const psbt_from_Oracle_for_Alice_to_sign = bitcoin.Psbt.fromBase64(response.data.psbtBaseText, { network: regtest });//Alice = me
                         // signInput and signInputAsync are better (They take the input index explicitly as the first arg)
-                        await psbt_from_Oracle_for_Alice_to_sign.signAllInputs(AliceClientSignTxID);
+                         psbt_from_Oracle_for_Alice_to_sign.signAllInputs(AliceClientSignTxID);
                         // If your signer object's sign method returns a promise, use the following
                         // await Alice.signAllInputsAsync(alice2.keys[0])
 
@@ -100,9 +100,9 @@ async function run() {
 
                         // Mine 10 blocks, returns an Array of the block hashes
                         // the above psbt will confirm
-                        await regtestUtils.mine(10);
+                         regtestUtils.mine(10);
                         // build and broadcast to our RegTest network
-                        await regtestUtils.broadcast(psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex());
+                        regtestUtils.broadcast(psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex());
                         // to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
                         // for bitcoin-cli decodepsbt use the psbt fromhex then to base64 (e.g. with cyberchef)
                         console.log('\npsbt can be decoded with "  bitcoin-cli -regtest decodepsbt ', psbt_from_Oracle_for_Alice_to_sign.toBase64() + '   "')//fromhex, tobase64  (e.g. with cyberchef)
