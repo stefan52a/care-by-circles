@@ -75,27 +75,22 @@ async function run() {
         // var answ = prompt('(a)irdrop or ask (o)racle to sign?')
         answ = "o"
         // console.log(crypto.hash160("blbalbal").toString('hex'))
-        stop = false
-        while (!stop) {
-            stop = true
-            if (answ === "a") {
+        if (answ === "a") {
 
-                axiosInstance.post('/oracleGetAirdrop', {
-                    // generate another pubkey from a WIF
-                    AlicePubkey: AliceClientSignTxID.publicKey.toString('hex'),
-                    AliceId: '+31-6-233787929',
+            axiosInstance.post('/oracleGetAirdrop', {
+                // generate another pubkey from a WIF
+                AlicePubkey: AliceClientSignTxID.publicKey.toString('hex'),
+                AliceId: '+31-6-233787929',
+            })
+                .then(function (response) {
+                    console.log(response.data);
+                    const circleID = response.data.CircleId;//store them persistent on client
+                    const psbt = response.data.psbt;//store them persistent on client, this should still fromhex, tobase64  (e.g. with cyberchef)
                 })
-                    .then(function (response) {
-                        console.log(response.data);
-                        const circleID = response.data.CircleId;//store them persistent on client
-                        const psbt = response.data.psbt;//store them persistent on client, this should still fromhex, tobase64  (e.g. with cyberchef)
-                    })
-                    .catch(function (error) {
-                        console.log(error.message);
-                    });
-                stop = true
+                .catch(function (error) {
+                    console.log(error.message);
+                });
             } else if (answ === "o") {
-                stop = true
 
                 //should be stored in persistent storage, in this example we use mongodb:
                 CirclesCollection.find({ "saltedHashedIdentification": AliceId, "version": constants.VERSION }).toArray(async function (err, circles) {
@@ -170,7 +165,6 @@ async function run() {
                                 // psbtFromOracleForAliceToSign.finalizeAllInputs()//psbtHelper.p2mscGetFinalScripts);
                                 psbtFromOracleForAliceToSign.finalizeInput(0, psbtHelper.getFinalScripts2) 
 
-                                console.log('\npsbt can be decoded with "  bitcoin-cli -regtest decodepsbt ', psbtFromOracleForAliceToSign.toBase64() + '   "')
 
                                 // Mine 10 blocks, returns an Array of the block hashes
                                 // the above psbt will confirm
@@ -179,14 +173,62 @@ async function run() {
                                 await regtestUtils.broadcast(psbtFromOracleForAliceToSign.extractTransaction().toHex());
                                 // to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
                                 // for bitcoin-cli decodepsbt use the psbt fromhex then to base64 (e.g. with cyberchef)
+                                console.log('\npsbt can be decoded with "  bitcoin-cli -regtest decodepsbt ', psbtFromOracleForAliceToSign.toBase64() + '   "')
 
-                                await regtestUtils.verify({
-                                    txId: AliceClientSignTxID,
-                                    address: AliceNewPubkey,
-                                    vout: 0,
-                                    value: 7e4,
-                                });
+                                CirclesCollection.updateOne(
+                                    // { "Attribute": "good" },
+                                    { instanceCircles: circles[0].instanceCircles, saltedHashedIdentification: BobId,  "version": constants.VERSION  },
+                                    { $set: { txId: psbtFromOracleForAliceToSign.extractTransaction().toHex(), updateDate: Date.now } },
+                                    function (err, cirrkes) {
+                                        if (err) { return console.log({ error: "Something went wrong while updating final transaction!" + err }) }
+                                        // addressToUnlock=circles[0].BTCaddress;
+                                        // txId = circles[0].txId;
+                                        // pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+
+
+
+                                        axiosInstance.post('/startFresh', {
+                                            // generate another pubkey from a WIF
+                                            circleId: circles[0].instanceCircles,
+                                            AliceId: '+31-6-233787929',
+                                        })
+                                            .then(function (response) {
+                                                console.log(response.data);
+                                            })
+                                            .catch(function (error) {
+                                                console.log(error.message);
+                                            });
+                        
+                        
+
+
+
+                                        return console.log({ error: "none" })
+                                    })
+                            
+
+//////////////////////////////////////////////////////////////////////todo
+
+//////////////////////////////////////////////////////////////////////todo
+
+//////////////////////////////////////////////////////////////////////todo
+
+//////////////////////////////////////////////////////////////////////todo
+
+//////////////////////////////////////////////////////////////////////todo
+
+                                // await regtestUtils.verify({
+                                //     txId: AliceClientSignTxID,
+                                //     address: AliceNewPubkey,
+                                //     vout: 0,
+                                //     value: 7e4,
+                                // });
                 
+//////////////////////////////////////////////////////////////////////todo
+
+//Now do it again from alice's address
+
+
                                 // const inputDataToUnlockALiceTransaction = await psbtHelper.getInputData(unspentToUnlock[0], paymentToUnlock, false, 'p2sh', regtestUtils)  //todo find out which indexe to take
                                 // psbt.addInput(inputDataToUnlockALiceTransaction)  //should result in :    'Can not modify transaction, signatures exist.'
 
@@ -314,10 +356,12 @@ async function run() {
                             });
                     });
                 });
-            } else {
-                answ = prompt('(a)irdrop or ask (o)racle to sign?')
+            // } else if (answ === "f") {
+
+
+//start afresh:
+
             }
-        }
     })
 }
 

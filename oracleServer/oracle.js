@@ -32,12 +32,12 @@ app.post('/api/oracleGetAirdrop', async (req, res) => {  //Alice wil get an aird
 			return res.status(400).json({ error: error + " Not allowed (id does not exist, id is not a person)" });
 		}
 		//http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
-		filename = './ExamplecontractExample.js'; 
+		filename = './ExamplecontractExample.js';
 		fs.readFile(filename, 'utf8', function (err, contractFromFile) {
 			if (err) throw err;
 			console.log('OK: ' + filename);
 			console.log(contractFromFile)
-			const contract=contractFromFile.trim().replace(/\s+/g, ' ')
+			const contract = contractFromFile.trim().replace(/\s+/g, ' ')
 			ID.hasNoGenesisCircle(AliceId, (ans, error) => {
 				if (error) {
 					console.log("error: " + error);
@@ -53,8 +53,8 @@ app.post('/api/oracleGetAirdrop', async (req, res) => {  //Alice wil get an aird
 					const psbt = answ.psbt
 					const CircleId = answ.CircleId
 					//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
-					console.log({version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: contract })
-					res.status(200).json({version: constants.VERSION , error: "none", Circle: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: contract });// xx e.g. could e.g. be be the same as the current blockchain reward
+					console.log({ version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: contract })
+					res.status(200).json({ version: constants.VERSION, error: "none", Circle: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: contract });// xx e.g. could e.g. be be the same as the current blockchain reward
 					return
 					// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 				})
@@ -150,7 +150,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										// 										dum();
 										// 										//endtemp 
 										// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-										res.status(status).json({error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal })
+										res.status(status).json({ error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal })
 										return
 
 									})
@@ -180,55 +180,76 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 	})
 });
 
-app.post('/api/GiveTxIdToOracle', (req, res) => {
-	const instanceCircles = req.body.instanceCircles;
-	const id = req.body.id;
 
-	const txId = req.body.txId;
-
-	//get address of public key:  https://bitcoin.stackexchange.com/a/54999/45311
-	//update mongoDB here for instanceCircles, id   combination with valuyes txId and address (ToUnlock)
+app.post('/api/startFresh', (req, res) => {  //temporary endpoint
+	// const addressToUnlock = req.body.addressToUnlock;// "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; // example address
+	const AliceId = req.body.AliceId;
+	const circleId = req.body.circleId;
 	CirclesCollection.updateOne(
 		// { "Attribute": "good" },
-		{ instanceCircles: instanceCircles, saltedHashedIdentification: id,  "version": constants.VERSION  },
-		{ $set: { txId: txId, addressToUnlock: address, updateDate: Date.now } },
+		{ saltedHashedIdentification: AliceId, instanceCircles: circleId, "version": constants.VERSION },
+		{ $set: { version: "deleted"+ constants.VERSION, updateDate: Date.now } },
+		// { upsert: true },
 		function (err, circles) {
-			if (err) { return res.status(500).json({ error: "Something went wrong while updating!" + err }) }
-			// addressToUnlock=circles[0].BTCaddress;
-			// txId = circles[0].txId;
-			// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-			return res.status(200).json({ error: "none" })
-		})
+			if (err) { return res.status(500).json({error: "Something went wrong: could not delete id/circle combination" + err}) }
+			if (circles.matchedCount != 1) return res.status(500).json({error: "Something went terribly wrong: no or more than 1 circles assigned to a user"} )
+			else {
+				return res.status(200).json({error:"none"});
+			}
+
+
+		});
 });
 
+	// app.post('/api/GiveTxIdToOracle', (req, res) => {
+	// 	const instanceCircles = req.body.instanceCircles;
+	// 	const id = req.body.id;
 
-function createTempContractFile(randFile, contractAlgorithm, callback) {
-	//a janitor that deletes the contract file after 30 secs
-	setTimeout((function (randFil) {
-		return function () {
-			rmFile(randFil)
-		}
-	})(randFile), 30000);
-	fs.writeFile(randFile, contractAlgorithm, callback)
-}
+	// 	const txId = req.body.txId;
 
-function rmFile(f) {
-	fs.unlink(f, (err) => {
-		if (err) {
-			return console.log({ error: "Unexpected error removing " + f + " " + err })
-		}
-	})
-}
+	// 	//get address of public key:  https://bitcoin.stackexchange.com/a/54999/45311
+	// 	//update mongoDB here for instanceCircles, id   combination with valuyes txId and address (ToUnlock)
+	// 	CirclesCollection.updateOne(
+	// 		// { "Attribute": "good" },
+	// 		{ instanceCircles: instanceCircles, saltedHashedIdentification: id,  "version": constants.VERSION  },
+	// 		{ $set: { txId: txId, addressToUnlock: address, updateDate: Date.now } },
+	// 		function (err, circles) {
+	// 			if (err) { return res.status(500).json({ error: "Something went wrong while updating!" + err }) }
+	// 			// addressToUnlock=circles[0].BTCaddress;
+	// 			// txId = circles[0].txId;
+	// 			// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+	// 			return res.status(200).json({ error: "none" })
+	// 		})
+	// });
 
-//janitor clean any old contract files
-require("glob").glob("contractTMP*.js", function (er, files) {
-	if (er) console.log(er)
-	for (f in files) {
-		fs.unlink(files[f], (err) => {
-			if (err) console.log({ error: "Unexpected error removing " + files[f] + " " + err })
+
+	function createTempContractFile(randFile, contractAlgorithm, callback) {
+		//a janitor that deletes the contract file after 30 secs
+		setTimeout((function (randFil) {
+			return function () {
+				rmFile(randFil)
+			}
+		})(randFile), 30000);
+		fs.writeFile(randFile, contractAlgorithm, callback)
+	}
+
+	function rmFile(f) {
+		fs.unlink(f, (err) => {
+			if (err) {
+				return console.log({ error: "Unexpected error removing " + f + " " + err })
+			}
 		})
 	}
-});
+
+	//janitor clean any old contract files
+	require("glob").glob("contractTMP*.js", function (er, files) {
+		if (er) console.log(er)
+		for (f in files) {
+			fs.unlink(files[f], (err) => {
+				if (err) console.log({ error: "Unexpected error removing " + files[f] + " " + err })
+			})
+		}
+	});
 
 
 // Make only one mongodb connection per session:  BY TOM:

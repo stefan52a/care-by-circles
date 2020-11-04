@@ -239,7 +239,7 @@ const dustSatoshis = 547
 
 
 
-			if (unspents.length == 0) return callback("", "", "400", 'the ttransaction is already spent:  no unspent tx for the address to unlock')
+			if (unspents.length == 0) return callback("", "", "400", 'the transaction is already spent:  no unspent tx for the address to unlock')
 			if (unspents.length > 1) return callback("", "", "500", 'more than 1 unspent tx for the address to unlock')
 
 
