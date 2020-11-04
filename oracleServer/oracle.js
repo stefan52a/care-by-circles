@@ -32,7 +32,7 @@ app.post('/api/oracleGetAirdrop', async (req, res) => {  //Alice wil get an aird
 			return res.status(400).json({ error: error + " Not allowed (id does not exist, id is not a person)" });
 		}
 		//http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
-		filename = './ExamplecontractExample.js';
+		filename = __dirname+'/ExamplecontractExample.js';
 		fs.readFile(filename, 'utf8', function (err, contractFromFile) {
 			if (err) throw err;
 			console.log('OK: ' + filename);
@@ -192,7 +192,7 @@ app.post('/api/startFresh', (req, res) => {  //temporary endpoint
 		// { upsert: true },
 		function (err, circles) {
 			if (err) { return res.status(500).json({error: "Something went wrong: could not delete id/circle combination" + err}) }
-			if (circles.matchedCount != 1) return res.status(500).json({error: "Something went terribly wrong: no or more than 1 circles assigned to a user"} )
+			if (circles.matchedCount != 1) return res.status(500).json({error: "Something went terribly wrong: no or more than 1 circles assigned to a user"} )  
 			else {
 				return res.status(200).json({error:"none"});
 			}

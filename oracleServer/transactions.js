@@ -34,6 +34,8 @@ const oracleBurnTx = bitcoin.ECPair.fromWIF(
 	'cRs1KTufxBpY4wcexxaQEULA4CFT3hKTqENEy7KZtpR5mqKeijwU',  ///// TODO KEEP SECRET
 	regtest,
 );
+
+
 // todo get miner's fee from a servce
 // ftm take satoshis:
 const minersFee = 6100;
@@ -232,18 +234,19 @@ const dustSatoshis = 547
 			network: regtest,
 		});
 
-		const unspents = await regtestUtils.unspents(AliceAddressToUnlock.address)
+		const unspentToUnlock = await regtestUtils.unspents(AliceAddressToUnlock.address)
 
 			//    const unspent2s = await regtestUtils.unspents(redeemScriptToAlice.toString('hex'))
 
 
 
 
-			if (unspents.length == 0) return callback("", "", "400", 'the transaction is already spent:  no unspent tx for the address to unlock')
-			if (unspents.length > 1) return callback("", "", "500", 'more than 1 unspent tx for the address to unlock')
+			if (unspentToUnlock.length == 0) return callback("", "", "400", 'the transaction is already spent:  no unspent tx for the address to unlock')
+			// if (unspents.length > 1) return callback("", "", "500", 'more than 1 unspent tx for the address to unlock, taking the first one')
+			if (unspentToUnlock.length > 1) console.log('more than 1 unspent tx for the address to unlock, taking a arbitrary one with value > dust')
 
 
-		const unspentToUnlock = [unspents[0]]//TODTODOTDOTDO  .filter(x => x.txId ===  txIdToUnlock);
+		// const unspentToUnlock = [unspents[0]]//TODTODOTDOTDO  .filter(x => x.txId ===  txIdToUnlock);
 
 		// const txIdToUnlockHash = bitcoin.Transaction.fromHex(txIdToUnlock).getId()
 
