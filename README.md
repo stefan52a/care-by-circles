@@ -41,36 +41,49 @@ Downloads the image from docker hub automatically:
 docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 ```
 
-2. Clone or download and run **npm install** 
+2. Clone or download and run 
+```
+npm install
+```
 
-3. Install and run mongodb locally:
+3. Install and run mongodb locally, see for instructions:
 https://docs.mongodb.com/manual/administration/install-community/
 
 4. Run a regtest server, e.g.:
 
+```
 docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
-
+```
 
 For your information: you can go into the docker by:
 
 a. get the CONTAINER_ID by
 
+```
 docker container ls
+```
 
 b. then
 
+```
 docker exec -it CONTAINER_ID bash
+```
 
 and then inside the docker you can execute commands like:
 
+```
 bitcoin-cli -regtest help
+```
 
 5.  Run the Oracle server 
 
+```
+cd oracleServer
 node oracle.js    #or use your favorite debugger
+```
 
 6. Run a client or a test e.g.:
 
-cd test
-
+```
 node clientTest   #or use your favorite debugger
+```
