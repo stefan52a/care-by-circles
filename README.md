@@ -10,16 +10,19 @@ Oracle server for Care by Circles, social inclusion.
 
 Circles are tribes with a maximum of 150 (Dunbar's number) people each.
 
+Under the hood it uses Bitcoin blockchain principles for consensus and Oracle contracts with Partially Signed Bitcoin Transactions (PSBT).
+
 All transactions are locked by the following scriptPub (to lock output):
 
 ```
 IF
 <oraclePleaseSignTx_hash> DROP
-2 <ID pubkey> <oraclePleaseSignTx_pubkey> 2 CHECKMULTISIG
+2 <ID pubkey> <oraclePleaseSignTx_pubkey> 2
 ELSE
 <contractBurn_hash> DROP
-n+1 <IDi pubkey> ..... <IDm pubkey><oracleBurn pubkey> m+1 CHECKMULTISIG
+n+1 <IDi pubkey> ..... <IDm pubkey><oracleBurn pubkey> m+1
 ENDIF
+CHECKMULTISIG
 ```
 where n>m/2
 
