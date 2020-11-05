@@ -52,15 +52,14 @@ npm install
 docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 ```
 
-- For your information: you can go into the docker by:
+For your information: you can go into the docker by:
 
-    - get the CONTAINER_ID by
+- get the CONTAINER_ID by
 
 ```
 docker container ls
 ```
-- 
-    - then
+- then
 
 ```
 docker exec -it CONTAINER_ID bash
