@@ -13,5 +13,5 @@
             ],
             "program": "${workspaceFolder}/clientTest.js"  // "${file}"  //
         }
-    ]
+    ] 
 }
