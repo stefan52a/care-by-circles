@@ -119,7 +119,7 @@ async function run() {
                         //     value: 7e4,
                         // });
                         //////////////////////////////////////////////////////////////////////todo
-                        //cleanup so we can restart: THIS endpoint will be REMOVED, Just here for testing
+                        //cleanup so we can restart: THIS endpoint will be REMOVED, Just here for testing:
                         axiosInstance.post('/startFresh', {
                             circleId: circleID,
                             AliceId: '+31-6-233787929',
