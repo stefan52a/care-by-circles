@@ -6,15 +6,13 @@ See https://CareByCircles.Com
 [![Promo Care By Circles](READMEImages/CareByCircles.gif)](https://youtu.be/YczwK4v-uJ0)
 
 
-Express RESTful API server for CirclesOracle.
-
-Oracle server for Care by Circles, social inclusion.
+Express RESTful API server for the Oracle for Care By Circles, social inclusion.
 
 Circles are tribes with a maximum of 150 (Dunbar's number) people each.
 
 Under the hood it uses Bitcoin blockchain principles for consensus and Oracle contracts with Partially Signed Bitcoin Transactions (PSBT).
 
-All transactions are locked by the following scriptPub (to lock output):
+Transactions are locked by the following scriptPub (to lock output):
 
 ```
 IF
@@ -33,12 +31,11 @@ PSBT transaction which is partially to be signed by the Oracle oraclePleaseSignT
 ![Alt text](READMEImages/ToBeSignedPSBT.jpg?raw=true "Transaction")
 
 
-Also includes a simple web application (WIP)
 
 ## Usage ##
 1. Setup a BTC regtest server with junderw who maintains an image of a Dockerfile as junderw/bitcoinjs-regtest-server on Docker Hub.
 
-Downloads the image from docker hub automatically:
+    For that download the image from docker hub automatically:
 ```
 docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 ```
@@ -48,8 +45,7 @@ docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 npm install
 ```
 
-3. Install and run mongodb locally, see for instructions:
-https://docs.mongodb.com/manual/administration/install-community/
+3. Install and run mongodb locally, see for instructions: https://docs.mongodb.com/manual/administration/install-community/
 
 4. Run a regtest server, e.g.:
 
@@ -57,21 +53,21 @@ https://docs.mongodb.com/manual/administration/install-community/
 docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 ```
 
-For your information: you can go into the docker by:
+- For your information: you can go into the docker by:
 
-a. get the CONTAINER_ID by
+    - get the CONTAINER_ID by
 
 ```
 docker container ls
 ```
-
-b. then
+- 
+    - then
 
 ```
 docker exec -it CONTAINER_ID bash
 ```
 
-and then inside the docker you can execute commands like:
+- and then inside the docker you can execute commands like:
 
 ```
 bitcoin-cli -regtest help
