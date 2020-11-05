@@ -1,10 +1,9 @@
 # Care By Circles Oracle
 
-See https://CareByCircles.Com
+See https://CareByCircles.Com and https://youtu.be/YczwK4v-uJ0
 
 
 [![Promo Care By Circles](READMEImages/CareByCircles.gif)](https://youtu.be/YczwK4v-uJ0)
-
 
 Express RESTful API server for the Oracle for Care By Circles, social inclusion.
 
