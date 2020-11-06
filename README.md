@@ -1,5 +1,7 @@
 # Care By Circles Oracle
 
+Give & Take Care.
+
 See https://CareByCircles.Com and https://youtu.be/YczwK4v-uJ0
 
 
@@ -9,13 +11,24 @@ Express RESTful API server for the Oracle for Care By Circles, social inclusion.
 
 Circles are tribes with a maximum of 150 (Dunbar's number) people each.
 
-Under the hood it uses Bitcoin blockchain principles for consensus and Oracle contracts with Partially Signed Bitcoin Transactions (PSBT).
+An individual person's id is not stored as is on the blockchain or decentral storage.
+
+GDPR consideration:
+In order, however, to determine the uniqueness of an id, the Oracle needs to be knowledgable about the id. Therefore the Oracle stores the id along with a salt in a table only accessible to the Oracle.
+The oracle enforces the uniqueness of the id. The user may withdraw the salt and the Oracle promises to delete the relationship between id and that salt, by which the data on his Circles in the blockchain is not retrievable anymore.
+What gets stored in a decentral table, is:
+
+circle instance  <->  Hash(id, salt)     relationship 
+
+For the id it would be better to use some kind of DID system here, but this is outside the scope ATM.
+
+Under the hood it uses Bitcoin blockchain principles for consensus (on Dunbar's number) and Oracle contracts with Partially Signed Bitcoin Transactions (PSBT).
 
 Transactions are locked by the following scriptPub (to lock output):
 
 ```
 IF
-<oraclePleaseSignTx_hash> DROP
+<contractPleaseSign_hash> DROP
 2 <ID pubkey> <oraclePleaseSignTx_pubkey> 2
 ELSE
 <contractBurn_hash> DROP
@@ -23,7 +36,22 @@ n+1 <IDi pubkey> ..... <IDm pubkey><oracleBurn pubkey> m+1
 ENDIF
 CHECKMULTISIG
 ```
-where n>m/2
+where n>m/2, and contractPleaseSign_hash is the hash of:
+
+```
+const ID = require('./identification');
+module.exports.contract = (newId, callback) => {
+    const dunbarsNumber = 150; 
+    ID.checkExists(newId, (err) => {
+        if (err) callback('', err + ' Contract error: Not allowed (newId does not exist)');
+        ID.hasGenesisCircle(newId, (err, circleId) => {
+            if (err) callback('', err + ' Contract error:  Not allowed (NewId already in Circleinstance) ' + circleId);
+            else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Contract error: Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId);
+            else callback(PSBT);
+        });
+    });
+}
+```
 
 PSBT transaction which is partially to be signed by the Oracle oraclePleaseSignTx, looks like:
 
