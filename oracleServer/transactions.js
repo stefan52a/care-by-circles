@@ -205,8 +205,8 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 	// force update MTP  (Merkle Tree Proof?)
 	const dustSatoshis = 547
 	CirclesCollection.find({ "saltedHashedIdentification": ID.HMAC(AliceId, saltAlice), "version": constants.VERSION }).toArray(async function (err, circles) {
-		if (err) { return callback("", "", 500, "2 Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
-		if (circles.length != 1) { return callback("", "", 500, "2 Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
+		if (err) { return callback("","", "", 500, "2 Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
+		if (circles.length != 1) { return callback("","", "", 500, "2 Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
 		// addressToUnlock=circles[0].BTCaddress;
 		await regtestUtils.mine(11);
 		// console.log("output lock of Alice's transaction: " + bitcoin.script.toASM(Buffer.from(paymentToUnlock.output.data, 'hex')))
@@ -232,7 +232,7 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 
 
 
-		if (unspentToUnlock.length == 0) return callback("", "", "400", 'the transaction is already spent:  no unspent tx for the address to unlock')
+		if (unspentToUnlock.length == 0) return callback("", "", "", "400", 'the transaction is already spent:  no unspent tx for the address to unlock')
 		// if (unspents.length > 1) return callback("", "", "500", 'more than 1 unspent tx for the address to unlock, taking the first one')
 		if (unspentToUnlock.length > 1) console.log('more than 1 unspent tx for the address to unlock, taking a arbitrary one with value > dust')
 
@@ -432,16 +432,16 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 				// { $set: { addressToUnlock: "determine when fully signed"} },
 				// { upsert: true },
 				function (err, circles) {
-					if (err) { return callback("", "", 500, "Something went wrong terribly while inserting!" + err) }
+					if (err) { return callback("", "", "", 500, "Something went wrong terribly while inserting!" + err) }
 					// addressToUnlock=circles[0].BTCaddress;
 					// txId = circles[0].txId;
 					// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-					return callback(psbtBaseText, psbtSignedByOracleText, 200);
+					return callback(BobAddressToUnlockLater, psbtBaseText, psbtSignedByOracleText, 200);
 				})
 
 		}
 		catch (e) {
-			return callback("", "", 500, e)
+			return callback("", "", "", 500, e)
 		}
 
 	})

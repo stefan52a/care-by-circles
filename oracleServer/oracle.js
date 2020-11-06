@@ -108,7 +108,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										console.log({ error: errInContract })
 										return res.json({ error: errInContract })
 									}
-									transactions.PSBT(AliceId, saltAlice, contract, AliceNewPubkey, BobId, saltBob, BobPubkey, circleId, (PSBT, OracleFinal, status, err) => {
+									transactions.PSBT(AliceId, saltAlice, contract, AliceNewPubkey, BobId, saltBob, BobPubkey, circleId, (AliceAddressOfNewUTXO, PSBT, OracleFinal, status, err) => {
 										if (err) {
 											console.log({ status: status, error: err })
 											return res.status(status).json({ error: err })
@@ -154,7 +154,8 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										// 										dum();
 										// 										//endtemp 
 										// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-										res.status(status).json({ error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal })
+										res.status(status).json({ error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal, 
+										 version: constants.VERSION, error: "none", Circle: circleId, tokens: (1e5 / 1e8), addressOfUTXO: AliceAddressOfNewUTXO, contract: contract })
 										return
 
 									})
@@ -185,26 +186,26 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 });
 
 
-app.post('/api/startFresh', (req, res) => {  //temporary endpoint
-	// const addressToUnlock = req.body.addressToUnlock;// "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; // example address
-	const AliceId = req.body.AliceId;
-	const saltAlice = req.body.saltAlice;
-	const circleId = req.body.circleId;
-	CirclesCollection.updateOne(
-		// { "Attribute": "good" },
-		{ saltedHashedIdentification: ID.HMAC(AliceId, saltAlice), instanceCircles: circleId, "version": constants.VERSION },
-		{ $set: { version: "deleted"+ constants.VERSION } },
-		// { upsert: true },
-		function (err, circles) {
-			if (err) { return res.status(500).json({error: "Something went wrong: could not delete id/circle combination" + err}) }
-			if (circles.matchedCount != 1) return res.status(500).json({error: "2: Something went terribly wrong: no or more than 1 circles assigned to a user"} )  
-			else {
-				return res.status(200).json({error:"none"});
-			}
+// app.post('/api/startFresh', (req, res) => {  //temporary endpoint
+// 	// const addressToUnlock = req.body.addressToUnlock;// "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; // example address
+// 	const AliceId = req.body.AliceId;
+// 	const saltAlice = req.body.saltAlice;
+// 	const circleId = req.body.circleId;
+// 	CirclesCollection.updateOne(
+// 		// { "Attribute": "good" },
+// 		{ saltedHashedIdentification: ID.HMAC(AliceId, saltAlice), instanceCircles: circleId, "version": constants.VERSION },
+// 		{ $set: { version: "deleted"+ constants.VERSION } },
+// 		// { upsert: true },
+// 		function (err, circles) {
+// 			if (err) { return res.status(500).json({error: "Something went wrong: could not delete id/circle combination" + err}) }
+// 			if (circles.matchedCount != 1) return res.status(500).json({error: "2: Something went terribly wrong: no or more than 1 circles assigned to a user"} )  
+// 			else {
+// 				return res.status(200).json({error:"none"});
+// 			}
 
 
-		});
-});
+// 		});
+// });
 
 	// app.post('/api/GiveTxIdToOracle', (req, res) => {
 	// 	const instanceCircles = req.body.instanceCircles;

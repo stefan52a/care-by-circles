@@ -47,7 +47,7 @@ module.exports.hasNoGenesisCircle = (id, salt, callback) => {
         if (err) { callback(err, "NotFound") } else
         if (circles.length == 0) {callback("No circles assigned to a user!")} else 
         if (circles.length != 1) callback("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle")
-        else callback(circles[0].instanceCircles, "exactly 1 Circle already exists for this user");
+        else callback(circles[0].instanceCircles, "exactly 1 Genesis Circle already exists for this user");
     })
 }
 
