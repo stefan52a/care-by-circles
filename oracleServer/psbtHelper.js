@@ -69,7 +69,7 @@ module.exports.getInputData = async (
     redeemType,
     regtestUtils,
 ) => {
-    const utx = await regtestUtils.fetch(unspent.txId);
+    const utx = await regtestUtils.fetch(unspent.txId); //await
     // for non segwit inputs, you must pass the full transaction buffer
     const nonWitnessUtxo = Buffer.from(utx.txHex, 'hex');
     // for segwit inputs, you only need the output script and value as an object.

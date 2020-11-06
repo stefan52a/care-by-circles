@@ -48,12 +48,15 @@ async function run() {
     // force update MTP  (Merkle Tree Proof?)
     await regtestUtils.mine(11);
 
+    const saltAlice = 'MonKey8sda89--__8933h8ih^%&*321i989d89as';  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
+    const saltBob = 'VotreKey8e87we89usdfij34sd43a859^*&*(&()-f-__d89asbla';  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
+
     axiosInstance.post('/oracleGetAirdrop', {
         // generate another pubkey from a WIF
         AlicePubkey: AliceClientSignTxID.publicKey.toString('hex'),  //Alice wants to receive the airdrop towards this pubkey , client (HD wallet?) should remember (persistent storage)
                                                                     //  this as long as it contains tokens, or client could do scan of blockchain
-        AliceId: '+31-6-233787929',
-        salt: '8sda898933h8ih321i989d89as',  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
+        AliceId: AliceId,
+        saltAlice: saltAlice, 
     })
         .then(function (response) {
             console.log(response.data);
@@ -70,11 +73,13 @@ async function run() {
                     circleId: circleID,//get circleID from persistent storage on client
 
                     AliceId: AliceId,
+                    saltAlice: saltAlice,
                     pubkeyInUTXO: AliceClientSignTxID.publicKey.toString('hex'),// get pubkey of UTXO from client persistent storage
                     addressOfUTXO: addressOfUTXO , //get addressOfUTXO from persistent storage on client
                     AliceNewPubkey: AliceNewPubkey,
 
                     BobId: BobId,
+                    saltBob: saltBob,
                     BobPubkey: BobClientSignTxID.publicKey.toString('hex')
                 })
                     .then(async function (response) {
@@ -126,6 +131,7 @@ async function run() {
                         axiosInstance.post('/startFresh', {
                             circleId: circleID,
                             AliceId: '+31-6-233787929',
+                            saltAlice: saltAlice,
                         })
                             .then(function (response) {
                                 console.log(response.data);

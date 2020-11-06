@@ -21,12 +21,12 @@ app.use(bodyParser.json());
 
 
 // Airdrop tokens to an identity that does not have a genesis Circle yet
-app.post('/api/oracleGetAirdrop', async (req, res) => {  //Alice wil get an airdrop form a faucet
+app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop form a faucet
 	const AliceId = req.body.AliceId; // telephone number FTM
-	const salt = req.body.salt; // a secret number which only the user controls
+	const saltAlice = req.body.saltAlice; // a secret number which only the user controls
 	// todo study changing with a timestamp, like done in Corona BLE apps.
 	const AlicePubkey = req.body.AlicePubkey; //a HD wallet changing public key
-	ID.checkExists(AliceId, (error) => { //best would be to use an existing DID system preferably as trustless as possible
+	ID.checkExists(AliceId, saltAlice, (error) => { //best would be to use an existing DID system preferably as trustless as possible
 		if (error) {
 			console.log("error: " + error + " Not allowed (id does not exist, id is not a person)");
 			return res.status(400).json({ error: error + " Not allowed (id does not exist, id is not a person)" });
@@ -38,12 +38,12 @@ app.post('/api/oracleGetAirdrop', async (req, res) => {  //Alice wil get an aird
 			console.log('OK: ' + filename);
 			console.log(contractFromFile)
 			const contract = contractFromFile.trim().replace(/\s+/g, ' ')
-			ID.hasNoGenesisCircle(AliceId, (ans, error) => {
+			ID.hasNoGenesisCircle(AliceId, saltAlice, (ans, error) => {
 				if (error) {
 					console.log("error: " + error);
 					return res.status(400).json({ error: error });
 				}
-				transactions.createAndBroadcastCircleGenesisTx(AliceId, AlicePubkey, contract, 1e5, (answ) => {
+				transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AlicePubkey, contract, 1e5, (answ) => {
 					const status = answ.status
 					const err = answ.err
 					if (err) {
@@ -66,6 +66,7 @@ app.post('/api/oracleGetAirdrop', async (req, res) => {  //Alice wil get an aird
 app.post('/api/oraclePleaseSignTx', (req, res) => {
 	// const addressToUnlock = req.body.addressToUnlock;// "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; // example address
 	const AliceId = req.body.AliceId;
+	const saltAlice = req.body.saltAlice;
 	const circleId = req.body.circleId;
 
 	const pubkeyOfUTXO = req.body.pubkeyInUTXO; //For Privacyreasons: The client also has to keep track of the pubkey belonging to his last Circle transaction
@@ -76,10 +77,11 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 
 	const BobPubkey = req.body.BobPubkey;
 	const BobId = req.body.BobId;
+	const saltBob = req.body.saltBob;
 
 	const contract = req.body.contract;
 	// execute the contract if has its hash is in the pubscript to be unlocked
-	transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, pubkeyOfUTXO, addressOfUTXO, contract, circleId, (err) => {
+	transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, saltAlice, pubkeyOfUTXO, addressOfUTXO, contract, (err) => {
 		if (err) {
 			console.log({ error: err + " Not allowed (unlockscript contains incorrect information (contract or pubkey))" })
 			return res.status(400).json({ error: err + " Not allowed (unlockscript contains incorrect information (contract or pubkey)) " })
@@ -101,12 +103,12 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 								return res.status(500).json({ error: err });
 							}
 							try {
-								require(randFile).contract(BobId, async (errInContract) => {
+								require(randFile).contract(BobId, saltBob, (dummy, errInContract) => {
 									if (errInContract) {
 										console.log({ error: errInContract })
 										return res.json({ error: errInContract })
 									}
-									transactions.PSBT(AliceId, pubkeyOfUTXO, contract, AliceNewPubkey, BobId, BobPubkey, circleId, function (PSBT, OracleFinal, status, err) {
+									transactions.PSBT(AliceId, saltAlice, contract, AliceNewPubkey, BobId, saltBob, BobPubkey, circleId, (PSBT, OracleFinal, status, err) => {
 										if (err) {
 											console.log({ status: status, error: err })
 											return res.status(status).json({ error: err })
@@ -161,12 +163,12 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 							catch (e2) {
 								//client error = status 400
 								console.log({
-									error: "invalid contract syntax" +
+									error: "invalid contract syntax" + e2+
 										""// "const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
 								}
 								);
 								return res.status(400).json({
-									error: "invalid contract syntax" +
+									error: "invalid contract syntax" + e2+
 										""//"const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
 								}
 								);
@@ -186,15 +188,16 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 app.post('/api/startFresh', (req, res) => {  //temporary endpoint
 	// const addressToUnlock = req.body.addressToUnlock;// "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; // example address
 	const AliceId = req.body.AliceId;
+	const saltAlice = req.body.saltAlice;
 	const circleId = req.body.circleId;
 	CirclesCollection.updateOne(
 		// { "Attribute": "good" },
-		{ saltedHashedIdentification: AliceId, instanceCircles: circleId, "version": constants.VERSION },
+		{ saltedHashedIdentification: ID.HMAC(AliceId, saltAlice), instanceCircles: circleId, "version": constants.VERSION },
 		{ $set: { version: "deleted"+ constants.VERSION } },
 		// { upsert: true },
 		function (err, circles) {
 			if (err) { return res.status(500).json({error: "Something went wrong: could not delete id/circle combination" + err}) }
-			if (circles.matchedCount != 1) return res.status(500).json({error: "Something went terribly wrong: no or more than 1 circles assigned to a user"} )  
+			if (circles.matchedCount != 1) return res.status(500).json({error: "2: Something went terribly wrong: no or more than 1 circles assigned to a user"} )  
 			else {
 				return res.status(200).json({error:"none"});
 			}

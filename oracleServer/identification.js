@@ -5,28 +5,45 @@ const bitcoin = require('bitcoinjs-lib');
 const crypto = require('crypto-js');
 const Circles = require('../lib/Circles');
 
+module.exports.HMAC = (id, salt) => { //needed by contract
+	saltedHashOfId= crypto.HmacSHA256(id,salt).toString(crypto.enc.Hex);
+    return saltedHashOfId; //for the moment always exists //identity determnined by his telephone number
+}
+
 // Checkexists does this by returning a message with a random Hash256 (H256), towards the telephone number of id and 
 // let that user id send H256 back to the server by posting endpoint validateMyId(Id, H256), which returns:
 // 	Not allowed (H256 does not belong to the id)
 // Or 	Succeeded
-module.exports.checkExists = (id, callback) => { //needed by contract
+module.exports.checkExists = (id, salt, callback) => { //needed by contract
     callback(); //for the moment always exists //identity determnined by his telephone number
 }
 
-module.exports.hasGenesisCircle = (id, callback) => {// needed by contract
+
+
+
+
+
+
+///////todo remove:
+
+
+
+
+module.exports.inThisGenesisCircle = (id, salt,  callback) => {// needed by contract
     // if (hasCircle(id))
     // {
     //     callback("abracadabraCirkel");
     // }
     // else
     // {
-    callback("abracadabraCirkel", "fout");// FTM pretend id not to have a Circle
+		circle= {identif: "abracadabraCirkel", nrOfMembers: 10}
+    callback(circle);// FTM pretend id to have a Circle
     // }
 }
 
-module.exports.hasNoGenesisCircle = (id, callback) => {
+module.exports.hasNoGenesisCircle = (id, salt, callback) => {
     // Connect to Mongoose
-    CirclesCollection.find({ "saltedHashedIdentification": id, "version": constants.VERSION }).toArray(function (err, circles) {
+    CirclesCollection.find({ "saltedHashedIdentification": this.HMAC(id, salt), "version": constants.VERSION }).toArray(function (err, circles) {
         if (err) { callback(err, "NotFound") } else
         if (circles.length == 0) {callback("No circles assigned to a user!")} else 
         if (circles.length != 1) callback("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle")
@@ -34,7 +51,7 @@ module.exports.hasNoGenesisCircle = (id, callback) => {
     })
 }
 
-module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest ) => { //todo how get new HD address?
+module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest ) => { //todo how get new HD address?
 	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	// const toPubkey = Buffer.from(toPubkeyStr, 'hex');   
 	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
@@ -66,7 +83,7 @@ module.exports.createAddressLockedWithCirclesScript = async (toPubkeyStr, contra
         //     bitcoin.opcodes.OP_TRUE,// don't do this in case of gneesis transaction
         // ]),
     // };
-	const p2sh = await bitcoin.payments.p2sh({
+	const p2sh = bitcoin.payments.p2sh({
 		redeem: {output:  redeemscript,
 					network: regtest},
 		network: regtest,
