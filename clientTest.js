@@ -9,24 +9,30 @@ const APIURL = process.env.APIURL || 'http://localhost:8080/1'; //e.g.   localho
 const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
 const regtest = regtestUtils.network;
 
+const axios = require('axios')
+const axiosInstance = axios.create({
+    baseURL: 'http://localhost:3000/api/',
+    // baseURL: 'https://www.carebycircle.com/api',
+    timeout: 10000
+});
+// const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
+const AliceClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
+    'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
+    regtest,
+);
+const AliceId = '+31-6-233787929'
+const BobClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
+    'cU4suhCk1LDHEksGRen2293CmZE1GdfSA4V4A6GmwZvmVRC7Vpvu', ///// TODO KEEP SECRET
+    regtest,
+);
+const BobId = '+31-6-231610011'
+const CharlieClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
+    'cU4suhCk1LDHEksGRen2293CmZE1GdfSA4V4A6GmwZvmVRC7Vpvu', ///// TODO KEEP SECRET
+    regtest,
+);
+const CharlieId = '+31-6-231231391'
+
 async function run() {
-    const axios = require('axios')
-    const axiosInstance = axios.create({
-        baseURL: 'http://localhost:3000/api/',
-        // baseURL: 'https://www.carebycircle.com/api',
-        timeout: 10000
-    });
-    // const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
-    const AliceClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
-        'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
-        regtest,
-    );
-    const AliceId = '+31-6-233787929'
-    const BobClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
-        'cU4suhCk1LDHEksGRen2293CmZE1GdfSA4V4A6GmwZvmVRC7Vpvu', ///// TODO KEEP SECRET
-        regtest,
-    );
-    const BobId = '+31-6-231610011'
 
     //HD wallet?:
     // const path = "m/0'/0/0"
@@ -59,6 +65,9 @@ async function run() {
         saltAlice: saltAlice, 
     })
         .then(function (response) {
+            letJoin(response)
+            letJoin(response)
+
             console.log(response.data);
             const circleID = response.data.Circle;//store circleID persistent on client
             const addressOfUTXO= response.data.addressOfUTXO; //store addressOfUTXO persistent on client
