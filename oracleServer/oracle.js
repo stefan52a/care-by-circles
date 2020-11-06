@@ -190,7 +190,7 @@ app.post('/api/startFresh', (req, res) => {  //temporary endpoint
 	CirclesCollection.updateOne(
 		// { "Attribute": "good" },
 		{ saltedHashedIdentification: AliceId, instanceCircles: circleId, "version": constants.VERSION },
-		{ $set: { version: "deleted"+ constants.VERSION, updateDate: Date.now } },
+		{ $set: { version: "deleted"+ constants.VERSION } },
 		// { upsert: true },
 		function (err, circles) {
 			if (err) { return res.status(500).json({error: "Something went wrong: could not delete id/circle combination" + err}) }

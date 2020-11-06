@@ -137,7 +137,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 
 				randCircle = "Circle" + buf.toString('hex');
 
-				var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, addressToUnlock: AliceAddressToUnlockLater, "version": constants.VERSION, });
+				var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, "version": constants.VERSION, });
 				CirclesCollection.insertOne(doc1, function (err, circles) {
 					if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "" , status: "500", err: "Could not store the Circle." + err }) }
 					return cb({ psbt: psbt.toHex(), CircleId: randCircle, addressOfUTXO: AliceAddressToUnlockLater, status: "200" });
@@ -427,7 +427,7 @@ module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkey, BobId, 
 
 			CirclesCollection.insertOne(
 				// { "Attribute": "good" },
-				{ "version": constants.VERSION, instanceCircles: circleId, saltedHashedIdentification: BobId, addressToUnlock: BobAddressToUnlockLater},
+				{ "version": constants.VERSION, instanceCircles: circleId, saltedHashedIdentification: BobId},
 				// { $set: { addressToUnlock: "determine when fully signed"} },
 				// { upsert: true },
 				function (err, circles) {
