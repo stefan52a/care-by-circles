@@ -53,8 +53,8 @@ app.post('/api/oracleGetAirdrop', async (req, res) => {  //Alice wil get an aird
 					const psbt = answ.psbt
 					const CircleId = answ.CircleId
 					//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
-					console.log({ version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: contract })
-					res.status(200).json({ version: constants.VERSION, error: "none", Circle: CircleId, tokens: (1e5 / 1e8), psbt: psbt, contract: contract });// xx e.g. could e.g. be be the same as the current blockchain reward
+					console.log({ version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (1e5 / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract })
+					res.status(200).json({ version: constants.VERSION, error: "none", Circle: CircleId, tokens: (1e5 / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract });// xx e.g. could e.g. be be the same as the current blockchain reward
 					return
 					// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 				})
@@ -69,7 +69,9 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 	const circleId = req.body.circleId;
 
 	const pubkeyOfUTXO = req.body.pubkeyInUTXO; //For Privacyreasons: The client also has to keep track of the pubkey belonging to his last Circle transaction
-	//instead of this pubkeyInUTXO we better transfer the hash of the script in transaction.PubScriptToUnlockContainsAHashOfContract
+	//TODo TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!instead of this pubkeyInUTXO and addressOfUTXO we better transfer the hash of the script in transaction.PubScriptToUnlockContainsAHashOfContract
+	const addressOfUTXO = req.body.addressOfUTXO; //For Privacyreasons: The client also has to keep track of the address belonging to his last Circle transaction
+
 	const AliceNewPubkey = req.body.AliceNewPubkey;
 
 	const BobPubkey = req.body.BobPubkey;
@@ -77,10 +79,10 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 
 	const contract = req.body.contract;
 	// execute the contract if has its hash is in the pubscript to be unlocked
-	transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, pubkeyOfUTXO, contract, circleId, (err) => {
+	transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, pubkeyOfUTXO, addressOfUTXO, contract, circleId, (err) => {
 		if (err) {
-			console.log({ error: err + " Not allowed (the unlockscript contains incorrect information (contract or pubkey))" })
-			return res.status(400).json({ error: err + " Not allowed (the unlockscript contains incorrect information (contract or pubkey)) " })
+			console.log({ error: err + " Not allowed (unlockscript contains incorrect information (contract or pubkey))" })
+			return res.status(400).json({ error: err + " Not allowed (unlockscript contains incorrect information (contract or pubkey)) " })
 		}
 		//save contractALgorithm to contract.js and execute that contract.js
 		try {

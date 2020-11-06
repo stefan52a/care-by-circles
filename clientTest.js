@@ -50,12 +50,15 @@ async function run() {
 
     axiosInstance.post('/oracleGetAirdrop', {
         // generate another pubkey from a WIF
-        AlicePubkey: AliceClientSignTxID.publicKey.toString('hex'),  //Alice wants to receive the airdrop towards this pubkey , client (HD wallet?) should remember this as long as it contains tokens, or client could do scan of blockchain
+        AlicePubkey: AliceClientSignTxID.publicKey.toString('hex'),  //Alice wants to receive the airdrop towards this pubkey , client (HD wallet?) should remember (persistent storage)
+                                                                    //  this as long as it contains tokens, or client could do scan of blockchain
         AliceId: '+31-6-233787929',
+        salt: '8sda898933h8ih321i989d89as',  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
     })
         .then(function (response) {
             console.log(response.data);
             const circleID = response.data.Circle;//store circleID persistent on client
+            const addressOfUTXO= response.data.addressOfUTXO; //store addressOfUTXO persistent on client
             //Now ALice will let Bob in her circle:
             const filenameContract = './oracleServer/ExamplecontractExample.js';
             fs.readFile(filenameContract, 'utf8',  function (err, contract) {
@@ -67,7 +70,8 @@ async function run() {
                     circleId: circleID,//get circleID from persistent storage on client
 
                     AliceId: AliceId,
-                    pubkeyInUTXO: AliceClientSignTxID.publicKey.toString('hex'),
+                    pubkeyInUTXO: AliceClientSignTxID.publicKey.toString('hex'),// get pubkey of UTXO from client persistent storage
+                    addressOfUTXO: addressOfUTXO , //get addressOfUTXO from persistent storage on client
                     AliceNewPubkey: AliceNewPubkey,
 
                     BobId: BobId,

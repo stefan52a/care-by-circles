@@ -62,7 +62,7 @@ axiosInstance.post('/oracleGetAirdrop', {
                             if (err) throw err;
                             db = database.db("scratch");
                             CirclesCollection = db.collection("circles");
-                            transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, pubkeyOfUTXO, contract, circleID, (err) => {
+                            transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, pubkeyOfUTXO, addressOfUTXO, contract, circleID, (err) => {
                                 if (err) {
                                     console.log(err)
                                     expect(false).to.equal(true);
@@ -87,7 +87,7 @@ axiosInstance.post('/oracleGetAirdrop', {
                             db = database.db("scratch");
                             CirclesCollection = db.collection("circles");
 
-                            transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, pubkeyOfUTXO, contract + "randomstuff", circleID, (err) => {
+                            transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, pubkeyOfUTXO, addressOfUTXO, contract + "randomstuff", circleID, (err) => {
                                 if (err) {
                                     expect(false).to.equal(false);
                                     done()

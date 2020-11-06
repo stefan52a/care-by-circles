@@ -47,7 +47,7 @@ const axiosInstance = axios.create({
 
 module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract, satoshisFromFaucet, cb) => {// see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts  for basic transactions
 	randomBytes(256, async (err, buf) => {
-		if (err) return cb({ unspent: "", CircleId: "", status: "500", err: err });
+		if (err) return cb({ unspent: "", CircleId: "", addressOfUTXO: "", status: "500", err: err });
 		else {
 			// force update MTP  (Merkle Tree Proof?)
 			await regtestUtils.mine(11);
@@ -79,13 +79,13 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 				// Tell the server to send you coins (satoshis)
 				const faucetUnspent = await regtestUtils.faucetComplex(faucetPayment.output, satoshisFromFaucet);
 
-				// Get all current unspents of the address.
-				const unspents = await regtestUtils.unspents(faucetPayment.address)
-				// Get data of a certain transaction
-				const fetchedTx = await regtestUtils.fetch(faucetUnspent.txId)
-				// Mine 10 blocks, returns an Array of the block hashes
-				// the above faucet payments will confirm
-				const results = await regtestUtils.mine(10);
+				// // Get all current unspents of the address.
+				// const unspents = await regtestUtils.unspents(faucetPayment.address)
+				// // Get data of a certain transaction
+				// const fetchedTx = await regtestUtils.fetch(faucetUnspent.txId)
+				// // Mine 10 blocks, returns an Array of the block hashes
+				// // the above faucet payments will confirm
+				// const results = await regtestUtils.mine(10);
 
 				const inputDataToUnlockFaucet = await psbtHelper.getInputData(faucetUnspent, faucetPayment.redeem.output, false, 'p2sh', regtestUtils)
 				console.log("redeem for the airdrop: " + bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript))
@@ -139,32 +139,32 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, AlicePubkeyStr, contract
 
 				var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: id, addressToUnlock: AliceAddressToUnlockLater, "version": constants.VERSION, });
 				CirclesCollection.insertOne(doc1, function (err, circles) {
-					if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", status: "500", err: "Could not store the Circle." + err }) }
-					return cb({ psbt: psbt.toHex(), CircleId: randCircle, status: "200" });
+					if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "" , status: "500", err: "Could not store the Circle." + err }) }
+					return cb({ psbt: psbt.toHex(), CircleId: randCircle, addressOfUTXO: AliceAddressToUnlockLater, status: "200" });
 				})
 			}
-			catch (e) { return cb({ psbt: "", CircleId: "", status: "500", err: e }) }// if you get Error: mandatory-script-verify-flag-failed (Operation not valid with the current stack size) (code 16) , then e.g. see https://bitcoin.stackexchange.com/a/81740/45311
+			catch (e) { return cb({ psbt: "", CircleId: "",addressOfUTXO:"", status: "500", err: e }) }// if you get Error: mandatory-script-verify-flag-failed (Operation not valid with the current stack size) (code 16) , then e.g. see https://bitcoin.stackexchange.com/a/81740/45311
 		}
 	})
 }
 
 // const contractHash = "ad40955030777152caefd9e48ec01012f674c5300e1543d32191adba55b83a4d"; //SHA256 hash of algorithm: const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}
 
-module.exports.PubScriptToUnlockContainsAHashOfContract = (id, pubkeyOfUTXO, contract, circleId, callback) => {
+module.exports.PubScriptToUnlockContainsAHashOfContract = (id, pubkeyOfUTXO, addressOfUTXO, contract, circleId, callback) => {
 
 	// The redeem script has a hash in the pubscript, and given the one-way nature of hashes
 	// you can never find the contents of the redeem script. (P2SH)
 	// we have to make a redeem script (a.o. with hash of contract etc) and look whether it hashes to the right hash of the redeem script.
 
-	var addressToUnlock;
+	// var addressOfUTXO;
 
 
 	CirclesCollection.find({ "saltedHashedIdentification": id, "version": constants.VERSION }).toArray(function (err, circles) {
 		if (err) { return callback(err + " Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash!") }
 		if (circles.length != 1) return callback("error" + " Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!")
-		else {
-			addressToUnlock = circles[0].addressToUnlock; //client should remember this
-		}
+		// else {
+		// 	addressOfUTXO = circles[0].addressToUnlock; //client should remember this!
+		// }
 		// make hash of the redeemscript
 		try {
 			const redeemScript = ID.circlesLockScriptSigOutput(pubkeyOfUTXO,
@@ -178,7 +178,7 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, pubkeyOfUTXO, con
 			});
 
 			// is address equal to utxo?
-			if (address === addressToUnlock) callback();
+			if (address === addressOfUTXO) callback();
 			else callback("Hash of contract not in UTXO redeemScript")
 		}
 		catch (e) {
@@ -420,12 +420,16 @@ module.exports.PSBT = (AliceId, pubkeyUsedInUTXO, contract, AlicePubkey, BobId, 
 
 			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " + (satoshisToUnlock - minersFee - dustSatoshis) + " is now locked with:\n" + bitcoin.script.toASM(redeemScriptToAlice))// + "\nat address " + redeemScriptToAlice.address)
 			console.log(dustSatoshis + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
+			
+			//for the output  lock of the tokens for Bob
+			const Bob_p2shOutputLock = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
+			const BobAddressToUnlockLater = Bob_p2shOutputLock.address;
 
-			CirclesCollection.updateOne(
+			CirclesCollection.insertOne(
 				// { "Attribute": "good" },
-				{ "version": constants.VERSION, instanceCircles: circleId, saltedHashedIdentification: BobId },
-				{ $set: { addressToUnlock: "determine when fully signed", updateDate: Date.now() } },
-				{ upsert: true },
+				{ "version": constants.VERSION, instanceCircles: circleId, saltedHashedIdentification: BobId, addressToUnlock: BobAddressToUnlockLater},
+				// { $set: { addressToUnlock: "determine when fully signed"} },
+				// { upsert: true },
 				function (err, circles) {
 					if (err) { return callback("", "", 500, "Something went wrong terribly while inserting!" + err) }
 					// addressToUnlock=circles[0].BTCaddress;
