@@ -4,7 +4,7 @@
   "description": "Simple api for Oracles",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha || true"
   },
   "dependencies": {
     "assert": "^2.0.0",
@@ -19,7 +19,6 @@
     "bitcoind-rpc": "^0.8.1",
     "bitcoinjs-lib": "^5.2.0",
     "body-parser": "*",
-    "chai": "^4.2.0",
     "crypto-js": "^4.0.0",
     "express": "*",
     "glob": "^7.1.6",
@@ -33,5 +32,9 @@
     "zeromq": "^6.0.0-beta.6"
   },
   "author": "Stefan Verhagen",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.2.1"
+  }
 }

@@ -10,11 +10,10 @@ const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
 const regtest = regtestUtils.network;
 
 async function run() {
-    // Make only one mongodb connection per session:  BY TOM:
     const axios = require('axios')
     const axiosInstance = axios.create({
-        // baseURL: 'http://localhost:3000/api/',
-        baseURL: 'https://www.carebycircle.com/api',
+        baseURL: 'http://localhost:3000/api/',
+        // baseURL: 'https://www.carebycircle.com/api',
         timeout: 10000
     });
     // const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();

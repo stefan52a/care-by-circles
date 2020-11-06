@@ -16,7 +16,7 @@ var db;
 global.CirclesCollection;
 var MongoClient = require('mongodb').MongoClient;
 
-// app.use(express.static(__dirname + '/client')); //for the Angular version
+// app.use(express.static(__dirname + '/client')); //for an Angular version
 app.use(bodyParser.json());
 
 
@@ -68,7 +68,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 	const AliceId = req.body.AliceId;
 	const circleId = req.body.circleId;
 
-	const pubkeyInUTXO = req.body.pubkeyInUTXO; //For Privacyreasons: The client also has to keep track of the pubkey belonging to his last Circle transaction
+	const pubkeyOfUTXO = req.body.pubkeyInUTXO; //For Privacyreasons: The client also has to keep track of the pubkey belonging to his last Circle transaction
 	//instead of this pubkeyInUTXO we better transfer the hash of the script in transaction.PubScriptToUnlockContainsAHashOfContract
 	const AliceNewPubkey = req.body.AliceNewPubkey;
 
@@ -77,10 +77,10 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 
 	const contract = req.body.contract;
 	// execute the contract if has its hash is in the pubscript to be unlocked
-	transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, pubkeyInUTXO, contract, circleId, (err) => {
+	transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, pubkeyOfUTXO, contract, circleId, (err) => {
 		if (err) {
-			console.log({ error: err + " Not allowed (the unlockscript contains an incorrect information (contract or pubkey))" })
-			return res.status(400).json({ error: err + " Not allowed (the unlockscript contains an incorrect information (contract or pubkey)) " })
+			console.log({ error: err + " Not allowed (the unlockscript contains incorrect information (contract or pubkey))" })
+			return res.status(400).json({ error: err + " Not allowed (the unlockscript contains incorrect information (contract or pubkey)) " })
 		}
 		//save contractALgorithm to contract.js and execute that contract.js
 		try {
@@ -104,7 +104,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										console.log({ error: errInContract })
 										return res.json({ error: errInContract })
 									}
-									transactions.PSBT(AliceId, pubkeyInUTXO, contract, AliceNewPubkey, BobId, BobPubkey, circleId, function (PSBT, OracleFinal, status, err) {
+									transactions.PSBT(AliceId, pubkeyOfUTXO, contract, AliceNewPubkey, BobId, BobPubkey, circleId, function (PSBT, OracleFinal, status, err) {
 										if (err) {
 											console.log({ status: status, error: err })
 											return res.status(status).json({ error: err })
