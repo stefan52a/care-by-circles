@@ -24,6 +24,8 @@ For the id it would be better to use some kind of DID system here, but this is o
 
 Under the hood it uses Bitcoin blockchain principles for consensus (on Dunbar's number) and Oracle contracts with Partially Signed Bitcoin Transactions (PSBT).
 
+The Oracle needs to be trusted by people using it.
+
 Transactions are locked by the following scriptPub (to lock output):
 
 ```
