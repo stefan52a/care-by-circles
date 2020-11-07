@@ -4,7 +4,7 @@ module.exports.contract = (circleId, BobId, salt, callback) => {
     ID.checkExists(BobId, salt, (result, err) => {
         if (err) callback('', err + ' Contract error: Not allowed (BobId does not exist)');
         ID.inThisGenesisCircle(circleId, BobId, salt, (Circle, nrOfMembers,  err) => {
-            if (err) callback('', err + ' Contract error:  Not allowed (BobId already in this Circleinstance) ' + circleId);
+            if (err) callback('', err + ' Contract error:  Not allowed (Id already in this Circleinstance) ' + circleId);
             else if (nrOfMembers >= dunbarsNumber) callback('', err + ' Contract error: Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids), it now has ' + nrOfMembers);
             else callback();
         });

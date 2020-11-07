@@ -126,7 +126,7 @@ Adapt clientTest.js to your heart's desire. You are Done.
 
 Remember the testClient can only be run twice: once with  DO_GENESIS: false,    and once with  DO_GENESIS: true,   
 
-After that you will have to change the users id (AliceId, BobId and CharlieId), otherwise you will get:
+After that you can change the users id (AliceId, BobId and CharlieId), otherwise you will get:
 
 ```
 ======>Alice accepts Bob in her Circle

@@ -32,13 +32,13 @@ const _BobClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
     'cU4suhCk1LDHEksGRen2293CmZE1GdfSA4V4A6GmwZvmVRC7Vpvu', ///// TODO KEEP SECRET
     regtest,
 );
-const _BobId = 'Bob+31-6-231610011'
+const _BobId = 'Bob+31-6-231610011c'
 const _saltBob = 'BobVotreKey8e87we89usdfij34sd43a859^*&*(&()-f-__d89asbla';  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
 const _CharlieClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
     'cQEVDN4VVCjH3eSvdZGkkteQGAp5M94MwLK2qCqmwV7rztSzQocU', ///// TODO KEEP SECRET
     regtest,
 );
-const _CharlieId = 'Charlie+31-6-231231391'
+const _CharlieId = 'Charlie+31-6-231231391c'
 const _saltCharlie = 'CharlieHatskikeydeeKey8e8789usdfi56j34sd430a8(**(59^*&*(&()-f-__d21387';  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
 
 // Make only one mongodb connection per session:  BY TOM:
@@ -125,11 +125,11 @@ async function run() {
                     else {
                         console.log("======>Alice accepts Bob in her Circle")
                         const BobPubkey = _BobClientSignTxID.publicKey.toString('hex')
-                        UTXOAlice = circles[0].newUTXO 
+                        UTXOAlice = circles[0].newUTXO
                         letJoin(AlicePubkey, BobPubkey, _BobId, _saltBob, circles[0].instanceCircles, UTXOAlice, true, (newUTXOBob, err) => {//store circleId, and newUTXO  persistent on client
                             if (err) {
-                                 console.log(newUTXOBob)
-                                 return console.log("Done with error")
+                                console.log(newUTXOBob)
+                                return console.log("Done with error")
                             }
                             console.log("======>succeeded")
                             const newUTXOAlice = UTXOAlice;  ///todo should get new one when a HD wallet is used!!!
@@ -154,22 +154,25 @@ async function run() {
                                                 newUTXO: newUTXOCharlie, pubkey: CharliePubkey, Id: _CharlieId, salt: _saltCharlie,
                                             }
                                             , function (err, cirkles) {
-                                                if (err) { console.log("Could not store the Circle." + err); console.log("Done with error"); return}//todo update for client side of Charlie as well
+                                                if (err) { console.log("Could not store the Circle." + err); console.log("Done with error"); return }//todo update for client side of Charlie as well
                                                 console.log("======>Alice tries to add Charlie with a incorrect contract, should fail")
                                                 const CharliePubkey = _CharlieClientSignTxID.publicKey.toString('hex')
                                                 letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, false, (dummy, err) => {
                                                     if (err) {
                                                         console.log("======>failed successfully")
-                                                    } else{
+                                                    } else {
                                                         console.log("======>!!!failed because of success")
                                                     }
-                                                    console.log("Done with success")
-                                                    // console.log("======>Alice tries to re-add Charlie in her Circle, which should fail") 
-                                                    // letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
-                                                    //     if (err) {
-                                                    //         return console.log(dummy)
-                                                    //     }
-
+                                                    console.log("======>Alice tries to re-add Charlie in her Circle, which should fail")
+                                                    letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
+                                                        if (err) {
+                                                            console.log(err)
+                                                            console.log("======>failed successfully")
+                                                        } else {
+                                                            console.log("======>!!!failed because of success")
+                                                        }
+                                                        console.log("Done with success")
+                                                    })
 
                                                     //     console.log("todo: make one that should fail, when a Circle already has 150 members")
                                                     // });
