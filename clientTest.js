@@ -26,7 +26,7 @@ const _AliceClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
     'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
     regtest,
 );
-const _AliceId = 'Alice+31-6-233787929'
+const _AliceId = 'Alice+31-6-233787929a'
 const _saltAlice = 'AliceMonKey8sda89--__8933h8ih^%&*321i989d89as';  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
 const _BobClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
     'cU4suhCk1LDHEksGRen2293CmZE1GdfSA4V4A6GmwZvmVRC7Vpvu', ///// TODO KEEP SECRET
@@ -131,7 +131,6 @@ async function run() {
                                 console.log(newUTXOBob)
                                 return console.log("Done with error")
                             }
-                            console.log("======>succeeded")
                             const newUTXOAlice = UTXOAlice;  ///todo should get new one when a HD wallet is used!!!
                             CirclesClientCollection.insertOne(
                                 {
@@ -147,7 +146,6 @@ async function run() {
                                             console.log(newUTXOCharlie)
                                             return console.log("Done with error")
                                         }
-                                        console.log("======>succeeded")
                                         CirclesClientCollection.insertOne(
                                             {
                                                 instanceCircles: circles[0].instanceCircles, saltedHashedIdentification: ID.HMAC(_CharlieId, _saltCharlie), "version": constants.VERSION,
@@ -166,7 +164,7 @@ async function run() {
                                                     console.log("======>Alice tries to re-add Charlie in her Circle, which should fail")
                                                     letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
                                                         if (err) {
-                                                            console.log(err)
+                                                            console.log(dummy)
                                                             console.log("======>failed successfully")
                                                         } else {
                                                             console.log("======>!!!failed because of success")
