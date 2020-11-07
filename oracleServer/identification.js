@@ -73,7 +73,7 @@ module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, contract, or
 		network: regtest,
 	})
 
-	return p2sh;
+	return {p2sh: p2sh, redeemscript: redeemscript};
 }
 
 // // to test scripts:  https://github.com/kallewoof/btcdeb

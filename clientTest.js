@@ -16,7 +16,7 @@ const axios = require('axios')
 const axiosInstance = axios.create({
     baseURL: 'http://localhost:3000/api/',
     // baseURL: 'https://www.carebycircle.com/api',
-    timeout: 10000
+    timeout: 30000
 });
 // const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
 const _AliceClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
@@ -38,6 +38,9 @@ const _CharlieClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wall
 const _CharlieId = 'Charlie+31-6-231231391'
 const _saltCharlie = 'CharlieHatskikeydeeKey8e8789usdfi56j34sd430a8(**(59^*&*(&()-f-__d21387';  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
 
+const _satoshiForGenesis = 7e4
+
+
 // Make only one mongodb connection per session:  BY TOM:
 var db;
 global.CirclesCollection;
@@ -45,7 +48,7 @@ var MongoClient = require('mongodb').MongoClient;
 
 
 
-function run() {
+async function run() {
 
     //HD wallet?:
     // const path = "m/0'/0/0"
@@ -66,9 +69,11 @@ function run() {
     // const bp = child2.privateKey.toString('hex')
     // force update MTP  (Merkle Tree Proof?)
 
-    regtestUtils.mine(11);
-
     const onlyGenesis = false;   ///<<====================================== set to true once, false subsequent calls
+            
+    // force update MTP  
+    await regtestUtils.mine(11);
+            
 
     if (onlyGenesis) {
         console.log ("Alice gets an airdrop")
@@ -83,7 +88,7 @@ function run() {
             .then(function (response) {
                 // console.log(response.data);//store circleID and newUTXO persistent on client
                 var doc1 = CirclesOnClient({ instanceCircles: response.data.Circle, newUTXO: response.data.addressOfUTXO, pubkey:  AlicePubkey, Id: _AliceId, salt: _saltAlice, 
-                                                saltedHashedIdentification: ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION, });//not all info needs be redorded on client, here just for debugging purposes
+                                                saltedHashedIdentification: ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION, satoshi: response.data.satoshiAliceLeft });//not all info needs be redorded on client, here just for debugging purposes
                 CirclesClientCollection.insertOne(doc1, function (err, circles) {
                     if (err) { console.log({ err: "Could not store the Circle." + err }); return }
                     { console.log("success creating genesis") };
@@ -92,21 +97,17 @@ function run() {
                 console.log("error " + JSON.stringify(error))
                 if (error.response) console.log("\n" + JSON.stringify(error.response.data))
             })
-    } else { //add 2 friends to Circle
+    } else { //add 2 friends to Alice's Circle
         CirclesClientCollection.find({ "saltedHashedIdentification": ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION }).toArray(function (err, circles) {
             const AlicePubkey = _AliceClientSignTxID.publicKey.toString('hex')
-            const UTXOAlice = circles[0].newUTXO
             if (err) { callback(err, "NotFound") } else
-                if (circles.length == 0) { console.log("No circles assigned to a user!") } else
-                    if (circles.length != 1) console.log("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle")
+                if (circles.length == 0) { console.log("No circles assigned to this user, make a genesis Circle first!") } else
+                    if (circles.length != 1) {console.log("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle")}
                     else {
-                        console.log ("Alice accepts Bob in her Circle")
+                        console.log ("======>Alice accepts Bob in her Circle")
                         const BobPubkey = _BobClientSignTxID.publicKey.toString('hex')
+                        const UTXOAlice = circles[0].newUTXO
                         letJoin(AlicePubkey, BobPubkey, _BobId, _saltBob, circles[0].instanceCircles, UTXOAlice, (newUTXO) => {//store circleId, and newUTXO  persistent on client
-                            //todo also store the Circle info for Bob
-
-                            // regtestUtils.mine(11);
-
                             const newUTXOBob = newUTXO;
                             const newUTXOAlice = UTXOAlice;  ///todo should get new one when a HD wallet is used!!!
                             CirclesClientCollection.insertOne(
@@ -119,7 +120,7 @@ function run() {
                                     , function (err, cirkles) {
                                     if (err) { console.log({ err: "Could not store the Circle." + err }); return }//todo update for client side of Charlie as well
                                     const CharliePubkey = _CharlieClientSignTxID.publicKey.toString('hex')
-                                    console.log ("Alice accepts Charlie in her Circle")
+                                    console.log ("======>Alice accepts Charlie in her Circle")
                                     letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, (newUTXOCharlie) => {  //store circleId, newUTXO  make persistent on client for Alice but also for Charlie
 
                                         console.log ("add also make one that should fail, with wrong contract")
@@ -138,7 +139,6 @@ function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, callback) {
 
 
     console.log("pubkey Alice: "+fromPubkey+ "\n"+"current UTXO of Alice "+UTXO)
-
 
     //Now ALice will let Bob in her circle:
     const filenameContract = './oracleServer/ExamplecontractExample.js';
@@ -185,10 +185,27 @@ function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, callback) {
 
                 // Mine 10 blocks, returns an Array of the block hashes
                 // the above psbt will confirm
-                regtestUtils.mine(10);
+
+
+
+
+
+                
+                
+                
+                
                 // build and broadcast to our RegTest network
-                regtestUtils.broadcast(psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex());
-                // to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
+                regtestUtils.broadcast(psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex());// to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
+
+
+
+   				// Mine 10 blocks, returns an Array of the block hashes
+				// the above psbt will confirm
+				regtestUtils.mine(10);
+
+
+
+
                 // for bitcoin-cli decodepsbt use the psbt fromhex then to base64 (e.g. with cyberchef)
                 console.log('\npsbt can be decoded with \n"  bitcoin-cli -regtest decodepsbt ', psbt_from_Oracle_for_Alice_to_sign.toBase64() + '   "\n')//fromhex, tobase64  (e.g. with cyberchef)
 
@@ -197,12 +214,12 @@ function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, callback) {
                 //////////////////////////////////////////////////////////////////////todo
                 //////////////////////////////////////////////////////////////////////todo
                 //////////////////////////////////////////////////////////////////////todo
-                // await regtestUtils.verify({
-                //     txId: AliceClientSignTxID,
-                //     address: AliceNewPubkey,
-                //     vout: 0,
-                //     value: 7e4,
-                // });
+                regtestUtils.verify({
+                    txId: _AliceClientSignTxID,
+                    address: fromPubkey,
+                    vout: 0,
+                    value: response.data.tokens,
+                });
                 //////////////////////////////////////////////////////////////////////todo
 
                 callback(response.data.addressOfUTXO);

@@ -43,7 +43,7 @@ app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop fo
 					console.log("error: " + error);
 					return res.status(400).json({ error: error });
 				}
-				transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AlicePubkey, contract, 1e5, (answ) => {
+				transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AlicePubkey, contract, constants.SATOSHI_FORGENESIS, true, (answ) => {
 					const status = answ.status
 					const err = answ.err
 					if (err) {
@@ -53,8 +53,8 @@ app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop fo
 					const psbt = answ.psbt
 					const CircleId = answ.CircleId
 					//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
-					console.log({ version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (1e5 / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract })
-					res.status(200).json({ version: constants.VERSION, error: "none", Circle: CircleId, tokens: (1e5 / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract });// xx e.g. could e.g. be be the same as the current blockchain reward
+					console.log({ version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (answ.satoshiAliceLeft / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract })
+					res.status(200).json({ version: constants.VERSION, error: "none", Circle: CircleId, tokens: (answ.satoshiAliceLeft / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract });// xx e.g. could e.g. be be the same as the current blockchain reward
 					return
 					// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 				})
@@ -108,6 +108,53 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										console.log({ error: errInContract })
 										return res.json({ error: errInContract })
 									}
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
+// therefore we use a faucet to emulate that there is some tokens on Alice's address
+			transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FORGENESIS-1000, false, (answ) => {
+				const status = answ.status
+				const err = answ.err
+				if (err) {
+					console.log("status " + status + " " + err)
+				}
+				const psbt = answ.psbt
+				const CircleId = answ.CircleId
+				console.log({ version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (answ.satoshiAliceLeft / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract })
+				return
+				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
+			})
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
 									transactions.PSBT(AliceId, saltAlice, contract, AliceNewPubkey, BobId, saltBob, BobPubkey, circleId, (AliceAddressOfNewUTXO, PSBT, OracleFinal, status, err) => {
 										if (err) {
 											console.log({ status: status, error: err })
@@ -155,7 +202,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										// 										//endtemp 
 										// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										res.status(status).json({ error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal, 
-										 version: constants.VERSION, error: "none", Circle: circleId, tokens: (1e5 / 1e8), addressOfUTXO: AliceAddressOfNewUTXO, contract: contract })
+										 version: constants.VERSION, error: "none", Circle: circleId, tokens: (constants.SATOSHI_FORGENESIS / 1e8), addressOfUTXO: AliceAddressOfNewUTXO, contract: contract })
 										return
 
 									})

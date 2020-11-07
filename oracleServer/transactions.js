@@ -45,7 +45,7 @@ const axiosInstance = axios.create({
 	timeout: 10000
 });
 
-module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, contract, satoshisFromFaucet, cb) => {// see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts  for basic transactions
+module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, contract, satoshisFromFaucet, createGenesis, cb) => {// see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts  for basic transactions
 	randomBytes(256, async (err, buf) => {
 		if (err) return cb({ unspent: "", CircleId: "", addressOfUTXO: "", status: "500", err: err });
 		else {
@@ -54,7 +54,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 			const hashType = bitcoin.Transaction.SIGHASH_ALL;
 
 			//for the output  lock of the airdropped tokens^
-			const Alice_p2shOutputLock = await ID.createAddressLockedWithCirclesScript(AlicePubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest) // Alice  will get the airdrop
+			const {p2sh: Alice_p2shOutputLock, redeemscript: dummy}  = await ID.createAddressLockedWithCirclesScript(AlicePubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest) // Alice  will get the airdrop
 			const AliceAddressToUnlockLater = Alice_p2shOutputLock.address;
 
 			try {
@@ -135,13 +135,16 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 
 				console.log((satoshisFromFaucet - minersFee) + " airdropped satoshi is now locked with:\n" + bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript) + "\nat address " + AliceAddressToUnlockLater)
 
-				randCircle = "Circle" + buf.toString('hex');
+if (createGenesis)
+{
+	randCircle = "Circle" + buf.toString('hex');
+	var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: ID.HMAC(id, salt), "version": constants.VERSION, });
+	CirclesCollection.insertOne(doc1, function (err, circles) {
+		if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: "Could not store the Circle." + err, satoshiAliceLeft: satoshisFromFaucet - minersFee }) }
+		return cb({ psbt: psbt.toHex(), CircleId: randCircle, addressOfUTXO: AliceAddressToUnlockLater, status: "200", satoshiAliceLeft: satoshisFromFaucet - minersFee  });
+	})
 
-				var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: ID.HMAC(id, salt), "version": constants.VERSION, });
-				CirclesCollection.insertOne(doc1, function (err, circles) {
-					if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: "Could not store the Circle." + err }) }
-					return cb({ psbt: psbt.toHex(), CircleId: randCircle, addressOfUTXO: AliceAddressToUnlockLater, status: "200" });
-				})
+}
 			}
 			catch (e) { return cb({ psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: e }) }// if you get Error: mandatory-script-verify-flag-failed (Operation not valid with the current stack size) (code 16) , then e.g. see https://bitcoin.stackexchange.com/a/81740/45311
 		}
@@ -170,10 +173,10 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, salt, pubkeyOfUTX
 		// }
 		// make hash of the redeemscript
 
-		const { address } = await ID.createAddressLockedWithCirclesScript(pubkeyOfUTXO, contract, oracleSignTx, oracleBurnTx, regtest)
+		const{p2sh:p2sh, redeemscript: dummy} = await ID.createAddressLockedWithCirclesScript(pubkeyOfUTXO, contract, oracleSignTx, oracleBurnTx, regtest)
 
 		// is calculated address equal to utxo?
-		if (address === addressOfUTXO) callback();
+		if (p2sh.address === addressOfUTXO) callback();
 		else callback("Hash of contract not in UTXO redeemScript")
 	});
 
@@ -197,24 +200,16 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 		if (err) { return callback("", "", "", 500, "2 Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
 		if (circles.length != 1) { return callback("", "", "", 500, "2 Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
 		// addressToUnlock=circles[0].BTCaddress;
-		await regtestUtils.mine(11);
+		// await regtestUtils.mine(11);
 		// console.log("output lock of Alice's transaction: " + bitcoin.script.toASM(Buffer.from(paymentToUnlock.output.data, 'hex')))
 		// console.log("We will create a script for this, which hash160 is equal to the above hexadecimal number")
 
 		//for the output  lock of the airdropped tokens
-		const redeemScriptToAlice = await ID.circlesLockScriptSigOutput(AlicePubkey, contract, oracleSignTx, oracleBurnTx, regtest)
-		const redeemScriptToBob = await ID.circlesLockScriptSigOutput(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
-		console.log("it might be: " + bitcoin.script.toASM(redeemScriptToAlice))
-		const AliceAddressToUnlock = bitcoin.payments.p2sh({
-			redeem: { output: redeemScriptToAlice, network: regtest },
-			network: regtest,
-		});
-		const BobAddressToUnlock = bitcoin.payments.p2sh({
-			redeem: { output: redeemScriptToBob, network: regtest },
-			network: regtest,
-		});
+		const {p2sh: AliceP2shToUnlock,redeemscript: redeemScriptToAlice}  = await ID.createAddressLockedWithCirclesScript(AlicePubkey, contract, oracleSignTx, oracleBurnTx, regtest)
+		const {p2sh: BobP2shToUnlock, redeemscript:redeemScriptToBob} = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
+		// console.log("it might be: " + bitcoin.script.toASM(redeemScriptToAlice))
 
-		const unspentToUnlock = await regtestUtils.unspents(AliceAddressToUnlock.address)
+		const unspentToUnlock = await regtestUtils.unspents(AliceP2shToUnlock.address)
 
 		//    const unspent2s = await regtestUtils.unspents(redeemScriptToAlice.toString('hex'))
 
@@ -334,7 +329,6 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 			// psbt.signInput(0,oracleSignTx,[hashType])
 
 
-
 			// Alice.signAllInputs(AliceClientSignTxID.privateKey);//alice2.keys[0]);  
 
 
@@ -412,7 +406,7 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 			console.log(dustSatoshis + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
 
 			//for the output  lock of the tokens for Bob
-			const Bob_p2shOutputLock = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
+			const {p2sh: Bob_p2shOutputLock, redeemscript: dummy}= await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
 			const BobAddressToUnlockLater = Bob_p2shOutputLock.address;
 
 			CirclesCollection.insertOne(
