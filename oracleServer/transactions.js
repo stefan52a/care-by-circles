@@ -110,17 +110,26 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 
 				const resultBroadcast = await regtestUtils.broadcast(psbt.extractTransaction().toHex());
 
-				// This verifies that the vout output of txId transaction is actually for value
-				// in satoshis and is locked for the address given.
-				// The utxo can be unconfirmed. We are just verifying it was at least placed in
-				// the mempool.
-				regtestUtils.verify({
-					txId: psbt.extractTransaction().toHex(),
-					address: regtestUtils.RANDOM_ADDRESS,
-					vout: 0,
-					value: satoshisFromFaucet,
-				});
-
+				                //////////////////////////////////////////////////////////////////////todo
+                //////////////////////////////////////////////////////////////////////todo
+                //////////////////////////////////////////////////////////////////////todo
+                //////////////////////////////////////////////////////////////////////todo
+                //////////////////////////////////////////////////////////////////////todo
+				// // This verifies that the vout output of txId transaction is actually for value
+				// // in satoshis and is locked for the address given.
+				// // The utxo can be unconfirmed. We are just verifying it was at least placed in
+				// // the mempool.
+				// await regtestUtils.verify({
+				// 	txId: psbt.extractTransaction().toHex(),
+				// 	address: regtestUtils.RANDOM_ADDRESS,
+				// 	vout: 0,
+				// 	value: satoshisFromFaucet,
+				// });
+                //////////////////////////////////////////////////////////////////////todo
+                //////////////////////////////////////////////////////////////////////todo
+                //////////////////////////////////////////////////////////////////////todo
+                //////////////////////////////////////////////////////////////////////todo
+                //////////////////////////////////////////////////////////////////////todo
 
 
 				// const redeemScript = ID.circlesLockScriptSigOutput(AlicePubkeyStr,
@@ -176,8 +185,8 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, salt, pubkeyOfUTX
 		const{p2sh:p2sh, redeemscript: dummy} = await ID.createAddressLockedWithCirclesScript(pubkeyOfUTXO, contract, oracleSignTx, oracleBurnTx, regtest)
 
 		// is calculated address equal to utxo?
-		if (p2sh.address === addressOfUTXO) callback();
-		else callback("Hash of contract not in UTXO redeemScript")
+		if (p2sh.address === addressOfUTXO) return callback();
+		else return callback("Hash of contract not in UTXO redeemScript")
 	});
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////

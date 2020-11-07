@@ -70,13 +70,13 @@ async function run() {
     // force update MTP  (Merkle Tree Proof?)
 
     const onlyGenesis = false;   ///<<====================================== set to true once, false subsequent calls
-            
+
     // force update MTP  
     await regtestUtils.mine(11);
-            
+
 
     if (onlyGenesis) {
-        console.log ("Alice gets an airdrop")
+        console.log("Alice gets an airdrop")
         const AlicePubkey = _AliceClientSignTxID.publicKey.toString('hex')
         axiosInstance.post('/oracleGetAirdrop', {
             // generate another pubkey from a WIF
@@ -87,8 +87,10 @@ async function run() {
         })
             .then(function (response) {
                 // console.log(response.data);//store circleID and newUTXO persistent on client
-                var doc1 = CirclesOnClient({ instanceCircles: response.data.Circle, newUTXO: response.data.addressOfUTXO, pubkey:  AlicePubkey, Id: _AliceId, salt: _saltAlice, 
-                                                saltedHashedIdentification: ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION, satoshi: response.data.satoshiAliceLeft });//not all info needs be redorded on client, here just for debugging purposes
+                var doc1 = CirclesOnClient({
+                    instanceCircles: response.data.Circle, newUTXO: response.data.addressOfUTXO, pubkey: AlicePubkey, Id: _AliceId, salt: _saltAlice,
+                    saltedHashedIdentification: ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION, satoshi: response.data.satoshiAliceLeft
+                });//not all info needs be redorded on client, here just for debugging purposes
                 CirclesClientCollection.insertOne(doc1, function (err, circles) {
                     if (err) { console.log({ err: "Could not store the Circle." + err }); return }
                     { console.log("success creating genesis") };
@@ -102,29 +104,40 @@ async function run() {
             const AlicePubkey = _AliceClientSignTxID.publicKey.toString('hex')
             if (err) { callback(err, "NotFound") } else
                 if (circles.length == 0) { console.log("No circles assigned to this user, make a genesis Circle first!") } else
-                    if (circles.length != 1) {console.log("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle")}
+                    if (circles.length != 1) { console.log("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle") }
                     else {
-                        console.log ("======>Alice accepts Bob in her Circle")
+                        console.log("======>Alice accepts Bob in her Circle")
                         const BobPubkey = _BobClientSignTxID.publicKey.toString('hex')
                         const UTXOAlice = circles[0].newUTXO
-                        letJoin(AlicePubkey, BobPubkey, _BobId, _saltBob, circles[0].instanceCircles, UTXOAlice, (newUTXO) => {//store circleId, and newUTXO  persistent on client
-                            const newUTXOBob = newUTXO;
+                        letJoin(AlicePubkey, BobPubkey, _BobId, _saltBob, circles[0].instanceCircles, UTXOAlice, true, (newUTXOBob) => {//store circleId, and newUTXO  persistent on client
                             const newUTXOAlice = UTXOAlice;  ///todo should get new one when a HD wallet is used!!!
                             CirclesClientCollection.insertOne(
-                                { instanceCircles: circles[0].instanceCircles, saltedHashedIdentification: ID.HMAC(_BobId, _saltBob), "version": constants.VERSION,
-                                 newUTXO: newUTXOBob, pubkey: BobPubkey, Id: _BobId, salt: _saltBob,}
-                                // CirclesClientCollection.updateOne(
-                                //     { instanceCircles: circles[0].instanceCircles, saltedHashedIdentification: ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION, }, // Filter
-                                //     { $set: { newUTXO: newUTXO, pubkey: AlicePubkey, Id: _AliceId, salt: _saltAlice, } }, // Update
-                                //     { upsert: true } // add document if not exists 
-                                    , function (err, cirkles) {
-                                    if (err) { console.log({ err: "Could not store the Circle." + err }); return }//todo update for client side of Charlie as well
+                                {
+                                    instanceCircles: circles[0].instanceCircles, saltedHashedIdentification: ID.HMAC(_BobId, _saltBob), "version": constants.VERSION,
+                                    newUTXO: newUTXOBob, pubkey: BobPubkey, Id: _BobId, salt: _saltBob,
+                                }
+                                , function (err, cirkles) {
+                                    if (err) { console.log("Could not store the Circle." + err ); process.kill(process.pid, 'SIGTERM') }//todo update for client side of Charlie as well
                                     const CharliePubkey = _CharlieClientSignTxID.publicKey.toString('hex')
-                                    console.log ("======>Alice accepts Charlie in her Circle")
-                                    letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, (newUTXOCharlie) => {  //store circleId, newUTXO  make persistent on client for Alice but also for Charlie
+                                    console.log("======>Alice accepts Charlie in her Circle")
+                                    letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (newUTXOCharlie) => {  //store circleId, newUTXO  make persistent on client for Alice but also for Charlie
+                                        CirclesClientCollection.insertOne(
+                                            {
+                                                instanceCircles: circles[0].instanceCircles, saltedHashedIdentification: ID.HMAC(_CharlieId, _saltCharlie), "version": constants.VERSION,
+                                                newUTXO: newUTXOCharlie, pubkey: CharliePubkey, Id: _CharlieId, salt: _saltCharlie,
+                                            }
+                                            , function (err, cirkles) {
+                                                if (err) { console.log( "Could not store the Circle." + err ); process.kill(process.pid, 'SIGTERM') }//todo update for client side of Charlie as well
+                                                console.log("======>Alice tries to add Charlie with a incorrect contract, should fail")
+                                                const CharliePubkey = _CharlieClientSignTxID.publicKey.toString('hex')
+                                                letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, false, (newUTXOCharlie) => {  //store circleId, newUTXO  make persistent on client for Alice but also for Charlie
 
-                                        console.log ("add also make one that should fail, with wrong contract")
 
+
+                                                    console.log("======>Alice tries to re-add Charlie in her Circle, which should fail")
+                                                    console.log("add also make one that should fail, A Circle with 151 members")
+                                                });
+                                            });
 
                                     })
                                 })
@@ -135,15 +148,14 @@ async function run() {
 
     }
 }
-function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, callback) {
+async function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, correctContract, callback) {
 
-
-    console.log("pubkey Alice: "+fromPubkey+ "\n"+"current UTXO of Alice "+UTXO)
 
     //Now ALice will let Bob in her circle:
     const filenameContract = './oracleServer/ExamplecontractExample.js';
     fs.readFile(filenameContract, 'utf8', function (err, contract) {
         if (err) throw err;
+        if (!correctContract) contract = "a=1 //waste, should not work as contract"
         axiosInstance.post('/oraclePleaseSignTx', {
             contract: contract.trim().replace(/\s+/g, ' '),  // http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
 
@@ -159,7 +171,7 @@ function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, callback) {
             saltBob: toSalt,
             BobPubkey: toPubkey
         })
-            .then(function (response) {
+            .then(async function (response) {
                 ////////////////////////////
                 //To combine signatures in parallel, see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
                 ////////////////////////////
@@ -190,18 +202,18 @@ function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, callback) {
 
 
 
-                
-                
-                
-                
+
+
+
+
                 // build and broadcast to our RegTest network
-                regtestUtils.broadcast(psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex());// to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
+                await regtestUtils.broadcast(psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex());// to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
 
 
 
-   				// Mine 10 blocks, returns an Array of the block hashes
-				// the above psbt will confirm
-				regtestUtils.mine(10);
+                // Mine 10 blocks, returns an Array of the block hashes
+                // the above psbt will confirm
+                await regtestUtils.mine(10);
 
 
 
@@ -214,21 +226,23 @@ function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, callback) {
                 //////////////////////////////////////////////////////////////////////todo
                 //////////////////////////////////////////////////////////////////////todo
                 //////////////////////////////////////////////////////////////////////todo
-                regtestUtils.verify({
-                    txId: _AliceClientSignTxID,
-                    address: fromPubkey,
-                    vout: 0,
-                    value: response.data.tokens,
-                });
+                // await regtestUtils.verify({
+                //     txId: psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex(),
+                //     address: fromPubkey,
+                //     vout: 0,
+                //     value: response.data.tokens,
+                // });
                 //////////////////////////////////////////////////////////////////////todo
 
                 callback(response.data.addressOfUTXO);
             })
             .catch(function (error) {
-                console.log("error2 "+error)
-                if (error.response) console.log("\n" + JSON.stringify(error.response.data))
+                console.log("error2 " + error)
+                // if (error.stack) console.log("\n" + JSON.stringify(error.stack))
+                if (error.response) console.log(JSON.stringify(error.response.data))
             });
-    })
+    });
+
 }
 
 // Make only one mongodb connection per session:  BY TOM:
