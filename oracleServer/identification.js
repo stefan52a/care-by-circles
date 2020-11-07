@@ -53,22 +53,6 @@ module.exports.hasNoGenesisCircle = (id, salt, callback) => {
 
 module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest ) => { //todo how get new HD address?
 	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
-	// const toPubkey = Buffer.from(toPubkeyStr, 'hex');   
-	//create (and broadcast via 3PBP) a Circles' genesis Transaction 
-	// const redeemscript = this.circlesLockScriptSigOutput(toPubkey,
-	// 	algorithm,
-	// 	oracleSignTx,  //: KeyPair,
-	// 	oracleBurnTx  //: KeyPair,
-	// )
-	// const p2sh = await bitcoin.payments.p2sh({
-	// 	redeem: {
-	// 		output: redeemscript,
-	// 	},
-	// 	network: regtest,
-	// }
-	// let payment = {
-    //     network: regtest,
-		// output:  
 		const redeemscript = this.circlesLockScriptSigOutput(toPubkeyStr,
 			contract,
 			oracleSignTx,  //: KeyPair,

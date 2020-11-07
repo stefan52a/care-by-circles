@@ -139,11 +139,11 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 
 				var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: ID.HMAC(id, salt), "version": constants.VERSION, });
 				CirclesCollection.insertOne(doc1, function (err, circles) {
-					if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "" , status: "500", err: "Could not store the Circle." + err }) }
+					if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: "Could not store the Circle." + err }) }
 					return cb({ psbt: psbt.toHex(), CircleId: randCircle, addressOfUTXO: AliceAddressToUnlockLater, status: "200" });
 				})
 			}
-			catch (e) { return cb({ psbt: "", CircleId: "",addressOfUTXO:"", status: "500", err: e }) }// if you get Error: mandatory-script-verify-flag-failed (Operation not valid with the current stack size) (code 16) , then e.g. see https://bitcoin.stackexchange.com/a/81740/45311
+			catch (e) { return cb({ psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: e }) }// if you get Error: mandatory-script-verify-flag-failed (Operation not valid with the current stack size) (code 16) , then e.g. see https://bitcoin.stackexchange.com/a/81740/45311
 		}
 	})
 }
@@ -154,38 +154,27 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, salt, pubkeyOfUTX
 
 	// The redeem script has a hash in the pubscript, and given the one-way nature of hashes
 	// you can never find the contents of the redeem script. (P2SH)
-	// we have to make a redeem script (a.o. with hash of contract etc) and look whether it hashes to the right hash of the redeem script.
+	// we have to make a redeem script (a.o. containing a  hash of the contract etc) and look whether it hashes to the right hash of the redeem script.
+	// If so the user gave the right contract for addressOfUTXO
 
 	// var addressOfUTXO;
 
 
-	CirclesCollection.find({ "saltedHashedIdentification": ID.HMAC(id, salt), "version": constants.VERSION }).toArray(function (err, circles) {
+	CirclesCollection.find({ "saltedHashedIdentification": ID.HMAC(id, salt), "version": constants.VERSION }).toArray(async function (err, circles) {
 		if (err) { return callback(err + " 1 Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash!") }
 		if (circles.length == 0) return callback("error" + " 1 Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash!")
 		if (circles.length > 1) return callback("error" + " 1 Something went terribly wrong: more than 1 circles assigned to a user, in the function when checking the contract hash!")
+
 		// else {
 		// 	addressOfUTXO = circles[0].addressToUnlock; //client should remember this!
 		// }
 		// make hash of the redeemscript
-		try {
-			const redeemScript = ID.circlesLockScriptSigOutput(pubkeyOfUTXO,
-				contract,
-				oracleSignTx,  //: KeyPair,
-				oracleBurnTx  //: KeyPair,
-			)
-			const { address } = bitcoin.payments.p2sh({
-				redeem: { output: redeemScript, network: regtest },
-				network: regtest,
-			});
 
-			// is address equal to utxo?
-			if (address === addressOfUTXO) callback();
-			else callback("Hash of contract not in UTXO redeemScript")
-		}
-		catch (e) {
-			callback(e)
-		}
+		const { address } = await ID.createAddressLockedWithCirclesScript(pubkeyOfUTXO, contract, oracleSignTx, oracleBurnTx, regtest)
 
+		// is calculated address equal to utxo?
+		if (address === addressOfUTXO) callback();
+		else callback("Hash of contract not in UTXO redeemScript")
 	});
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,8 +194,8 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 	// force update MTP  (Merkle Tree Proof?)
 	const dustSatoshis = 547
 	CirclesCollection.find({ "saltedHashedIdentification": ID.HMAC(AliceId, saltAlice), "version": constants.VERSION }).toArray(async function (err, circles) {
-		if (err) { return callback("","", "", 500, "2 Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
-		if (circles.length != 1) { return callback("","", "", 500, "2 Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
+		if (err) { return callback("", "", "", 500, "2 Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
+		if (circles.length != 1) { return callback("", "", "", 500, "2 Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
 		// addressToUnlock=circles[0].BTCaddress;
 		await regtestUtils.mine(11);
 		// console.log("output lock of Alice's transaction: " + bitcoin.script.toASM(Buffer.from(paymentToUnlock.output.data, 'hex')))
@@ -421,14 +410,14 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 
 			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " + (satoshisToUnlock - minersFee - dustSatoshis) + " is now locked with:\n" + bitcoin.script.toASM(redeemScriptToAlice))// + "\nat address " + redeemScriptToAlice.address)
 			console.log(dustSatoshis + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
-			
+
 			//for the output  lock of the tokens for Bob
 			const Bob_p2shOutputLock = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
 			const BobAddressToUnlockLater = Bob_p2shOutputLock.address;
 
 			CirclesCollection.insertOne(
 				// { "Attribute": "good" },
-				{ "version": constants.VERSION, instanceCircles: circleId, saltedHashedIdentification: ID.HMAC(BobId, saltBob)},
+				{ "version": constants.VERSION, instanceCircles: circleId, saltedHashedIdentification: ID.HMAC(BobId, saltBob) },
 				// { $set: { addressToUnlock: "determine when fully signed"} },
 				// { upsert: true },
 				function (err, circles) {
