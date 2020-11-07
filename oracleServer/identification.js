@@ -37,7 +37,7 @@ module.exports.inThisGenesisCircle = (id, salt,  callback) => {// needed by cont
     // else
     // {
 		circle= {identif: "abracadabraCirkel", nrOfMembers: 10}
-    callback(circle);// FTM pretend id to have a Circle
+    callback(circle, '');// FTM pretend id to have a Circle
     // }
 }
 
