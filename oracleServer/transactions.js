@@ -54,7 +54,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 			const hashType = bitcoin.Transaction.SIGHASH_ALL;
 
 			//for the output  lock of the airdropped tokens^
-			const {p2sh: Alice_p2shOutputLock, redeemscript: dummy}  = await ID.createAddressLockedWithCirclesScript(AlicePubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest) // Alice  will get the airdrop
+			const { p2sh: Alice_p2shOutputLock, redeemscript: dummy } = await ID.createAddressLockedWithCirclesScript(AlicePubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest) // Alice  will get the airdrop
 			const AliceAddressToUnlockLater = Alice_p2shOutputLock.address;
 
 			try {
@@ -110,11 +110,11 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 
 				const resultBroadcast = await regtestUtils.broadcast(psbt.extractTransaction().toHex());
 
-				                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
+				//////////////////////////////////////////////////////////////////////todo
+				//////////////////////////////////////////////////////////////////////todo
+				//////////////////////////////////////////////////////////////////////todo
+				//////////////////////////////////////////////////////////////////////todo
+				//////////////////////////////////////////////////////////////////////todo
 				// // This verifies that the vout output of txId transaction is actually for value
 				// // in satoshis and is locked for the address given.
 				// // The utxo can be unconfirmed. We are just verifying it was at least placed in
@@ -125,11 +125,11 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 				// 	vout: 0,
 				// 	value: satoshisFromFaucet,
 				// });
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
+				//////////////////////////////////////////////////////////////////////todo
+				//////////////////////////////////////////////////////////////////////todo
+				//////////////////////////////////////////////////////////////////////todo
+				//////////////////////////////////////////////////////////////////////todo
+				//////////////////////////////////////////////////////////////////////todo
 
 
 				// const redeemScript = ID.circlesLockScriptSigOutput(AlicePubkeyStr,
@@ -144,16 +144,15 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 
 				console.log((satoshisFromFaucet - minersFee) + " airdropped satoshi is now locked with:\n" + bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript) + "\nat address " + AliceAddressToUnlockLater)
 
-if (createGenesis)
-{
-	randCircle = "Circle" + buf.toString('hex');
-	var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: ID.HMAC(id, salt), "version": constants.VERSION, });
-	CirclesCollection.insertOne(doc1, function (err, circles) {
-		if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: "Could not store the Circle." + err, satoshiAliceLeft: satoshisFromFaucet - minersFee }) }
-		return cb({ psbt: psbt.toHex(), CircleId: randCircle, addressOfUTXO: AliceAddressToUnlockLater, status: "200", satoshiAliceLeft: satoshisFromFaucet - minersFee  });
-	})
+				if (createGenesis) {
+					randCircle = "Circle" + buf.toString('hex');
+					var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: ID.HMAC(id, salt), "version": constants.VERSION, });
+					CirclesCollection.insertOne(doc1, function (err, circles) {
+						if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: "Could not store the Circle." + err, satoshiAliceLeft: satoshisFromFaucet - minersFee }) }
+						return cb({ psbt: psbt.toHex(), CircleId: randCircle, addressOfUTXO: AliceAddressToUnlockLater, status: "200", satoshiAliceLeft: satoshisFromFaucet - minersFee });
+					})
 
-}
+				}
 			}
 			catch (e) { return cb({ psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: e }) }// if you get Error: mandatory-script-verify-flag-failed (Operation not valid with the current stack size) (code 16) , then e.g. see https://bitcoin.stackexchange.com/a/81740/45311
 		}
@@ -182,7 +181,7 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, salt, pubkeyOfUTX
 		// }
 		// make hash of the redeemscript
 
-		const{p2sh:p2sh, redeemscript: dummy} = await ID.createAddressLockedWithCirclesScript(pubkeyOfUTXO, contract, oracleSignTx, oracleBurnTx, regtest)
+		const { p2sh: p2sh, redeemscript: dummy } = await ID.createAddressLockedWithCirclesScript(pubkeyOfUTXO, contract, oracleSignTx, oracleBurnTx, regtest)
 
 		// is calculated address equal to utxo?
 		if (p2sh.address === addressOfUTXO) return callback();
@@ -214,8 +213,8 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 		// console.log("We will create a script for this, which hash160 is equal to the above hexadecimal number")
 
 		//for the output  lock of the airdropped tokens
-		const {p2sh: AliceP2shToUnlock,redeemscript: redeemScriptToAlice}  = await ID.createAddressLockedWithCirclesScript(AlicePubkey, contract, oracleSignTx, oracleBurnTx, regtest)
-		const {p2sh: BobP2shToUnlock, redeemscript:redeemScriptToBob} = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
+		const { p2sh: AliceP2shToUnlock, redeemscript: redeemScriptToAlice } = await ID.createAddressLockedWithCirclesScript(AlicePubkey, contract, oracleSignTx, oracleBurnTx, regtest)
+		const { p2sh: BobP2shToUnlock, redeemscript: redeemScriptToBob } = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
 		// console.log("it might be: " + bitcoin.script.toASM(redeemScriptToAlice))
 
 		const unspentToUnlock = await regtestUtils.unspents(AliceP2shToUnlock.address)
@@ -415,7 +414,7 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 			console.log(dustSatoshis + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
 
 			//for the output  lock of the tokens for Bob
-			const {p2sh: Bob_p2shOutputLock, redeemscript: dummy}= await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
+			const { p2sh: Bob_p2shOutputLock, redeemscript: dummy } = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
 			const BobAddressToUnlockLater = Bob_p2shOutputLock.address;
 
 			CirclesCollection.insertOne(

@@ -1,12 +1,3 @@
-const axios = require('axios')
-const axiosInstance = axios.create({
-    baseURL: 'http://localhost:3000/api/',
-    // baseURL: 'https://www.carebycircle.com/api',
-    timeout: 30000
-});
-const onlyGenesis = false;   ///<<====================================== set to true once, false subsequent calls
-
-
 //Handy:  https://github.com/BlockchainCommons/Learning-Bitcoin-from-the-Command-Line
 
 const constants = require('./oracleServer/constants');
@@ -16,11 +7,19 @@ const bitcoin = require('bitcoinjs-lib');
 const psbtHelper = require('./oracleServer/psbtHelper');
 const ID = require('./oracleServer/identification');
 const regtestClient = require('regtest-client'); /// seee https://github.com/bitcoinjs/regtest-client
+const { addressContentsToLockingBytecode } = require('bitcoin-ts');
+const { constant } = require('underscore');
 const APIPASS = process.env.APIPASS || 'sastoshi';
 const APIURL = process.env.APIURL || 'http://localhost:8080/1'; //e.g.   localhost:8080/1/r/generate?432  see https://github.com/bitcoinjs/regtest-server/blob/master/routes/1.js
 const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
 const regtest = regtestUtils.network;
 
+const axios = require('axios')
+const axiosInstance = axios.create({
+    baseURL: constants.BASEURL,
+    timeout: 30000
+});
+const onlyGenesis = constants.DO_GENESIS;   ///<<====================================== set to true once to start, false in all subsequent calls
 
 // const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
 const _AliceClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
@@ -41,9 +40,6 @@ const _CharlieClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wall
 );
 const _CharlieId = 'Charlie+31-6-231231391'
 const _saltCharlie = 'CharlieHatskikeydeeKey8e8789usdfi56j34sd430a8(**(59^*&*(&()-f-__d21387';  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
-
-const _satoshiForGenesis = 7e4
-
 
 // Make only one mongodb connection per session:  BY TOM:
 var db;
@@ -106,31 +102,28 @@ async function run() {
             const AlicePubkey = _AliceClientSignTxID.publicKey.toString('hex')
             if (err) { callback(err, "NotFound") } else
                 if (circles.length == 0) { console.log("No circles assigned to this user, make a genesis Circle first!") } else
-                    if (circles.length != 1) { 
-                        
-                        
-////////////////////////////////todo delete this code:
+                    if (circles.length != 1) {
 
-                        //remove the last one:
-                        CirclesClientCollection.remove({ "saltedHashedIdentification": ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION,  instanceCircles: circles[1].instanceCircles }, function(err, result) {
-                            if (err) {
-                              console.err(err);
-                            } else {
-                              console.log("deleted "+result);
-                            }
-                          });
-                        
-                        /////and uncomment:                      
-                        
-                        //console.log("Something went wrong terribly: more genesis scircles assigned to a user!", "more than 1 Circle") 
+
+                        // ////////////////////////////////todo delete this code:
+
+                        // //remove the last one:
+                        // CirclesClientCollection.remove({ "saltedHashedIdentification": ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION, instanceCircles: circles[1].instanceCircles }, function (err, result) {
+                        //     if (err) {
+                        //         console.err(err);
+                        //     } else {
+                        //         console.log("deleted " + result);
+                        //     }
+                        // });
+
+                        ///and uncomment:                      
+
+                        console.log("Something went wrong terribly: more genesis scircles assigned to a user!", "more than 1 Circle")
                     }
-                    // else 
-                    
-                    
-                    {
+                    else {
                         console.log("======>Alice accepts Bob in her Circle")
                         const BobPubkey = _BobClientSignTxID.publicKey.toString('hex')
-                        const UTXOAlice = circles[0].newUTXO
+                        UTXOAlice = circles[0].newUTXO 
                         letJoin(AlicePubkey, BobPubkey, _BobId, _saltBob, circles[0].instanceCircles, UTXOAlice, true, (newUTXOBob, err) => {//store circleId, and newUTXO  persistent on client
                             if (err) {
                                 return console.log(newUTXOBob)
@@ -142,12 +135,11 @@ async function run() {
                                     newUTXO: newUTXOBob, pubkey: BobPubkey, Id: _BobId, salt: _saltBob,
                                 }
                                 , function (err, cirkles) {
-                                    if (err) { console.log("Could not store the Circle." + err); process.kill(process.pid, 'SIGTERM') }//todo update for client side of Charlie as well
+                                    if (err) { console.log("Could not store the Circle." + err); return }//todo update for client side of Charlie as well
                                     const CharliePubkey = _CharlieClientSignTxID.publicKey.toString('hex')
                                     console.log("======>Alice accepts Charlie in her Circle")
                                     letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (newUTXOCharlie, err) => {  //store circleId, newUTXO  make persistent on client for Alice but also for Charlie
                                         if (err) {
-
                                             return console.log(newUTXOCharlie)
                                         }
                                         CirclesClientCollection.insertOne(
@@ -156,12 +148,14 @@ async function run() {
                                                 newUTXO: newUTXOCharlie, pubkey: CharliePubkey, Id: _CharlieId, salt: _saltCharlie,
                                             }
                                             , function (err, cirkles) {
-                                                if (err) { console.log("Could not store the Circle." + err); process.kill(process.pid, 'SIGTERM') }//todo update for client side of Charlie as well
+                                                if (err) { console.log("Could not store the Circle." + err); return}//todo update for client side of Charlie as well
                                                 console.log("======>Alice tries to add Charlie with a incorrect contract, should fail")
                                                 const CharliePubkey = _CharlieClientSignTxID.publicKey.toString('hex')
                                                 letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, false, (dummy, err) => {
                                                     if (err) {
-                                                        return console.log(dummy)
+                                                        console.log("======>failed successfully")
+                                                    } else{
+                                                        console.log("======>!!!failed because of success")
                                                     }
                                                     // console.log("======>Alice tries to re-add Charlie in her Circle, which should fail") ///TODO   does not fail yet, working on it,.......
                                                     // letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
@@ -240,48 +234,51 @@ async function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, corre
                 // the above psbt will confirm
 
 
+                if (true) //regtest //                 // build and broadcast to our RegTest network
+                {
+                    if (axiosInstance.defaults.baseURL === 'http://localhost:3000/api/') {
+                        // build and broadcast to our RegTest network
+                        await regtestUtils.broadcast(psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex());// to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
+                        // Mine 10 blocks, returns an Array of the block hashes
+                        // the above psbt will confirm
+                        await regtestUtils.mine(10);
+                        // for bitcoin-cli decodepsbt use the psbt fromhex then to base64 (e.g. with cyberchef)
 
-
-
-
-
-
-
-                // build and broadcast to our RegTest network
-                await regtestUtils.broadcast(psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex());// to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
-
-
-
-                // Mine 10 blocks, returns an Array of the block hashes
-                // the above psbt will confirm
-                await regtestUtils.mine(10);
-
-
-
-
-                // for bitcoin-cli decodepsbt use the psbt fromhex then to base64 (e.g. with cyberchef)
-                console.log('\npsbt can be decoded with \n"  bitcoin-cli -regtest decodepsbt ', psbt_from_Oracle_for_Alice_to_sign.toBase64() + '   "\n')//fromhex, tobase64  (e.g. with cyberchef)
-
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
-                //////////////////////////////////////////////////////////////////////todo
-                // await regtestUtils.verify({
-                //     txId: psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex(),
-                //     address: fromPubkey,
-                //     vout: 0,
-                //     value: response.data.tokens,
-                // });
-                //////////////////////////////////////////////////////////////////////todo
-
-                callback(response.data.addressOfUTXO);
+                        console.log('\npsbt can be decoded with \n"  bitcoin-cli -regtest decodepsbt ', psbt_from_Oracle_for_Alice_to_sign.toBase64() + '   "\n')//fromhex, tobase64  (e.g. with cyberchef)
+                        console.log("======>Succes")
+                        //////////////////////////////////////////////////////////////////////todo
+                        //////////////////////////////////////////////////////////////////////todo
+                        //////////////////////////////////////////////////////////////////////todo
+                        //////////////////////////////////////////////////////////////////////todo
+                        //////////////////////////////////////////////////////////////////////todo
+                        // await regtestUtils.verify({
+                        //     txId: psbt_from_Oracle_for_Alice_to_sign.extractTransaction().toHex(),
+                        //     address: fromPubkey,
+                        //     vout: 0,
+                        //     value: response.data.tokens,
+                        // });
+                        //////////////////////////////////////////////////////////////////////todo
+                        callback(response.data.addressOfUTXO);
+                    } else { //remote regtest baseURL: 'https://www.carebycircle.com/api',
+                        axiosInstance.post('/broadcastToRegtest', {
+                            // generate another pubkey from a WIF
+                            psbtToBroadcast: psbt.toBase64(),  //Alice wants to receive the airdrop towards this pubkey , client (HD wallet?) should remember (persistent storage)
+                            //  this as long as it contains tokens, or client could do scan of blockchain
+                        })
+                            .then(function (responseCast, err) {
+                                if (err) callback("", err);
+                                callback(response.data.addressOfUTXO);
+                            })
+                    }
+                } else {
+                    // to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
+                }
             })
             .catch(function (error) {
                 console.log("error2 " + error)
                 // if (error.stack) console.log("\n" + JSON.stringify(error.stack))
                 if (error.response) console.log(JSON.stringify(error.response.data))
-                callback("error");
+                callback("fail", "error");
             });
     });
 

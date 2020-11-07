@@ -74,9 +74,31 @@ docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 npm install
 ```
 
-3. Install and run mongodb locally, see for instructions: https://docs.mongodb.com/manual/administration/install-community/
+3. Run testClient.js on our regtest server:
 
-4. Run a regtest server, e.g.:
+adapt constants.js to
+
+```
+module.exports = Object.freeze({
+    VERSION: '0.11',
+    SATOSHI_FORGENESIS: 7e4,
+
+    // For testClient:
+    // BASEURL: 'https://www.carebycircle.com/api',
+    DO_GENESIS: false,   ///<<====================================== set to true once to start, false in all subsequent calls
+});
+```
+```
+node clientTest   #or use your favorite debugger
+```
+
+Adapt clientTest.js to your heart's desire. You are Done.
+
+If you want to run locally:
+
+4. Install and run mongodb locally, see for instructions: https://docs.mongodb.com/manual/administration/install-community/
+
+5. Run a regtest server, e.g.:
 
 ```
 docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
@@ -101,14 +123,28 @@ docker exec -it CONTAINER_ID bash
 bitcoin-cli -regtest help
 ```
 
-5.  Run the Oracle server 
+6.  Run the Oracle server 
 
 ```
 cd oracleServer
 node oracle.js    #or use your favorite debugger
 ```
 
-6. Run a client or a test e.g.:
+7. Run a client or a test e.g.:
+
+adapt constants.js to
+
+```
+module.exports = Object.freeze({
+    VERSION: '0.11',
+    SATOSHI_FORGENESIS: 7e4,
+
+    // For testClient:
+    BASEURL: 'http://localhost:3000/api/',
+    DO_GENESIS: true,   ///<<====================================== set to true once to start, false in all subsequent calls
+
+});
+```
 
 ```
 node clientTest   #or use your favorite debugger

@@ -32,7 +32,7 @@ app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop fo
 			return res.status(400).json({ error: error + " Not allowed (id does not exist, id is not a person)" });
 		}
 		//http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
-		filename = __dirname+'/ExamplecontractExample.js';
+		filename = __dirname + '/ExamplecontractExample.js';
 		fs.readFile(filename, 'utf8', function (err, contractFromFile) {
 			if (err) throw err;
 			console.log('OK: ' + filename);
@@ -114,47 +114,36 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
-// therefore we use a faucet to emulate that there is some tokens on Alice's address
-			transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FORGENESIS-1000, false, (answ) => {
-				const status = answ.status
-				const err = answ.err
-				if (err) {
-					console.log("status " + status + " " + err)
-				}
-				const psbt = answ.psbt
-				const CircleId = answ.CircleId
-				console.log({ version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (answ.satoshiAliceLeft / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract })
-				return
-				// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
-			})
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-
-
-
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
+									// therefore we use a faucet to emulate that there is some tokens on Alice's address
+									transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FORGENESIS - 1000, false, (answ) => {
+										const status = answ.status
+										const err = answ.err
+										if (err) {
+											console.log("status " + status + " " + err)
+										}
+										const psbt = answ.psbt
+										const CircleId = answ.CircleId
+										console.log({ version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (answ.satoshiAliceLeft / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract })
+										return
+										// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
+									})
+									// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
+									// therefore we use a faucet to emulate that there is some tokens on Alice's address
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 									transactions.PSBT(AliceId, saltAlice, contract, AliceNewPubkey, BobId, saltBob, BobPubkey, circleId, (AliceAddressOfNewUTXO, PSBT, OracleFinal, status, err) => {
 										if (err) {
 											console.log({ status: status, error: err })
@@ -201,8 +190,10 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										// 										dum();
 										// 										//endtemp 
 										// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-										res.status(status).json({ error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal, 
-										 version: constants.VERSION, error: "none", Circle: circleId, tokens: (constants.SATOSHI_FORGENESIS / 1e8), addressOfUTXO: AliceAddressOfNewUTXO, contract: contract })
+										res.status(status).json({
+											error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal,
+											version: constants.VERSION, error: "none", Circle: circleId, tokens: (constants.SATOSHI_FORGENESIS / 1e8), addressOfUTXO: AliceAddressOfNewUTXO, contract: contract
+										})
 										return
 
 									})
@@ -211,12 +202,12 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 							catch (e2) {
 								//client error = status 400
 								console.log({
-									error: "invalid contract syntax" + e2+
+									error: "invalid contract syntax" + e2 +
 										""// "const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
 								}
 								);
 								return res.status(400).json({
-									error: "invalid contract syntax" + e2+
+									error: "invalid contract syntax" + e2 +
 										""//"const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
 								}
 								);
@@ -254,55 +245,105 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 // 		});
 // });
 
-	// app.post('/api/GiveTxIdToOracle', (req, res) => {
-	// 	const instanceCircles = req.body.instanceCircles;
-	// 	const id = req.body.id;
+// app.post('/api/GiveTxIdToOracle', (req, res) => {
+// 	const instanceCircles = req.body.instanceCircles;
+// 	const id = req.body.id;
 
-	// 	const txId = req.body.txId;
+// 	const txId = req.body.txId;
 
-	// 	//get address of public key:  https://bitcoin.stackexchange.com/a/54999/45311
-	// 	//update mongoDB here for instanceCircles, id   combination with valuyes txId and address (ToUnlock)
-	// 	CirclesCollection.updateOne(
-	// 		// { "Attribute": "good" },
-	// 		{ instanceCircles: instanceCircles, saltedHashedIdentification: id,  "version": constants.VERSION  },
-	// 		{ $set: { txId: txId, addressToUnlock: address, updateDate: Date.now } },
-	// 		function (err, circles) {
-	// 			if (err) { return res.status(500).json({ error: "Something went wrong while updating!" + err }) }
-	// 			// addressToUnlock=circles[0].BTCaddress;
-	// 			// txId = circles[0].txId;
-	// 			// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-	// 			return res.status(200).json({ error: "none" })
-	// 		})
+// 	//get address of public key:  https://bitcoin.stackexchange.com/a/54999/45311
+// 	//update mongoDB here for instanceCircles, id   combination with valuyes txId and address (ToUnlock)
+// 	CirclesCollection.updateOne(
+// 		// { "Attribute": "good" },
+// 		{ instanceCircles: instanceCircles, saltedHashedIdentification: id,  "version": constants.VERSION  },
+// 		{ $set: { txId: txId, addressToUnlock: address, updateDate: Date.now } },
+// 		function (err, circles) {
+// 			if (err) { return res.status(500).json({ error: "Something went wrong while updating!" + err }) }
+// 			// addressToUnlock=circles[0].BTCaddress;
+// 			// txId = circles[0].txId;
+// 			// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+// 			return res.status(200).json({ error: "none" })
+// 		})
+// });
+
+// app.post('/api/GiveTxIdToOracle', (req, res) => {
+// 	const instanceCircles = req.body.instanceCircles;
+// 	const id = req.body.id;
+
+// 	const txId = req.body.txId;
+
+// 	//get address of public key:  https://bitcoin.stackexchange.com/a/54999/45311
+// 	//update mongoDB here for instanceCircles, id   combination with valuyes txId and address (ToUnlock)
+// 	CirclesCollection.updateOne(
+// 		// { "Attribute": "good" },
+// 		{ instanceCircles: instanceCircles, saltedHashedIdentification: id,  "version": constants.VERSION  },
+// 		{ $set: { txId: txId, addressToUnlock: address, updateDate: Date.now } },
+// 		function (err, circles) {
+// 			if (err) { return res.status(500).json({ error: "Something went wrong while updating!" + err }) }
+// 			// addressToUnlock=circles[0].BTCaddress;
+// 			// txId = circles[0].txId;
+// 			// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
+// 			return res.status(200).json({ error: "none" })
+// 		})
+// });
+
+app.post('/api/broadcastToRegtest', async (req, res) => {
+	const psbt = req.body.psbtToBroadcast;
+	const psbtToBroadcast= bitcoin.Psbt.fromBase64(psbt, { network: regtest })
+	// build and broadcast to our RegTest network
+	await regtestUtils.broadcast(psbtToBroadcast.extractTransaction().toHex());
+	// Mine 10 blocks, returns an Array of the block hashes
+	// the above psbt will confirm
+	await regtestUtils.mine(10);
+	// for bitcoin-cli decodepsbt use the psbt fromhex then to base64 (e.g. with cyberchef)
+	//////////////////////////////////////////////////////////////////////todo
+	//////////////////////////////////////////////////////////////////////todo
+	//////////////////////////////////////////////////////////////////////todo
+	//////////////////////////////////////////////////////////////////////todo
+	//////////////////////////////////////////////////////////////////////todo
+	// await regtestUtils.verify({
+	//     txId: psbtToBroadcast.extractTransaction().toHex(),
+	//     address: fromPubkey,
+	//     vout: 0,
+	//     value: response.data.tokens,
 	// });
+	//////////////////////////////////////////////////////////////////////todo
+
+	const psbtBas64 = bitcoin.Psbt.fromBase64(psbtToBroadcast, { network: regtest })
+	console.log('\npsbt can be decoded with \n"  bitcoin-cli -regtest decodepsbt ', psbtBase64 + '   "\n')//fromhex, tobase64  (e.g. with cyberchef)
 
 
-	function createTempContractFile(randFile, contractAlgorithm, callback) {
-		//a janitor that deletes the contract file after 30 secs
-		setTimeout((function (randFil) {
-			return function () {
-				rmFile(randFil)
-			}
-		})(randFile), 30000);
-		fs.writeFile(randFile, contractAlgorithm, callback)
-	}
+	return res.status(200).json({ msg: "done" , error:''})
+});
 
-	function rmFile(f) {
-		fs.unlink(f, (err) => {
-			if (err) {
-				return console.log({ error: "Unexpected error removing " + f + " " + err })
-			}
+
+function createTempContractFile(randFile, contractAlgorithm, callback) {
+	//a janitor that deletes the contract file after 30 secs
+	setTimeout((function (randFil) {
+		return function () {
+			rmFile(randFil)
+		}
+	})(randFile), 30000);
+	fs.writeFile(randFile, contractAlgorithm, callback)
+}
+
+function rmFile(f) {
+	fs.unlink(f, (err) => {
+		if (err) {
+			return console.log({ error: "Unexpected error removing " + f + " " + err })
+		}
+	})
+}
+
+//janitor clean any old contract files
+require("glob").glob("contractTMP*.js", function (er, files) {
+	if (er) console.log(er)
+	for (f in files) {
+		fs.unlink(files[f], (err) => {
+			if (err) console.log({ error: "Unexpected error removing " + files[f] + " " + err })
 		})
 	}
-
-	//janitor clean any old contract files
-	require("glob").glob("contractTMP*.js", function (er, files) {
-		if (er) console.log(er)
-		for (f in files) {
-			fs.unlink(files[f], (err) => {
-				if (err) console.log({ error: "Unexpected error removing " + files[f] + " " + err })
-			})
-		}
-	});
+});
 
 
 // Make only one mongodb connection per session:  BY TOM:
