@@ -130,11 +130,12 @@ async function run() {
                                                 if (err) { console.log( "Could not store the Circle." + err ); process.kill(process.pid, 'SIGTERM') }//todo update for client side of Charlie as well
                                                 console.log("======>Alice tries to add Charlie with a incorrect contract, should fail")
                                                 const CharliePubkey = _CharlieClientSignTxID.publicKey.toString('hex')
-                                                letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, false, (newUTXOCharlie) => {  //store circleId, newUTXO  make persistent on client for Alice but also for Charlie
-
-
-
+                                                letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, false, (newUTXOCharlie) => {  
                                                     console.log("======>Alice tries to re-add Charlie in her Circle, which should fail")
+                                                    letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, false, (newUTXOCharlie) => { 
+
+
+
                                                     console.log("add also make one that should fail, A Circle with 151 members")
                                                 });
                                             });
