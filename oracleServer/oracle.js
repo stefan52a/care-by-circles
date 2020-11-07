@@ -111,7 +111,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 								return res.status(500).json({ error: err });
 							}
 							try {
-								require(randFile).contract(BobId, saltBob, (dummy, errInContract) => {
+								require(randFile).contract(circleId, BobId, saltBob, (dummy, errInContract) => {
 									if (errInContract) {
 										console.log({ error: errInContract })
 										return res.json({ error: errInContract })
@@ -131,78 +131,69 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 									// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
 									// therefore we use a faucet to emulate that there is some tokens on Alice's address
-									transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FORGENESIS - 1000, false, (answ) => {
-										const status = answ.status
-										const err = answ.err
-										if (err) {
-											console.log("status " + status + " " + err)
-										}
-										const psbt = answ.psbt
-										const CircleId = answ.CircleId
-										console.log({ version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (answ.satoshiAliceLeft / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract })
-										return
+									transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FORGENESIS - 500, false, (answ) => {
 										// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
-									})
-									// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
-									// therefore we use a faucet to emulate that there is some tokens on Alice's address
-									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-									transactions.PSBT(AliceId, saltAlice, contract, AliceNewPubkey, BobId, saltBob, BobPubkey, circleId, (AliceAddressOfNewUTXO, PSBT, OracleFinal, status, err) => {
-										if (err) {
-											console.log({ status: status, error: err })
-											return res.status(status).json({ error: err })
-										}
-										// const dummy = PSBT.data.inputs[0].partialSig[0].signature  // this is the signature of the Oracle oracleSignTx
-										console.log({ status: status, error: "none", psbtBaseText: PSBT, OracleText: OracleFinal })
+										// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
+										// therefore we use a faucet to emulate that there is some tokens on Alice's address
+										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+										transactions.PSBT(AliceId, saltAlice, contract, AliceNewPubkey, BobId, saltBob, BobPubkey, circleId, (AliceAddressOfNewUTXO, PSBT, OracleFinal, status, err) => {
+											if (err) {
+												console.log({ status: status, error: err })
+												return res.status(status).json({ error: err })
+											}
+											// const dummy = PSBT.data.inputs[0].partialSig[0].signature  // this is the signature of the Oracle oracleSignTx
+											console.log({ status: status, error: "none", psbtBaseText: PSBT, OracleText: OracleFinal })
 
 
-										//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-										// 										//temp:
-										// 										const regtestClient = require('regtest-client');
-										// 										const APIPASS = process.env.APIPASS || 'sastoshi';
-										// 										const APIURL = process.env.APIURL || 'http://localhost:8080/1';
-										// 										const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
-										// 										const regtest = regtestUtils.network;
-										// 										const bitcoin = require('bitcoinjs-lib');
-										// 										var aClientSignTxID = bitcoin.ECPair.fromWIF(
-										// 											'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
-										// 											regtest,
-										// 										);
+											//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+											// 										//temp:
+											// 										const regtestClient = require('regtest-client');
+											// 										const APIPASS = process.env.APIPASS || 'sastoshi';
+											// 										const APIURL = process.env.APIURL || 'http://localhost:8080/1';
+											// 										const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
+											// 										const regtest = regtestUtils.network;
+											// 										const bitcoin = require('bitcoinjs-lib');
+											// 										var aClientSignTxID = bitcoin.ECPair.fromWIF(
+											// 											'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
+											// 											regtest,
+											// 										);
 
-										// 										const psbt = require('./test/psbtMod/psbtMod').Psbt.fromHex(PSBT.toHex());
-										// 										// const psbtObj = new Function('return ' + psbt.toString()+'')()
-										// 										psbt.signInput(0, aClientSignTxID)
+											// 										const psbt = require('./test/psbtMod/psbtMod').Psbt.fromHex(PSBT.toHex());
+											// 										// const psbtObj = new Function('return ' + psbt.toString()+'')()
+											// 										psbt.signInput(0, aClientSignTxID)
 
-										// 										// you can use validate signature method provided by library to make sure generated signature is valid
-										// 										if (!psbt.validateSignaturesOfAllInputs()) // if this returns false, then you can throw the error
-										// 										{
-										// 											console.log("could not validate signatures of psbt ")
-										// 										}
+											// 										// you can use validate signature method provided by library to make sure generated signature is valid
+											// 										if (!psbt.validateSignaturesOfAllInputs()) // if this returns false, then you can throw the error
+											// 										{
+											// 											console.log("could not validate signatures of psbt ")
+											// 										}
 
-										// 										psbt.finalizeAllInputs(regtest)
+											// 										psbt.finalizeAllInputs(regtest)
 
 
-										// 										// signed transaction hex
-										// 										const transaction = psbt.extractTransaction()
-										// 										const signedTransaction = transaction.toHex()
-										// 										const transactionId = transaction.getId()
-										// 										// sign transaction end
+											// 										// signed transaction hex
+											// 										const transaction = psbt.extractTransaction()
+											// 										const signedTransaction = transaction.toHex()
+											// 										const transactionId = transaction.getId()
+											// 										// sign transaction end
 
-										// 										// // build and broadcast to the Bitcoin RegTest network
-										// 										async function dum() {console.log (await regtestUtils.broadcast(signedTransaction))}
-										// 										dum();
-										// 										//endtemp 
-										// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-										res.status(status).json({
-											error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal,
-											version: constants.VERSION, error: "none", Circle: circleId, tokens: (constants.SATOSHI_FORGENESIS / 1e8), addressOfUTXO: AliceAddressOfNewUTXO, contract: contract
+											// 										// // build and broadcast to the Bitcoin RegTest network
+											// 										async function dum() {console.log (await regtestUtils.broadcast(signedTransaction))}
+											// 										dum();
+											// 										//endtemp 
+											// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+											res.status(status).json({
+												error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal,
+												version: constants.VERSION, error: "none", Circle: circleId, tokens: (constants.SATOSHI_FORGENESIS / 1e8), addressOfUTXO: AliceAddressOfNewUTXO, contract: contract
+											})
+											return
 										})
-										return
 
 									})
 								})
@@ -297,7 +288,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 
 app.post('/api/broadcastToRegtest', async (req, res) => {
 	const psbt = req.body.psbtToBroadcast;
-	const psbtToBroadcast= bitcoin.Psbt.fromBase64(psbt, { network: regtest })
+	const psbtToBroadcast = bitcoin.Psbt.fromBase64(psbt, { network: regtest })
 	// build and broadcast to our RegTest network
 	await regtestUtils.broadcast(psbtToBroadcast.extractTransaction().toHex());
 	// Mine 10 blocks, returns an Array of the block hashes
@@ -321,7 +312,7 @@ app.post('/api/broadcastToRegtest', async (req, res) => {
 	console.log('\npsbt can be decoded with \n"  bitcoin-cli -regtest decodepsbt ', psbtBase64 + '   "\n')//fromhex, tobase64  (e.g. with cyberchef)
 
 
-	return res.status(200).json({ msg: "done" , error:''})
+	return res.status(200).json({ msg: "done", error: '' })
 });
 
 

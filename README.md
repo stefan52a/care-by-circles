@@ -9,8 +9,11 @@ See https://CareByCircles.Com and https://youtu.be/YczwK4v-uJ0
 
 Express RESTful API server for the Oracle for Care By Circles, social inclusion.
 
+An Oracle is any service that tries to execute a contract, a contract on which the users of this blockchain have consensus on.
+
 Circles are tribes with a maximum of 150 (Dunbar's number) people each.
 
+Next to that the Oracle currently also checks whether an Id is really 1 unique human.
 An individual person's id is not stored as is on the blockchain or decentral storage.
 
 GDPR consideration:

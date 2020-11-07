@@ -160,7 +160,7 @@ async function run() {
                                                     } else{
                                                         console.log("======>!!!failed because of success")
                                                     }
-                                                    // console.log("======>Alice tries to re-add Charlie in her Circle, which should fail") ///TODO   does not fail yet, working on it,.......
+                                                    // console.log("======>Alice tries to re-add Charlie in her Circle, which should fail") 
                                                     // letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
                                                     //     if (err) {
                                                     //         return console.log(dummy)
