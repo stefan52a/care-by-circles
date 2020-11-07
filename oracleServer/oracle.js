@@ -1,6 +1,14 @@
 // This API is callable by anybody, there is no protection needed.
 
 const constants = require('./constants');
+const bitcoin = require('bitcoinjs-lib');
+const regtestClient = require('regtest-client');
+// const e = require('express');
+const APIPASS = process.env.APIPASS || 'sastoshi';
+const APIURL = process.env.APIURL || 'http://localhost:8080/1';
+//e.g.   localhost:8080/1/r/generate?432  see https://github.com/bitcoinjs/regtest-server/blob/master/routes/1.js
+const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
+const regtest = regtestUtils.network;
 
 const fs = require('fs');
 const path = require('path');
@@ -309,7 +317,7 @@ app.post('/api/broadcastToRegtest', async (req, res) => {
 	// });
 	//////////////////////////////////////////////////////////////////////todo
 
-	const psbtBas64 = bitcoin.Psbt.fromBase64(psbtToBroadcast, { network: regtest })
+	const psbtBase64 = psbtToBroadcast.toBase64()
 	console.log('\npsbt can be decoded with \n"  bitcoin-cli -regtest decodepsbt ', psbtBase64 + '   "\n')//fromhex, tobase64  (e.g. with cyberchef)
 
 

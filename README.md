@@ -92,6 +92,21 @@ module.exports = Object.freeze({
 node clientTest   #or use your favorite debugger
 ```
 
+Then you need to set up a local mongodb, for this in clienTest.js to work:
+```
+MongoClient.connect("mongodb://localhost:27017", { useNewUrlParser: true, useUnifiedTopology: true }, function (err, database) {
+    if (err) throw err;
+
+    db = database.db("carebycircles");
+    CirclesClientCollection = db.collection("clientData");
+
+    // Start the application after the database connection is ready
+    run();
+});
+```
+
+Of course you can use any other database, like sqllite, or table for client side storage.
+
 Adapt clientTest.js to your heart's desire. You are Done.
 
 If you want to run locally:
@@ -149,3 +164,5 @@ module.exports = Object.freeze({
 ```
 node clientTest   #or use your favorite debugger
 ```
+
+8. Be aware that if you often switch between local and remote regtest, that you empty the client side database (see point 3).

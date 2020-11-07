@@ -199,7 +199,9 @@ module.exports.getFinalScripts2 = (
     // e.g. btcdeb '[3045022100dee56de1b3c991f5169f96c53cd817d8eb4420f5659e3581dc2e69b12fe0376d02205e8916504c5131d1eabb2e31fd80765b5b7135cf39ab782800d4e424720f7569 02758bfe7f2b8e61821e3e32b47be516193117daddde3c3f9126b8f2bd3ae40e1d OP_DUP OP_HASH160 9b8ed87a689ace35b66dddbc3beda82793aca3e4 OP_EQUALVERIFY OP_CHECKSIG]'
 
     // console.log ("or try very nice, but does not work ATM: https://siminchen.github.io/bitcoinIDE/build/editor.html ")
-    console.log ("lockc: bitcoin.script.toASM(decompiled) \nunlock:  bitcoin.script.toASM(bitcoin.script.decompile(payment.redeem.input)) \nuse https://github.com/crm416/script")
+
+
+    // console.log ("lockc: bitcoin.script.toASM(decompiled) \nunlock:  bitcoin.script.toASM(bitcoin.script.decompile(payment.redeem.input)) \nuse https://github.com/crm416/script")
 
 
     // var evaluate = require('bitcoin-script').evaluate;

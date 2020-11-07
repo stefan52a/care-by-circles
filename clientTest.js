@@ -101,7 +101,7 @@ async function run() {
         CirclesClientCollection.find({ "saltedHashedIdentification": ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION }).toArray(function (err, circles) {
             const AlicePubkey = _AliceClientSignTxID.publicKey.toString('hex')
             if (err) { callback(err, "NotFound") } else
-                if (circles.length == 0) { console.log("No circles assigned to this user, make a genesis Circle first!") } else
+                if (circles.length == 0) { console.log("No circles assigned to this user, make a genesis Circle first!, look in constants.js set   DO_GENESIS: true   once, run testClient.js, then set back to   DO_GENESIS: false") } else
                     if (circles.length != 1) {
 
 
@@ -118,7 +118,8 @@ async function run() {
 
                         ///and uncomment:                      
 
-                        console.log("Something went wrong terribly: more genesis scircles assigned to a user!", "more than 1 Circle")
+                        console.log("Something went wrong terribly: more genesis circles assigned to a user!", "more than 1 Circle")
+                        console.log("Did you switch from local regtest to remote (or the other way around), then clean your local client database first.")
                     }
                     else {
                         console.log("======>Alice accepts Bob in her Circle")
@@ -128,6 +129,7 @@ async function run() {
                             if (err) {
                                 return console.log(newUTXOBob)
                             }
+                            console.log("======>succeeded")
                             const newUTXOAlice = UTXOAlice;  ///todo should get new one when a HD wallet is used!!!
                             CirclesClientCollection.insertOne(
                                 {
@@ -142,6 +144,7 @@ async function run() {
                                         if (err) {
                                             return console.log(newUTXOCharlie)
                                         }
+                                        console.log("======>succeeded")
                                         CirclesClientCollection.insertOne(
                                             {
                                                 instanceCircles: circles[0].instanceCircles, saltedHashedIdentification: ID.HMAC(_CharlieId, _saltCharlie), "version": constants.VERSION,
@@ -262,7 +265,7 @@ async function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, corre
                     } else { //remote regtest baseURL: 'https://www.carebycircle.com/api',
                         axiosInstance.post('/broadcastToRegtest', {
                             // generate another pubkey from a WIF
-                            psbtToBroadcast: psbt.toBase64(),  //Alice wants to receive the airdrop towards this pubkey , client (HD wallet?) should remember (persistent storage)
+                            psbtToBroadcast: psbt_from_Oracle_for_Alice_to_sign.toBase64(),  //Alice wants to receive the airdrop towards this pubkey , client (HD wallet?) should remember (persistent storage)
                             //  this as long as it contains tokens, or client could do scan of blockchain
                         })
                             .then(function (responseCast, err) {
