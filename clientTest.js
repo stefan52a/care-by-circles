@@ -106,15 +106,27 @@ async function run() {
             const AlicePubkey = _AliceClientSignTxID.publicKey.toString('hex')
             if (err) { callback(err, "NotFound") } else
                 if (circles.length == 0) { console.log("No circles assigned to this user, make a genesis Circle first!") } else
-                /////////////////////////////////////////////////////////////////////////////////////////////////////
-                //////////////////////uncomment JUST for testing removed  TODTODTDOTtODO
-                ///////////////////////////////////////////////////////////////////////////////
-                    // if (circles.length != 1) { console.log("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle") }
-                    // else 
-                                    /////////////////////////////////////////////////////////////////////////////////////////////////////
-                //////////////////////uncomment JUST for testing removed  TODTODTDOTtODO
-                ///////////////////////////////////////////////////////////////////////////////
+                    if (circles.length != 1) { 
+                        
+                        
+////////////////////////////////todo delete this code:
 
+                        //remove the last one:
+                        CirclesClientCollection.remove({ "saltedHashedIdentification": ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION,  instanceCircles: circles[1].instanceCircles }, function(err, result) {
+                            if (err) {
+                              console.err(err);
+                            } else {
+                              console.log("deleted "+result);
+                            }
+                          });
+                        
+                        /////and uncomment:                      
+                        
+                        //console.log("Something went wrong terribly: more genesis scircles assigned to a user!", "more than 1 Circle") 
+                    }
+                    // else 
+                    
+                    
                     {
                         console.log("======>Alice accepts Bob in her Circle")
                         const BobPubkey = _BobClientSignTxID.publicKey.toString('hex')
@@ -151,15 +163,15 @@ async function run() {
                                                     if (err) {
                                                         return console.log(dummy)
                                                     }
-                                                    console.log("======>Alice tries to re-add Charlie in her Circle, which should fail") ///TODO   does not fail yet, working on it,.......
-                                                    letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
-                                                        if (err) {
-                                                            return console.log(dummy)
-                                                        }
+                                                    // console.log("======>Alice tries to re-add Charlie in her Circle, which should fail") ///TODO   does not fail yet, working on it,.......
+                                                    // letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
+                                                    //     if (err) {
+                                                    //         return console.log(dummy)
+                                                    //     }
 
 
-                                                        console.log("todo: make one that should fail, when a Circle already has 150 members")
-                                                    });
+                                                    //     console.log("todo: make one that should fail, when a Circle already has 150 members")
+                                                    // });
                                                 });
                                             });
 
