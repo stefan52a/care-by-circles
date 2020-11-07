@@ -1,3 +1,12 @@
+const axios = require('axios')
+const axiosInstance = axios.create({
+    baseURL: 'http://localhost:3000/api/',
+    // baseURL: 'https://www.carebycircle.com/api',
+    timeout: 30000
+});
+const onlyGenesis = false;   ///<<====================================== set to true once, false subsequent calls
+
+
 //Handy:  https://github.com/BlockchainCommons/Learning-Bitcoin-from-the-Command-Line
 
 const constants = require('./oracleServer/constants');
@@ -12,12 +21,7 @@ const APIURL = process.env.APIURL || 'http://localhost:8080/1'; //e.g.   localho
 const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
 const regtest = regtestUtils.network;
 
-const axios = require('axios')
-const axiosInstance = axios.create({
-    baseURL: 'http://localhost:3000/api/',
-    // baseURL: 'https://www.carebycircle.com/api',
-    timeout: 30000
-});
+
 // const keyPair = bitcoin.ECPair.makeRandom({ network: regtest }).toWIF();
 const _AliceClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
     'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
@@ -69,8 +73,6 @@ async function run() {
     // const bp = child2.privateKey.toString('hex')
     // force update MTP  (Merkle Tree Proof?)
 
-    const onlyGenesis = false;   ///<<====================================== set to true once, false subsequent calls
-
     // force update MTP  
     await regtestUtils.mine(11);
 
@@ -104,57 +106,62 @@ async function run() {
             const AlicePubkey = _AliceClientSignTxID.publicKey.toString('hex')
             if (err) { callback(err, "NotFound") } else
                 if (circles.length == 0) { console.log("No circles assigned to this user, make a genesis Circle first!") } else
-                    if (circles.length != 1) { console.log("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle") }
-                    else {
+                /////////////////////////////////////////////////////////////////////////////////////////////////////
+                //////////////////////uncomment JUST for testing removed  TODTODTDOTtODO
+                ///////////////////////////////////////////////////////////////////////////////
+                    // if (circles.length != 1) { console.log("Something went wrong terribly: more circles assigned to a user!", "more than 1 Circle") }
+                    // else 
+                                    /////////////////////////////////////////////////////////////////////////////////////////////////////
+                //////////////////////uncomment JUST for testing removed  TODTODTDOTtODO
+                ///////////////////////////////////////////////////////////////////////////////
+
+                    {
                         console.log("======>Alice accepts Bob in her Circle")
                         const BobPubkey = _BobClientSignTxID.publicKey.toString('hex')
                         const UTXOAlice = circles[0].newUTXO
                         letJoin(AlicePubkey, BobPubkey, _BobId, _saltBob, circles[0].instanceCircles, UTXOAlice, true, (newUTXOBob, err) => {//store circleId, and newUTXO  persistent on client
-                            if (err)
-                            {
-                                return console.log (newUTXOBob)
+                            if (err) {
+                                return console.log(newUTXOBob)
                             }
-    const newUTXOAlice = UTXOAlice;  ///todo should get new one when a HD wallet is used!!!
+                            const newUTXOAlice = UTXOAlice;  ///todo should get new one when a HD wallet is used!!!
                             CirclesClientCollection.insertOne(
                                 {
                                     instanceCircles: circles[0].instanceCircles, saltedHashedIdentification: ID.HMAC(_BobId, _saltBob), "version": constants.VERSION,
                                     newUTXO: newUTXOBob, pubkey: BobPubkey, Id: _BobId, salt: _saltBob,
                                 }
                                 , function (err, cirkles) {
-                                    if (err) { console.log("Could not store the Circle." + err ); process.kill(process.pid, 'SIGTERM') }//todo update for client side of Charlie as well
+                                    if (err) { console.log("Could not store the Circle." + err); process.kill(process.pid, 'SIGTERM') }//todo update for client side of Charlie as well
                                     const CharliePubkey = _CharlieClientSignTxID.publicKey.toString('hex')
                                     console.log("======>Alice accepts Charlie in her Circle")
                                     letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (newUTXOCharlie, err) => {  //store circleId, newUTXO  make persistent on client for Alice but also for Charlie
-                                        if (err)
-                                        {
-                                            return console.log (newUTXOCharlie)
+                                        if (err) {
+
+                                            return console.log(newUTXOCharlie)
                                         }
-                            CirclesClientCollection.insertOne(
+                                        CirclesClientCollection.insertOne(
                                             {
                                                 instanceCircles: circles[0].instanceCircles, saltedHashedIdentification: ID.HMAC(_CharlieId, _saltCharlie), "version": constants.VERSION,
                                                 newUTXO: newUTXOCharlie, pubkey: CharliePubkey, Id: _CharlieId, salt: _saltCharlie,
                                             }
                                             , function (err, cirkles) {
-                                                if (err) { console.log( "Could not store the Circle." + err ); process.kill(process.pid, 'SIGTERM') }//todo update for client side of Charlie as well
+                                                if (err) { console.log("Could not store the Circle." + err); process.kill(process.pid, 'SIGTERM') }//todo update for client side of Charlie as well
                                                 console.log("======>Alice tries to add Charlie with a incorrect contract, should fail")
                                                 const CharliePubkey = _CharlieClientSignTxID.publicKey.toString('hex')
-                                                letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, false, (dummy, err) => {  
-                                                    if (err)
-                                                    {
-                                                        return console.log (dummy)
+                                                letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, false, (dummy, err) => {
+                                                    if (err) {
+                                                        return console.log(dummy)
                                                     }
                                                     console.log("======>Alice tries to re-add Charlie in her Circle, which should fail") ///TODO   does not fail yet, working on it,.......
-                                                    letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => { 
-                                                    if (err)
-                                                    {
-                                                        return console.log (dummy)
-                                                    }
+                                                    letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
+                                                        if (err) {
+                                                            return console.log(dummy)
+                                                        }
 
 
-                                                    console.log("todo: make one that should fail, when a Circle already has 150 members")
+                                                        console.log("todo: make one that should fail, when a Circle already has 150 members")
+                                                    });
                                                 });
                                             });
-                                        });
 
                                     })
                                 })
@@ -190,9 +197,8 @@ async function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, corre
         })
             .then(async function (response) {
 
-                if (response.data.error && response.data.error!='none')
-                {
-                    return  callback(response.data.error, 'error');
+                if (response.data.error && response.data.error != 'none') {
+                    return callback(response.data.error, 'error');
                 }
 
                 ////////////////////////////
