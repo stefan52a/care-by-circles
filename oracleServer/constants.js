@@ -5,6 +5,6 @@ module.exports = Object.freeze({
     // For testClient:
     BASEURL: 'http://localhost:3000/api/',
     // BASEURL: 'https://www.carebycircle.com/api',
-    DO_GENESIS: false,   ///<<====================================== set to true once to start, false in all subsequent calls
+    DO_GENESIS: true,   ///<<====================================== set to true once to start, false in all subsequent calls
 
 });
