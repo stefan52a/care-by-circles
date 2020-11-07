@@ -91,11 +91,12 @@ async function run() {
                 });//not all info needs be redorded on client, here just for debugging purposes
                 CirclesClientCollection.insertOne(doc1, function (err, circles) {
                     if (err) { console.log({ err: "Could not store the Circle." + err }); return }
-                    { console.log("success creating genesis") };
+                    return console.log("success creating genesis\nDone with succes");
                 })
             }).catch(function (error) {
                 console.log("error " + JSON.stringify(error))
                 if (error.response) console.log("\n" + JSON.stringify(error.response.data))
+                return console.log("Done with error");
             })
     } else { //add 2 friends to Alice's Circle
         CirclesClientCollection.find({ "saltedHashedIdentification": ID.HMAC(_AliceId, _saltAlice), "version": constants.VERSION }).toArray(function (err, circles) {
@@ -127,7 +128,8 @@ async function run() {
                         UTXOAlice = circles[0].newUTXO 
                         letJoin(AlicePubkey, BobPubkey, _BobId, _saltBob, circles[0].instanceCircles, UTXOAlice, true, (newUTXOBob, err) => {//store circleId, and newUTXO  persistent on client
                             if (err) {
-                                return console.log(newUTXOBob)
+                                 console.log(newUTXOBob)
+                                 return console.log("Done with error")
                             }
                             console.log("======>succeeded")
                             const newUTXOAlice = UTXOAlice;  ///todo should get new one when a HD wallet is used!!!
@@ -142,7 +144,8 @@ async function run() {
                                     console.log("======>Alice accepts Charlie in her Circle")
                                     letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (newUTXOCharlie, err) => {  //store circleId, newUTXO  make persistent on client for Alice but also for Charlie
                                         if (err) {
-                                            return console.log(newUTXOCharlie)
+                                            console.log(newUTXOCharlie)
+                                            return console.log("Done with error")
                                         }
                                         console.log("======>succeeded")
                                         CirclesClientCollection.insertOne(
@@ -151,7 +154,7 @@ async function run() {
                                                 newUTXO: newUTXOCharlie, pubkey: CharliePubkey, Id: _CharlieId, salt: _saltCharlie,
                                             }
                                             , function (err, cirkles) {
-                                                if (err) { console.log("Could not store the Circle." + err); return}//todo update for client side of Charlie as well
+                                                if (err) { console.log("Could not store the Circle." + err); console.log("Done with error"); return}//todo update for client side of Charlie as well
                                                 console.log("======>Alice tries to add Charlie with a incorrect contract, should fail")
                                                 const CharliePubkey = _CharlieClientSignTxID.publicKey.toString('hex')
                                                 letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, false, (dummy, err) => {
@@ -160,6 +163,7 @@ async function run() {
                                                     } else{
                                                         console.log("======>!!!failed because of success")
                                                     }
+                                                    console.log("Done with success")
                                                     // console.log("======>Alice tries to re-add Charlie in her Circle, which should fail") 
                                                     // letJoin(AlicePubkey, CharliePubkey, _CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
                                                     //     if (err) {

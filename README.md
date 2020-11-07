@@ -13,8 +13,9 @@ This work is Work in Progress, implemented is the blockchain part:
 - Storage of hashed data and Circle identification on a RSK RIF Swarm
 - Consensus in the form of a contract
 
-not implemented is:
+Not implemented is:
 - Asking for help
+- Unique identification of a person, for now this always returns true, see below
 
 
 

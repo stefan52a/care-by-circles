@@ -47,7 +47,8 @@ const axiosInstance = axios.create({
 
 module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, contract, satoshisFromFaucet, createGenesis, cb) => {// see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts  for basic transactions
 	randomBytes(256, async (err, buf) => {
-		if (err) return cb({ unspent: "", CircleId: "", addressOfUTXO: "", status: "500", err: err });
+		if (err) return cb({ unspent: "", CircleId: "", addressOfUTXO: "", status: "500", err: err })
+		else if (satoshisFromFaucet<constants.DUST_SATOSHIS) return b({ unspent: "", CircleId: "", addressOfUTXO: "", status: "500", err: "satoshis from faucet is lower than dust: "+(constants.DUST_SATOSHIS-1) })
 		else {
 			// force update MTP  (Merkle Tree Proof?)
 			await regtestUtils.mine(11);
@@ -92,7 +93,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 				psbt.addInput(inputDataToUnlockFaucet)
 					.addOutput({
 						address: AliceAddressToUnlockLater,//script: Buffer.from(inputDataToUnlockFaucet.redeemScript,'hex'),
-						value: satoshisFromFaucet - minersFee, //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
+						value: Math.max(constants.DUST_SATOSHIS, satoshisFromFaucet - minersFee), //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
 						//   "estimated_feerate" : feerate   (numeric, optional) Estimated feerate of the final signed transaction in BTC/kB. Shown only if all UTXO slots in the PSBT have been filled.
 						// network: { regtest },
 					})
@@ -142,14 +143,14 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 				// 	network: regtest,
 				// });
 
-				console.log((satoshisFromFaucet - minersFee) + " airdropped satoshi is now locked with:\n" + bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript) + "\nat address " + AliceAddressToUnlockLater)
+				console.log(Math.max(constants.DUST_SATOSHIS, satoshisFromFaucet - minersFee) + " airdropped satoshi is now locked with:\n" + bitcoin.script.toASM(inputDataToUnlockFaucet.redeemScript) + "\nat address " + AliceAddressToUnlockLater)
 
 				if (createGenesis) {
 					randCircle = "Circle" + buf.toString('hex');
 					var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: ID.HMAC(id, salt), "version": constants.VERSION, });
 					CirclesCollection.insertOne(doc1, function (err, circles) {
-						if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: "Could not store the Circle." + err, satoshiAliceLeft: satoshisFromFaucet - minersFee }) }
-						return cb({ psbt: psbt.toHex(), CircleId: randCircle, addressOfUTXO: AliceAddressToUnlockLater, status: "200", satoshiAliceLeft: satoshisFromFaucet - minersFee });
+						if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: "Could not store the Circle." + err, satoshiAliceLeft:Math.max(constants.DUST_SATOSHIS, satoshisFromFaucet - minersFee) }) }
+						return cb({ psbt: psbt.toHex(), CircleId: randCircle, addressOfUTXO: AliceAddressToUnlockLater, status: "200", satoshiAliceLeft: Math.max(constants.DUST_SATOSHIS, satoshisFromFaucet - minersFee) });
 					})
 
 				} else{
@@ -205,7 +206,6 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, salt, pubkeyOfUTX
 module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob, BobPubkey, circleId, callback) => {
 	// Signs PSBT by oracle
 	// force update MTP  (Merkle Tree Proof?)
-	const dustSatoshis = 547
 	CirclesCollection.find({ "saltedHashedIdentification": ID.HMAC(AliceId, saltAlice), "version": constants.VERSION }).toArray(async function (err, circles) {
 		if (err) { return callback("", "", "", 500, "2 Something went terribly wrong: no circles assigned to a user, in the function when checking the contract hash! " + err) }
 		if (circles.length != 1) { return callback("", "", "", 500, "2 Something went terribly wrong: no or more than 1 circles assigned to a user, in the function when checking the contract hash!") }
@@ -240,7 +240,7 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 		var voutIndex
 		for (voutIndex = 0; voutIndex < unspentToUnlock.length; voutIndex++) {
 			const sat = unspentToUnlock[unspentToUnlock[voutIndex].vout].value
-			if (sat > dustSatoshis) {
+			if (sat > constants.DUST_SATOSHIS) {
 				satoshisToUnlock = sat  //TODO ATM there is exactly 1 output greater than dust+1, 
 				//which is Alice's value, find out another way???
 				break
@@ -248,6 +248,7 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 		}
 		console.log("which locks " + satoshisToUnlock + " satoshi")
 
+		if (satoshisToUnlock<(2*constants.DUST_SATOSHIS)) return callback("", "",  "", 500, "unfortunately there are not enough tokens left to carry out this transaction");
 
 		try {
 			// make an output to refer to 
@@ -280,7 +281,7 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 
 
 				// address: regtestUtils.RANDOM_ADDRESS,
-				value: (satoshisToUnlock - dustSatoshis - minersFee), //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
+				value: Math.max(constants.DUST_SATOSHIS,(satoshisToUnlock - constants.DUST_SATOSHIS - minersFee)), //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
 				//   "estimated_feerate" : feerate   (numeric, optional) Estimated feerate of the final signed transaction in BTC/kB. Shown only if all UTXO slots in the PSBT have been filled.
 			})
 				.addOutput({
@@ -289,7 +290,7 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 
 					// address: p2shOutputLockGoesToBob.address,^M
 
-					value: dustSatoshis,  //547  =  1 more than dust https://bitcoin.stackexchange.com/a/76157/45311
+					value: constants.DUST_SATOSHIS,  //547  =  1 more than dust https://bitcoin.stackexchange.com/a/76157/45311
 				})
 			// no change output!
 
@@ -412,8 +413,8 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 			// 	value: satoshisToUnlock,
 			// });
 
-			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " + (satoshisToUnlock - minersFee - dustSatoshis) + " is now locked with:\n" + bitcoin.script.toASM(redeemScriptToAlice))// + "\nat address " + redeemScriptToAlice.address)
-			console.log(dustSatoshis + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
+			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " + Math.max(constants.DUST_SATOSHIS,(satoshisToUnlock - minersFee - constants.DUST_SATOSHIS)) + " is now locked with:\n" + bitcoin.script.toASM(redeemScriptToAlice))// + "\nat address " + redeemScriptToAlice.address)
+			console.log(constants.DUST_SATOSHIS + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
 
 			//for the output  lock of the tokens for Bob
 			const { p2sh: Bob_p2shOutputLock, redeemscript: dummy } = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
