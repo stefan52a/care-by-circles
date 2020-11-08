@@ -7,18 +7,36 @@ Also see https://CareByCircles.Com and https://youtu.be/YczwK4v-uJ0 and the acco
 
 [![Promo Care By Circles](READMEImages/CareByCircles.gif)](https://youtu.be/YczwK4v-uJ0)
 
+## Status ##
 This work is Work in Progress, implemented is the blockchain part:
 - Users creating a genesis Circle
 - Users accepting other members in their Circle (to a maximum of 150, Dunbar's number)
 - Storage of hashed data and Circle identification on a RSK RIF Swarm
 - Consensus in the form of a contract
 
-Not implemented is:
+Foreseen, but not implemented is:
 - Asking for help
+- Expelling a memebr of a Circle by majority
+- Implementation, either the system can be made in RGB, but for the moment we will use fork BTC (we considered counterparty or Elements, but scripts are not easily programmable in a client)
+- When we will fork the BTC blockchain. current BTC holders will already have some Circle tokens, 
+- Related to that: we need to think about replay protection
 - Unique identification of a person, for now this always returns true, see below
 
+## Summary ##
+Members agreeing in the Circle blockchain have consensus about the following:
 
+- It follows the same rules as the Bitcoin blockchain,as of this writing
+- Not more than 150 people (Dunbar's number) may take part in 1 Circle
+- Blockchain nodes cannot measure arbitrary conditions, so we must rely on an Oracle. An oracle is a server that has a keypair, and (co)signs transactions on request when a user-provided expression (contract) evaluates to true.
+- A transaction is adding another person to one of your Circles
 
+The Circle token is a fungible token, and is associated with identity. initially 1/100th (=1 million Satoshi) Circle token is associated with a telephone nr. (FTM to represent identity), but also e.g. 600 Satoshi1 token could be associated with an id.
+
+Important is to consider that it will not be a simple single sign signature unlock script, but a multisig (either of Alice and the Oracle, where Alice invites Bob to join a Circle) or (Alice, Bob and Carol and the Oracle in a Circle of 5 (so they are a majority, and then can "expel" David)
+
+The Circle blockchain is a fork of the Bitcoin blockchain.
+
+## The Oracle server ##
 This is an Express RESTful API server for the Oracle for Care By Circles, social inclusion.
 
 An Oracle is any service that tries to execute a contract, a contract on which the users of this blockchain have consensus on.
@@ -28,19 +46,20 @@ Circles are tribes with a maximum of 150 (Dunbar's number) people each.
 Next to that the Oracle currently also checks whether an Id is really 1 unique human.
 An individual person's id is not stored as is on the blockchain or decentral storage.
 
-GDPR consideration:
+## GDPR consideration ##
 In order, however, to determine the uniqueness of an id, the Oracle needs to be knowledgable about the id. Therefore the Oracle stores the id along with a salt in a table only accessible to the Oracle.
 The oracle enforces the uniqueness of the id. The user may withdraw the salt and the Oracle promises to delete the relationship between id and that salt, by which the data on his Circles in the blockchain is not retrievable anymore.
 What gets stored in a decentral table, is:
 
 circle instance  <->  Hash(id, salt)     relationship 
 
-For the id it would be better to use some kind of DID system here, but this is outside the scope ATM.
+For the id it would be better to use some kind of DID system here (e.g. one using built-up reputation of a public key), but this is outside the scope ATM.
 
 Under the hood it uses Bitcoin blockchain principles for consensus (on Dunbar's number) and Oracle contracts with Partially Signed Bitcoin Transactions (PSBT).
 
 The Oracle needs to be trusted by people using it.
 
+## Transactions ##
 Transactions are locked by the following scriptPub (to lock output):
 
 ```
