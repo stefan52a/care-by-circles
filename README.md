@@ -13,7 +13,7 @@ Where the following specifications are not clear, valid or seemingly changed, al
 This work is Work in Progress, implemented is the blockchain part:
 - Users creating a genesis Circle
 - Users accepting other members in their Circle (to a maximum of 150, Dunbar's number)
-- Storage of hashed data and Circle identification on a RSK RIF Swarm
+- Storage of hashed data and Circle identification
 - Consensus in the form of a contract
 
 Foreseen, but not implemented is:
