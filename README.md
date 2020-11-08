@@ -17,23 +17,28 @@ This work is Work in Progress, implemented is the blockchain part:
 Foreseen, but not implemented is:
 - Asking for help
 - Expelling a member of a Circle by majority
-- Implementation, either the system can be made in RGB, but for the moment we will use fork BTC (we considered counterparty or Elements, but scripts are not easily programmable in a client)
+- The concept is blocklchain agnostic, its implementation, can be made in RGB, Rootstock and even in Ethereum, but for the moment we will use a BTC fork (see the powerpoint for further reasoning) (we also considered counterparty or Elements, but scripts are not easily programmable in a client)
 - When we will fork the BTC blockchain. current BTC holders will already have some Circle tokens, 
 - Related to that: we need to think about replay protection
-- Some tokens are 'freed' to be spent, such as the miner fee. They are not locked by the Oracle. The Oracle guards, via the agreed contract, other token, by locking the remainder.
+- Some tokens are 'freed' to be spent, such as the miner fee. They are not locked by the Oracle. The Oracle guards, via the agreed contract, the other remaining tokens.
 - Unique identification of a person, for now this always returns true, see below
 
 ## Summary ##
+Alice's coins will be locked with a Special script. Alice can only spend with that special script, transactions that are cosigned by the Oracle server and Alice. The spending (to let Bob join the Circle) is only cosigned by the Oracle when 1 of the following is satisfied (the contract):
+
+- The Oracle decides whether Alice's publickey belongs to a CircleInstance a.o. stays under 150 (Dunbar's number) members. Then Alice gets some 'free" tokens and the remainder gets locked by a similarly Special script.
+
+- The Oracle decides whether a majority (which is greater than half of all Circle members + 1) of publickeys belonging to a CircleInstance exists, that asks to spend the tokens locked with the Special script. If it is a majority: the Oracle cosigns the spending of the tokens towards the pubkeys of that majority.  (to expel a member)
+
 Members agreeing in the Circle blockchain have consensus about the following:
 
-- It follows the same rules as the Bitcoin blockchain,as of this writing
+- It follows the same rules as the Bitcoin blockchain, as of this writing
 - When you join the system you get awarded ('airdropped') 1/100 Circle token, but only once. (unless you somehow change your id ;)
 - This users' airdrop gets halved every 500k users entering the system.
 - Alice (a user) should be able to invite other members (e.g. Bob & Charlie), they get some Oracle-locked tokens from Alice. Bob then gets half of Alice's tokens minus a miner fee.
 - Not more than 150 people (Dunbar's number) may take part in 1 Circle
 - Blockchain nodes cannot measure arbitrary conditions, so we must rely on an Oracle. An oracle is a server that has a keypair, and (co)signs transactions on request when a user-provided expression (contract) evaluates to true.
 - A transaction is adding another person to one of your Circles
-
 
 The Circle token is a fungible token, and is associated with identity. initially 1/100th (=1 million Satoshi) Circle token is associated with a telephone nr. (FTM to represent identity), but also e.g. 600 Satoshi1 token could be associated with an id.
 
@@ -98,6 +103,9 @@ PSBT transaction which is partially to be signed by the Oracle oraclePleaseSignT
 
 ![Alt text](READMEImages/ToBeSignedPSBT.jpg?raw=true "Transaction")
 
+In context it looks like:
+
+![Alt text](READMEImages/Transaction.jpg?raw=true "Transaction in context")
 
 
 ## Usage ##
@@ -215,3 +223,7 @@ node clientTest   #or use your favorite debugger
 ```
 
 8. Be aware that if you often switch between local and remote regtest, that you should empty the client side database (see point 3).
+
+## Ideas ##
+
+Issue may contain binary metadata: should we allow owners of the asset add some additonal binary data to the as the "asset history" (like adding engravings to the owned token)
