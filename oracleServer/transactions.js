@@ -273,15 +273,18 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 			// 				redeemScript: Buffer.from(redeem, 'hex')
 			// 			})
 			// psbt.addInput({hash: Buffer.from((unspentToUnlock[voutIndex].txId), 'hex').reverse(), index: unspentToUnlock[voutIndex].vout, seq: 0xffffffff})
+			const satoshisToAlice = satoshisToUnlock*(1-constants.ENTRY_COST_FACTOR)
+			const satoshisToBob = satoshisToUnlock*constants.ENTRY_COST_FACTOR
+			if ((satoshisToAlice+satoshisToBob) != satoshisToUnlock) satoshisToBob+=1
+			if ((satoshisToAlice+satoshisToBob) != satoshisToUnlock) return callback("","","", 500, "internal arithmetic error when sharing satoshis when Alice wants Bob in her Circle");
 			psbt.addOutput({
 				// address: bitcoin.address.toOutputScript(p2shOutputLockGoesBackToAlice.address, regtest),// regtestUtils.RANDOM_ADDRESS,
 				script: Buffer.from(redeemScriptToAlice, 'hex'),// regtestUtils.RANDOM_ADDRESS,
 
 				// address: p2shOutputLockGoesBackToAlice.address,// regtestUtils.RANDOM_ADDRESS,^M
 
-
 				// address: regtestUtils.RANDOM_ADDRESS,
-				value: Math.max(constants.DUST_SATOSHIS,(satoshisToUnlock - constants.DUST_SATOSHIS - minersFee)), //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
+				value: Math.max(constants.DUST_SATOSHIS,(satoshisToAlice - constants.DUST_SATOSHIS)), //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
 				//   "estimated_feerate" : feerate   (numeric, optional) Estimated feerate of the final signed transaction in BTC/kB. Shown only if all UTXO slots in the PSBT have been filled.
 			})
 				.addOutput({
@@ -290,7 +293,7 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 
 					// address: p2shOutputLockGoesToBob.address,^M
 
-					value: constants.DUST_SATOSHIS,  //547  =  1 more than dust https://bitcoin.stackexchange.com/a/76157/45311
+					value: Math.max(constants.DUST_SATOSHIS,(satoshisToBob - minersFee)),  //547  =  1 more than dust https://bitcoin.stackexchange.com/a/76157/45311
 				})
 			// no change output!
 
@@ -412,9 +415,11 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 			// 	vout: 0,  //todo is this the right vout?
 			// 	value: satoshisToUnlock,
 			// });
+			//maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
+			//547  =  1 more than dust https://bitcoin.stackexchange.com/a/76157/45311
 
-			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " + Math.max(constants.DUST_SATOSHIS,(satoshisToUnlock - minersFee - constants.DUST_SATOSHIS)) + " is now locked with:\n" + bitcoin.script.toASM(redeemScriptToAlice))// + "\nat address " + redeemScriptToAlice.address)
-			console.log(constants.DUST_SATOSHIS + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
+			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " +  Math.max(constants.DUST_SATOSHIS,(satoshisToAlice - constants.DUST_SATOSHIS)) + " is now locked with:\n" + bitcoin.script.toASM(redeemScriptToAlice))// + "\nat address " + redeemScriptToAlice.address)
+			console.log(Math.max(constants.DUST_SATOSHIS,(satoshisToBob - minersFee)) + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
 
 			//for the output  lock of the tokens for Bob
 			const { p2sh: Bob_p2shOutputLock, redeemscript: dummy } = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)

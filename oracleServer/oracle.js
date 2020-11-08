@@ -51,7 +51,7 @@ app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop fo
 					console.log("error: " + error);
 					return res.status(400).json({ error: error });
 				}
-				transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AlicePubkey, contract, constants.SATOSHI_FORGENESIS, true, (answ) => {
+				transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AlicePubkey, contract, constants.SATOSHI_FOR_GENESIS, true, (answ) => {
 					const status = answ.status
 					const err = answ.err
 					if (err) {
@@ -131,7 +131,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 									// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
 									// therefore we use a faucet to emulate that there is some tokens on Alice's address
-									transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FORGENESIS - 500, false, (answ) => {
+									transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FOR_GENESIS - 500, false, (answ) => {
 										// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 										// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
 										// therefore we use a faucet to emulate that there is some tokens on Alice's address
@@ -190,7 +190,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 											// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 											res.status(status).json({
 												error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal,
-												version: constants.VERSION, error: "none", Circle: circleId, tokens: (constants.SATOSHI_FORGENESIS / 1e8), addressOfUTXO: AliceAddressOfNewUTXO, contract: contract
+												version: constants.VERSION, error: "none", Circle: circleId, tokens: (constants.SATOSHI_FOR_GENESIS / 1e8), addressOfUTXO: AliceAddressOfNewUTXO, contract: contract
 											})
 											return
 										})

@@ -16,7 +16,7 @@ const regtest = regtestUtils.network;
 
 const axios = require('axios')
 const axiosInstance = axios.create({
-    baseURL: constants.BASEURL,
+    baseURL: constants.BASE_URL,
     timeout: 30000
 });
 const onlyGenesis = constants.DO_GENESIS;   ///<<====================================== set to true once to start, false in all subsequent calls
@@ -131,6 +131,7 @@ async function run() {
                                 console.log(newUTXOBob)
                                 return console.log("Done with error")
                             }
+                            console.log("======>succeeded")
                             const newUTXOAlice = UTXOAlice;  ///todo should get new one when a HD wallet is used!!!
                             CirclesClientCollection.insertOne(
                                 {
@@ -146,6 +147,7 @@ async function run() {
                                             console.log(newUTXOCharlie)
                                             return console.log("Done with error")
                                         }
+                                        console.log("======>succeeded")
                                         CirclesClientCollection.insertOne(
                                             {
                                                 instanceCircles: circles[0].instanceCircles, saltedHashedIdentification: ID.HMAC(_CharlieId, _saltCharlie), "version": constants.VERSION,
