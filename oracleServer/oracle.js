@@ -121,7 +121,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 									// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
 									// therefore we use a faucet to emulate that there is some tokens on Alice's address
-									transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FOR_GENESIS - 500, false, (answ) => {
+									transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FOR_GENESIS - 500, false, (answ) => {//-500 so I recognize it during debugging
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +193,7 @@ function createTempContractFile(randFile, contractAlgorithm, callback) {
 		return function () {
 			rmFile(randFil)
 		}
-	})(randFile), 30000);
+	})(randFile), 300000);
 	fs.writeFile(randFile, contractAlgorithm, callback)
 }
 
