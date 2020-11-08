@@ -147,23 +147,24 @@ async function run() {
                                                         if (err) {
                                                             console.log(dummy)
                                                             console.log("======>failed successfully")
-                                                            // console.log("======>when a Circle already has 150 members, which should fail")
-                                                            // var failed=false;
-                                                            // for (let i = 0; i < 148; i++) {
-                                                            //     var CharlieId = ""+i + "just something else every looprun!!";
-                                                            //     setTimeout( letJoin(AlicePubkey, CharliePubkey, CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
-                                                            //         if (err) {
-                                                            //             console.log("======>when a Circle already has 150 members, which should fail")
-                                                            //             console.log((i+3)+"\n"+dummy)
-                                                            //             console.log("======>failed successfully")
-                                                            //             failed=true
-                                                            //         } else
-                                                            //         {
-                                                            //             console.log((i+3)+"\n"+dummy)
-                                                            //             console.log("======>succeeded successfully")
-                                                            //         }
-                                                            //     }),i*1000);
-                                                            // }
+                                                            // See https://stackoverflow.com/a/11488129/964064 for using  afor loop with asynchornous function
+                                                            console.log("======>when a Circle already has 150 members, which should fail")
+                                                            var failed=false;
+                                                            for (let i = 0; i < 148; i++) {
+                                                                var CharlieId = ""+i + "just something else every looprun!!";
+                                                                setTimeout( letJoin(AlicePubkey, CharliePubkey, CharlieId, _saltCharlie, circles[0].instanceCircles, newUTXOAlice, true, (dummy, err) => {
+                                                                    if (err) {
+                                                                        console.log("======>when a Circle already has 150 members, which should fail")
+                                                                        console.log((i+3)+"\n"+dummy)
+                                                                        console.log("======>failed successfully")
+                                                                        failed=true
+                                                                    } else
+                                                                    {
+                                                                        console.log((i+3)+"\n"+dummy)
+                                                                        console.log("======>succeeded successfully")
+                                                                    }
+                                                                }),i*1000);
+                                                            }
                                                             if(failed)
                                                             {
                                                                 console.log("======>failed successfully")
@@ -192,7 +193,7 @@ async function letJoin(fromPubkey, toPubkey, toId, toSalt, circleID, UTXO, corre
         if (err) throw err;
         if (!correctContract) contract = "a=1 //waste, should not work as contract"
         axiosInstance.post('/oraclePleaseSignTx', {
-            contract: contract.trim().replace(/\s+/g, ' '),  // http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
+            contract: contract, // maybe later do also in server:  contract.trim().replace(/\s+/g, ' '),  // http://www.lifewithalacrity.com/2004/03/the_dunbar_numb.html
 
             circleId: circleID,
 

@@ -42,7 +42,7 @@ app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop fo
 			if (err) throw err;
 			console.log('OK: ' + filename);
 			console.log(contractFromFile)
-			const contract = contractFromFile.trim().replace(/\s+/g, ' ')
+			const contract = contractFromFile // todo later  also in client:   .trim().replace(/\s+/g, ' ')
 			ID.hasNoGenesisCircle(AliceId, saltAlice, (ans, error) => {
 				if (error) {
 					console.log("error: " + error);
@@ -141,14 +141,13 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 											})
 											return
 										})
-
 									})
 								})
 							}
 							catch (e2) {
 								//client error = status 400
-								console.log({error: "invalid contract syntax" + e2 });
-								return res.status(400).json({error: "invalid contract syntax" + e2 });
+								console.log({ error: "invalid contract syntax" + e2 });
+								return res.status(400).json({ error: "invalid contract syntax" + e2 });
 							}
 						})
 				}

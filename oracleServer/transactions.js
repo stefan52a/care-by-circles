@@ -42,7 +42,7 @@ const axiosInstance = axios.create({
 module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, contract, satoshisFromFaucet, createGenesis, cb) => {// see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts  for basic transactions
 	randomBytes(256, async (err, buf) => {
 		if (err) return cb({ unspent: "", CircleId: "", addressOfUTXO: "", status: "500", err: err })
-		else if (satoshisFromFaucet<constants.DUST_SATOSHIS) return b({ unspent: "", CircleId: "", addressOfUTXO: "", status: "500", err: "satoshis from faucet is lower than dust: "+(constants.DUST_SATOSHIS-1) })
+		else if (satoshisFromFaucet < constants.DUST_SATOSHIS) return b({ unspent: "", CircleId: "", addressOfUTXO: "", status: "500", err: "satoshis from faucet is lower than dust: " + (constants.DUST_SATOSHIS - 1) })
 		else {
 			// force update MTP  (Merkle Tree Proof?)
 			await regtestUtils.mine(11);
@@ -81,7 +81,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 					// psbt.validateSignaturesOfInput(0);
 					// Using the finalizeInput second parameter to
 					// define how you finalize the inputs, allowing for any type of script.
-					.finalizeInput(0, psbtHelper.getFinalScripts) 
+					.finalizeInput(0, psbtHelper.getFinalScripts)
 					.extractTransaction();
 				// Mine 10 blocks, returns an Array of the block hashes
 				// the above psbt will confirm
@@ -113,11 +113,11 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 					randCircle = "Circle" + buf.toString('hex');
 					var doc1 = Circles({ instanceCircles: randCircle, saltedHashedIdentification: ID.HMAC(id, salt), "version": constants.VERSION, });
 					CirclesCollection.insertOne(doc1, function (err, circles) {
-						if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: "Could not store the Circle." + err, satoshiAliceLeft:Math.max(constants.DUST_SATOSHIS, satoshisFromFaucet - minersFee) }) }
+						if (err) { return cb({ "version": constants.VERSION, psbt: "", CircleId: "", addressOfUTXO: "", status: "500", err: "Could not store the Circle." + err, satoshiAliceLeft: Math.max(constants.DUST_SATOSHIS, satoshisFromFaucet - minersFee) }) }
 						return cb({ psbt: psbt.toHex(), CircleId: randCircle, addressOfUTXO: AliceAddressToUnlockLater, status: "200", satoshiAliceLeft: Math.max(constants.DUST_SATOSHIS, satoshisFromFaucet - minersFee) });
 					})
 
-				} else{
+				} else {
 					return cb()
 				}
 			}
@@ -173,7 +173,7 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 			}
 		}
 		console.log("which locks " + satoshisToUnlock + " satoshi")
-		if (satoshisToUnlock<(2*constants.DUST_SATOSHIS)) return callback("", "",  "", 500, "unfortunately there are not enough tokens left to carry out this transaction");
+		if (satoshisToUnlock < (2 * constants.DUST_SATOSHIS)) return callback("", "", "", 500, "unfortunately there are not enough tokens left to carry out this transaction");
 		try {
 			// make an output to refer to 
 			// unspent = await regtestUtils.faucet(p2sh.address, satoshis); // TODO we actually want to MINT here NOT USE A FAUCET
@@ -184,270 +184,46 @@ module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob
 			const nonWitnessUtxo = Buffer.from(utx.txHex, 'hex');
 			const inputDataToUnlockALiceTransaction = await psbtHelper.getInputData(unspentToUnlock[voutIndex], redeemScriptToAlice, false, 'p2ms', regtestUtils)
 			psbt.addInput(inputDataToUnlockALiceTransaction)
-			const satoshisToAlice = satoshisToUnlock*(1-constants.ENTRY_COST_FACTOR)
-			const satoshisToBob = satoshisToUnlock*constants.ENTRY_COST_FACTOR
-			if ((satoshisToAlice+satoshisToBob) != satoshisToUnlock) satoshisToBob+=1
-			if ((satoshisToAlice+satoshisToBob) != satoshisToUnlock) return callback("","","", 500, "internal arithmetic error when sharing satoshis when Alice wants Bob in her Circle");
+			const satoshisToAlice = satoshisToUnlock * (1 - constants.ENTRY_COST_FACTOR)
+			const satoshisToBob = satoshisToUnlock * constants.ENTRY_COST_FACTOR
+			if ((satoshisToAlice + satoshisToBob) != satoshisToUnlock) satoshisToBob += 1
+			if ((satoshisToAlice + satoshisToBob) != satoshisToUnlock) return callback("", "", "", 500, "internal arithmetic error when sharing satoshis when Alice wants Bob in her Circle");
 			psbt.addOutput({
 				script: Buffer.from(redeemScriptToAlice, 'hex'),// regtestUtils.RANDOM_ADDRESS,
-				value: Math.max(constants.DUST_SATOSHIS,(satoshisToAlice - constants.DUST_SATOSHIS)), //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
+				value: Math.max(constants.DUST_SATOSHIS, (satoshisToAlice - constants.DUST_SATOSHIS)), //maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
 				//   "estimated_feerate" : feerate   (numeric, optional) Estimated feerate of the final signed transaction in BTC/kB. Shown only if all UTXO slots in the PSBT have been filled.
 			})
 				.addOutput({
 					script: Buffer.from(redeemScriptToBob, 'hex'),// regtestUtils.RANDOM_ADDRESS,
-
-
-					// address: p2shOutputLockGoesToBob.address,^M
-
-					value: Math.max(constants.DUST_SATOSHIS,(satoshisToBob - minersFee)),  //547  =  1 more than dust https://bitcoin.stackexchange.com/a/76157/45311
+					value: Math.max(constants.DUST_SATOSHIS, (satoshisToBob - minersFee)),  //547  =  1 more than dust https://bitcoin.stackexchange.com/a/76157/45311
 				})
 			// no change output!
-
-			//tx.locktime = lockTime;
-			// Note: nSequence MUST be <= 0xfffffffe otherwise LockTime is ignored, and is immediately spendable.
-
-			// // {Alice's signature} {Bob's signature} OP_FALSE
-			// const signatureHash = tx.hashForSignature(0, redeemScript, hashType);
-			// const redeemScriptSig = bitcoin.payments.p2sh({
-			//   redeem: {
-			// 	input: bitcoin.script.compile([
-			// 	  bitcoin.script.signature.encode(
-			// 		alice.sign(signatureHash),
-			// 		hashType,
-			// 	  ),
-			// 	  bitcoin.script.signature.encode(bob.sign(signatureHash), hashType),
-			// 	  bitcoin.opcodes.OP_FALSE,
-			// 	]),
-			// 	output: redeemScript,
-			//   },
-			// }).input;
-			// tx.setInputScript(0, redeemScriptSig!);
-
-			// await regtestUtils.broadcast(tx.toHex());
-			// await regtestUtils.verify({
-			//   txId: tx.getId(),
-			//   address: regtestUtils.RANDOM_ADDRESS,
-			//   vout: 0,
-			//   value: 8e4,
-			// });
-			// },
-			// );
 			// encode to send out to the signers
 			const psbtBaseText = psbt.toBase64();
-
-			// each signer imports
-			// const psbt = bitcoin.Psbt.fromBase64(psbtBaseText);
-			// const Alice = bitcoin.Psbt.fromBase64(psbtBaseText);
-
 			// Alice and Oracle signs their input with the respective private keys
 			// signInput and signInputAsync are better
 			// (They take the input index explicitly as the first arg)
-
-
-
-			psbt.signAllInputs(oracleSignTx);//alice1.keys[0]);
-			// psbt.signInput(0,oracleSignTx,[hashType])
-
-
-			// Alice.signAllInputs(AliceClientSignTxID.privateKey);//alice2.keys[0]);  
-
-
+			psbt.signAllInputs(oracleSignTx);
 			// If your signer object's sign method returns a promise, use the following
 			// await Alice.signAllInputsAsync(alice2.keys[0])
-
 			// encode to send back to combiner (Oracle and Alice are not near each other)
 			const psbtSignedByOracleText = psbt.toBase64();
-			// const s2text = Alice.toBase64();
-
-			// const OracleFinal = bitcoin.Psbt.fromBase64(OracleText);
-			// const final2 = bitcoin.Psbt.fromBase64(s2text);
-
-			// If your signer object's sign method returns a promise, use the following
-			// await Alice.signAllInputsAsync(alice2.keys[0])
-
-			// encode to send back to combiner (Oracle and Alice are not near each other)
-			// const s1text = Oracle.toBase64();
-			// const s2text = Alice.toBase64();
-
-			// const final1 = bitcoin.Psbt.fromBase64(s1text);
-			// const final2 = bitcoin.Psbt.fromBase64(s2text);
-
-			// final1.combine(final2) would give the exact same result
-			// psbt.combine(final1, final2);
-
-			// Finalizer wants to check all signatures are valid before finalizing.
-			// If the finalizer wants to check for specific pubkeys, the second arg
-			// can be passed. See the first multisig example below.
-			// assert.strictEqual(psbt.validateSignaturesOfInput(0), true);
-			// assert.strictEqual(psbt.validateSignaturesOfInput(1), true);
-
-			// This step it new. Since we separate the signing operation and
-			// the creation of the scriptSig and witness stack, we are able to
-			// psbt.finalizeAllInputs();
-
-			// build and broadcast our RegTest network
-			// await regtestUtils.broadcast(psbt.extractTransaction().toHex());
-			// to build and broadcast to the actual Bitcoin network, see https://github.com/bitcoinjs/bitcoinjs-lib/issues/839
-
-			// ************** signing **************
-
-			// psbt.data.inputs.forEach((input, index) => {
-			// 	//// sign regular inputs that can be simply signed
-			// 	// if (!input.redeemScript && !input.witnessScript) {
-			// 	psbt.signInput(index, oracleSignTx)
-
-			// psbt.signInput(voutIndex, oracleSignTx)
-			// // give error if signature failed
-			// if (!psbt.validateSignaturesOfInput(voutIndex)) {
-			// 	return callback("", 'Signature validation failed for input index ' + voutIndex.toString())
-			// }
-
-
-			// })
-
-			// // This is an example of using the finalizeInput second parameter to
-			// // define how you finalize the inputs, allowing for any type of script.
-			// psbt.finalizeInput(0, getFinalScripts) // See getFinalScripts below
-			// 	.extractTransaction();
-
-
-			// const resultsCircle = await regtestUtils.mine(10);
-			//Only partially signed so we cannot broadcast yet:
-			// const resultBroadcast = await regtestUtils.broadcast(psbt.extractTransaction().toHex());
-
-			// regtestUtils.verify({
-			// 	txId: psbt.extractTransaction().toHex(),
-			// 	address: regtestUtils.RANDOM_ADDRESS,
-			// 	vout: 0,  //todo is this the right vout?
-			// 	value: satoshisToUnlock,
-			// });
 			//maybe can estmate by bcli analyzepsbt by adding output first then analyze then make psbt anew with estimated fee
 			//547  =  1 more than dust https://bitcoin.stackexchange.com/a/76157/45311
-
-			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " +  Math.max(constants.DUST_SATOSHIS,(satoshisToAlice - constants.DUST_SATOSHIS)) + " is now locked with:\n" + bitcoin.script.toASM(redeemScriptToAlice))// + "\nat address " + redeemScriptToAlice.address)
-			console.log(Math.max(constants.DUST_SATOSHIS,(satoshisToBob - minersFee)) + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
-
+			console.log((satoshisToUnlock) + " satoshi transferred from Alice to Alice, who gets " + Math.max(constants.DUST_SATOSHIS, (satoshisToAlice - constants.DUST_SATOSHIS)) + " is now locked with:\n" + bitcoin.script.toASM(redeemScriptToAlice))// + "\nat address " + redeemScriptToAlice.address)
+			console.log(Math.max(constants.DUST_SATOSHIS, (satoshisToBob - minersFee)) + " satoshi transferred from Alice to Bob is now locked with:\n" + bitcoin.script.toASM(redeemScriptToBob))// + "\nat address " + redeemScriptToBob.address)
 			//for the output  lock of the tokens for Bob
 			const { p2sh: Bob_p2shOutputLock, redeemscript: dummy } = await ID.createAddressLockedWithCirclesScript(BobPubkey, contract, oracleSignTx, oracleBurnTx, regtest)
 			const BobAddressToUnlockLater = Bob_p2shOutputLock.address;
-
 			CirclesCollection.insertOne(
-				// { "Attribute": "good" },
 				{ "version": constants.VERSION, instanceCircles: circleId, saltedHashedIdentification: ID.HMAC(BobId, saltBob) },
-				// { $set: { addressToUnlock: "determine when fully signed"} },
-				// { upsert: true },
 				function (err, circles) {
 					if (err) { return callback("", "", "", 500, "Something went wrong terribly while inserting!" + err) }
-					// addressToUnlock=circles[0].BTCaddress;
-					// txId = circles[0].txId;
-					// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
 					return callback(BobAddressToUnlockLater, psbtBaseText, psbtSignedByOracleText, 200);
 				})
-
 		}
 		catch (e) {
 			return callback("", "", "", 500, e)
 		}
-
 	})
-	// .catch(function (error) {
-	// 	return callback("", "very strange there is no TX_HEX of the txId:" + txId + " " + error);
-	// });
-
 }
-//from  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
-// This function is used to finalize a transaction using PSBT.
-// See  above.
-// getFinalScripts = (
-// 	inputIndex,//: number,
-// 	input,//: PsbtInput,
-// 	script,//: Buffer,
-// 	isSegwit,//: boolean,
-// 	isP2SH,//: boolean,
-// 	isP2WSH,//: boolean,
-// ) =>
-// //   : {
-// // 	finalScriptSig;//: Buffer | undefined;
-// // 	finalScriptWitness;//: Buffer | undefined;
-// //   } 
-// {
-// 	// Step 1: Check to make sure the meaningful script matches what you expect.
-// 	const decompiled = bitcoin.script.decompile(script);
-// 	//TODO:
-// 	// Checking if first OP is OP_IF... should do better check in production!
-// 	// You may even want to check the public keys in the script against a
-// 	// whitelist depending on the circumstances!!!
-// 	// You also want to check the contents of the input to see if you have enough
-// 	// info to actually construct the scriptSig and Witnesses.
-// 	// if (!decompiled || decompiled[0] !== bitcoin.opcodes.OP_IF) {
-// 	// 	throw new Error(`Can not finalize input #${inputIndex}`);
-// 	// }
-
-// 	// Step 2: Create final scripts
-// 	let payment//: bitcoin.Payment 
-// 		= {
-// 		network: regtest,
-// 		output: script,
-// 		// This logic should be more strict and make sure the pubkeys in the
-// 		// meaningful script are the ones signing in the PSBT etc.
-// 		input: bitcoin.script.compile([
-// 			// input.partialSig![0].signature,
-// 			input,
-// 			bitcoin.opcodes.OP_TRUE,
-// 		]),
-// 	};
-// 	if (isP2WSH && isSegwit)
-// 		payment = bitcoin.payments.p2wsh({
-// 			network: regtest,
-// 			redeem: payment,
-// 		});
-// 	if (isP2SH)
-// 		payment = bitcoin.payments.p2sh({
-// 			network: regtest,
-// 			redeem: payment.input,
-// 		});
-
-// 	function witnessStackToScriptWitness(witness)//: Buffer[]): Buffer 
-// 	{
-// 		let buffer = Buffer.allocUnsafe(0);
-
-// 		function writeSlice(slice)//: Buffer): void 
-// 		{
-// 			buffer = Buffer.concat([buffer, Buffer.from(slice)]);
-// 		}
-
-// 		function writeVarInt(i)//: number): void 
-// 		{
-// 			const currentLen = buffer.length;
-// 			const varintLen = varuint.encodingLength(i);
-
-// 			buffer = Buffer.concat([buffer, Buffer.allocUnsafe(varintLen)]);
-// 			varuint.encode(i, buffer, currentLen);
-// 		}
-
-// 		function writeVarSlice(slice)//: Buffer): void 
-// 		{
-// 			writeVarInt(slice.length);
-// 			writeSlice(slice);
-// 		}
-
-// 		function writeVector(vector)//: Buffer[]): void 
-// 		{
-// 			writeVarInt(vector.length);
-// 			vector.forEach(writeVarSlice);
-// 		}
-
-// 		writeVector(witness);
-
-// 		return buffer;
-// 	}
-
-// 	return {
-// 		finalScriptSig: payment.input,
-// 		finalScriptWitness:
-// 			payment.witness && payment.witness.length > 0
-// 				? witnessStackToScriptWitness(payment.witness)
-// 				: undefined,
-// 	};
-// }
-
