@@ -18,15 +18,15 @@ This work is Work in Progress, implemented is the blockchain part:
 
 Foreseen, but not implemented is:
 - Asking for help
-- Expelling a member of a Circle by majority
+- Expelling a member of a Circle by majority (script as been written though: see below Transactions)
 - The concept is blocklchain agnostic, its implementation, can be made in RGB, Rootstock and even in Ethereum, but for the moment we will use a BTC fork (see the powerpoint for further reasoning) (we also considered counterparty or Elements, but scripts are not easily programmable in a client)
 - When we will fork the BTC blockchain. current BTC holders will already have some Circle tokens, 
 - Related to that: we need to think about replay protection
-- Some tokens are 'freed' to be spent, such as the miner fee. They are not locked by the Oracle. The Oracle guards, via the agreed contract, the other remaining tokens.
+- Some tokens are 'freed' to be spent, such as alreday implemented: the miner fee. They are not locked by the Oracle. The Oracle guards, via the agreed contract, the other remaining tokens.
 - Unique identification of a person, for now this always returns true, see below
 
 ## Summary ##
-Alice's coins will be locked with a Special script. Alice can only spend with that special script, transactions that are cosigned by the Oracle server and Alice. The spending (to let Bob join the Circle) is only cosigned by the Oracle when 1 of the following is satisfied (the contract):
+Alice's coins will be locked with a Special script. Alice can only spend to that special script, transactions that are cosigned by the Oracle server and Alice. The spending (to let Bob join the Circle) is only cosigned by the Oracle when 1 of the following is satisfied (the contract):
 
 - The Oracle decides whether Alice's publickey belongs to a CircleInstance a.o. stays under 150 (Dunbar's number) members. Then Alice gets some 'free" tokens and the remainder gets locked by a similarly Special script.
 
@@ -247,5 +247,11 @@ Harari: Sapiens
 
 van Mensvoort: Next Nature 
 
+## A demo of a testclient ##
+1. Alice generates a Circle gets airdopped some tokens
+2. Alice adds Bob to her Circle
+3. Alice adds Charlie to her Circle
+4. Alice tries to add somebody with an invalid contract -> should fail
+5. Alice tries to add Charlie once again -> should fail
 
-[![Promo Care By Circles](READMEImages/server.gif)]
+![Promo Care By Circles](READMEImages/server.gif)
