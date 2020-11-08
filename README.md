@@ -229,3 +229,20 @@ node clientTest   #or use your favorite debugger
 ## Ideas ##
 
 Issue may contain binary metadata: should we allow owners of the asset add some additonal binary data to the as the "asset history" (like adding engravings to the owned token)
+
+## Some literature: ##
+
+Malcolm Gladwell's The Tipping Point: How Little Things Can  Make a Big Difference
+
+‘The Dunbar Number as a Limit to Group Sizes’, Christopher Allen
+
+Duncan J. Watts' Six  Degrees: The Science of a Connected Age
+
+Small  Worlds: The Dynamics of Networks between Order and  Randomness
+
+Mark Buchanan's Nexus: Small  Worlds and the Groundbreaking Science of Networks
+
+Harari: Sapiens
+
+van Mensvoort: Next Nature 
+
