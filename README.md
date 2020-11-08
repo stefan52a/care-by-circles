@@ -16,19 +16,24 @@ This work is Work in Progress, implemented is the blockchain part:
 
 Foreseen, but not implemented is:
 - Asking for help
-- Expelling a memebr of a Circle by majority
+- Expelling a member of a Circle by majority
 - Implementation, either the system can be made in RGB, but for the moment we will use fork BTC (we considered counterparty or Elements, but scripts are not easily programmable in a client)
 - When we will fork the BTC blockchain. current BTC holders will already have some Circle tokens, 
 - Related to that: we need to think about replay protection
+- Some tokens are 'freed' to be spent, such as the miner fee. They are not locked by the Oracle. The Oracle guards, via the agreed contract, other token, by locking the remainder.
 - Unique identification of a person, for now this always returns true, see below
 
 ## Summary ##
 Members agreeing in the Circle blockchain have consensus about the following:
 
 - It follows the same rules as the Bitcoin blockchain,as of this writing
+- When you join the system you get awarded ('airdropped') 1/100 Circle token, but only once. (unless you somehow change your id ;)
+- This users' airdrop gets halved every 500k users entering the system.
+- Alice (a user) should be able to invite other members (e.g. Bob & Charlie), they get some Oracle-locked tokens from Alice. Bob then gets half of Alice's tokens minus a miner fee.
 - Not more than 150 people (Dunbar's number) may take part in 1 Circle
 - Blockchain nodes cannot measure arbitrary conditions, so we must rely on an Oracle. An oracle is a server that has a keypair, and (co)signs transactions on request when a user-provided expression (contract) evaluates to true.
 - A transaction is adding another person to one of your Circles
+
 
 The Circle token is a fungible token, and is associated with identity. initially 1/100th (=1 million Satoshi) Circle token is associated with a telephone nr. (FTM to represent identity), but also e.g. 600 Satoshi1 token could be associated with an id.
 
@@ -209,4 +214,4 @@ module.exports = Object.freeze({
 node clientTest   #or use your favorite debugger
 ```
 
-8. Be aware that if you often switch between local and remote regtest, that you empty the client side database (see point 3).
+8. Be aware that if you often switch between local and remote regtest, that you should empty the client side database (see point 3).
