@@ -2,7 +2,7 @@
 
 Give & Take Care.
 
-See https://CareByCircles.Com and https://youtu.be/YczwK4v-uJ0
+Also see https://CareByCircles.Com and https://youtu.be/YczwK4v-uJ0 and the accompanying client software https://gitlab.com/circle3/care-by-circle
 
 
 [![Promo Care By Circles](READMEImages/CareByCircles.gif)](https://youtu.be/YczwK4v-uJ0)
@@ -89,7 +89,7 @@ docker run -d -p 8080:8080 junderw/bitcoinjs-regtest-server
 npm install
 ```
 
-3. Run testClient.js on our regtest server:
+3. Run the accompanying client software https://gitlab.com/circle3/care-by-circle   or      run the testClient.js on our regtest server:
 
 adapt constants.js to
 
