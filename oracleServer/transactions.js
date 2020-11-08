@@ -4,7 +4,6 @@ const ID = require('./identification');
 
 const randomBytes = require('randombytes');
 
-const axios = require('axios')
 // see for a tutorial of bitcoinjs:  https://bitcoinjs-guide.bitcoin-studio.com/
 
 // see https://github.com/bitcoinjs/regtest-server/tree/master/docker
@@ -33,11 +32,6 @@ const oracleBurnTx = bitcoin.ECPair.fromWIF(
 // todo get miner's fee from a servce
 // ftm take satoshis:
 const minersFee = 6100;
-
-const axiosInstance = axios.create({
-	baseURL: APIURL,
-	timeout: 10000
-});
 
 module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, contract, satoshisFromFaucet, createGenesis, cb) => {// see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts  for basic transactions
 	randomBytes(256, async (err, buf) => {

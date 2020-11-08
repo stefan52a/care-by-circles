@@ -24,19 +24,19 @@ const _AliceClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
     'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
     regtest,
 );
-const _AliceId = 'Alice+31-6-233787929b'
+const _AliceId = 'Alice+31-6-233787929z'
 const _saltAlice = 'AliceMonKey8sda89--__8933h8ih^%&*321i989d89as';  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
 const _BobClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
     'cU4suhCk1LDHEksGRen2293CmZE1GdfSA4V4A6GmwZvmVRC7Vpvu', ///// TODO KEEP SECRET
     regtest,
 );
-const _BobId = 'Bob+31-6-231610011f'
+const _BobId = 'Bob+31-6-231610011z'
 const _saltBob = 'BobVotreKey8e87we89usdfij34sd43a859^*&*(&()-f-__d89asbla';  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
 const _CharlieClientSignTxID = bitcoin.ECPair.fromWIF(  /// should be  a HD wallet
     'cQEVDN4VVCjH3eSvdZGkkteQGAp5M94MwLK2qCqmwV7rztSzQocU', ///// TODO KEEP SECRET
     regtest,
 );
-const _CharlieId = 'Charlie+31-6-231231391f'
+const _CharlieId = 'Charlie+31-6-231231391z'
 const _saltCharlie = 'CharlieHatskikeydeeKey8e8789usdfi56j34sd430a8(**(59^*&*(&()-f-__d21387';  // a fixed random string used to one-way hash your personal data, if you change this number your id cannot (it will be pseudomous) be associated with any data stored on decentral storage
 
 // Make only one mongodb connection per session:  BY TOM:
