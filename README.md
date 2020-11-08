@@ -4,6 +4,8 @@ Give & Take Care.
 
 Also see https://CareByCircles.Com and https://youtu.be/YczwK4v-uJ0 and the accompanying client software https://gitlab.com/circle3/care-by-circle
 
+Where the following specifications are not clear, valid or seemingly changed, always look at the code for the workings.
+
 
 [![Promo Care By Circles](READMEImages/CareByCircles.gif)](https://youtu.be/YczwK4v-uJ0)
 
