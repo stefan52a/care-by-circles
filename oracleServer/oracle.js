@@ -1,9 +1,8 @@
-// This API is callable by anybody, there is no protection needed.
+// This API is callable by anybody, no protection needed should be needed.
 
 const constants = require('./constants');
 const bitcoin = require('bitcoinjs-lib');
 const regtestClient = require('regtest-client');
-// const e = require('express');
 const APIPASS = process.env.APIPASS || 'sastoshi';
 const APIURL = process.env.APIURL || 'http://localhost:8080/1';
 //e.g.   localhost:8080/1/r/generate?432  see https://github.com/bitcoinjs/regtest-server/blob/master/routes/1.js
@@ -24,15 +23,13 @@ var db;
 global.CirclesCollection;
 var MongoClient = require('mongodb').MongoClient;
 
-// app.use(express.static(__dirname + '/client')); //for an Angular version
 app.use(bodyParser.json());
-
 
 // Airdrop tokens to an identity that does not have a genesis Circle yet
 app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop form a faucet
 	const AliceId = req.body.AliceId; // telephone number FTM
 	const saltAlice = req.body.saltAlice; // a secret number which only the user controls
-	// todo study changing with a timestamp, like done in Corona BLE apps.
+	// todo study how to change the id with a timestamp, like done in Corona BLE apps.
 	const AlicePubkey = req.body.AlicePubkey; //a HD wallet changing public key
 	ID.checkExists(AliceId, saltAlice, (error) => { //best would be to use an existing DID system preferably as trustless as possible
 		if (error) {
@@ -60,9 +57,9 @@ app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop fo
 					}
 					const psbt = answ.psbt
 					const CircleId = answ.CircleId
-					//0.001BTC ,   store UTXO in mongodb, e.g.   unpsent.txId en unspent.vout
+
 					console.log({ version: constants.VERSION, error: "none", CircleId: CircleId, tokens: (answ.satoshiAliceLeft / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract })
-					res.status(200).json({ version: constants.VERSION, error: "none", Circle: CircleId, tokens: (answ.satoshiAliceLeft / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract });// xx e.g. could e.g. be be the same as the current blockchain reward
+					res.status(200).json({ version: constants.VERSION, error: "none", Circle: CircleId, tokens: (answ.satoshiAliceLeft / 1e8), psbt: psbt, addressOfUTXO: answ.addressOfUTXO, contract: contract });
 					return
 					// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
 				})
@@ -72,13 +69,12 @@ app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop fo
 });
 
 app.post('/api/oraclePleaseSignTx', (req, res) => {
-	// const addressToUnlock = req.body.addressToUnlock;// "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; // example address
 	const AliceId = req.body.AliceId;
 	const saltAlice = req.body.saltAlice;
 	const circleId = req.body.circleId;
 
-	const pubkeyOfUTXO = req.body.pubkeyInUTXO; //For Privacyreasons: The client also has to keep track of the pubkey belonging to his last Circle transaction
-	//TODo TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!instead of this pubkeyInUTXO and addressOfUTXO we better transfer the hash of the script in transaction.PubScriptToUnlockContainsAHashOfContract
+	const pubkeyOfUTXO = req.body.pubkeyInUTXO; //For Privacyreasons: The client huimself, has to keep track of the pubkey belonging to his last Circle transaction
+	//TODo TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!instead of this pubkeyInUTXO and addressOfUTXO we can also transfer the hash of the script in transaction.PubScriptToUnlockContainsAHashOfContract
 	const addressOfUTXO = req.body.addressOfUTXO; //For Privacyreasons: The client also has to keep track of the address belonging to his last Circle transaction
 
 	const AliceNewPubkey = req.body.AliceNewPubkey;
@@ -116,12 +112,6 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										console.log({ error: errInContract })
 										return res.json({ error: errInContract })
 									}
-
-
-
-
-
-
 									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -132,9 +122,6 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 									// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
 									// therefore we use a faucet to emulate that there is some tokens on Alice's address
 									transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FOR_GENESIS - 500, false, (answ) => {
-										// but in this case you'll get the reward because you are an identity that does not have a genesis Circle yet.
-										// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
-										// therefore we use a faucet to emulate that there is some tokens on Alice's address
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -147,47 +134,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 												console.log({ status: status, error: err })
 												return res.status(status).json({ error: err })
 											}
-											// const dummy = PSBT.data.inputs[0].partialSig[0].signature  // this is the signature of the Oracle oracleSignTx
 											console.log({ status: status, error: "none", psbtBaseText: PSBT, OracleText: OracleFinal })
-
-
-											//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-											// 										//temp:
-											// 										const regtestClient = require('regtest-client');
-											// 										const APIPASS = process.env.APIPASS || 'sastoshi';
-											// 										const APIURL = process.env.APIURL || 'http://localhost:8080/1';
-											// 										const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
-											// 										const regtest = regtestUtils.network;
-											// 										const bitcoin = require('bitcoinjs-lib');
-											// 										var aClientSignTxID = bitcoin.ECPair.fromWIF(
-											// 											'cW7jhU1AXDsxUgLuQQUnh2k3JAof3eaMgP9vEtsbvgpfWd4WM3sS', ///// TODO KEEP SECRET
-											// 											regtest,
-											// 										);
-
-											// 										const psbt = require('./test/psbtMod/psbtMod').Psbt.fromHex(PSBT.toHex());
-											// 										// const psbtObj = new Function('return ' + psbt.toString()+'')()
-											// 										psbt.signInput(0, aClientSignTxID)
-
-											// 										// you can use validate signature method provided by library to make sure generated signature is valid
-											// 										if (!psbt.validateSignaturesOfAllInputs()) // if this returns false, then you can throw the error
-											// 										{
-											// 											console.log("could not validate signatures of psbt ")
-											// 										}
-
-											// 										psbt.finalizeAllInputs(regtest)
-
-
-											// 										// signed transaction hex
-											// 										const transaction = psbt.extractTransaction()
-											// 										const signedTransaction = transaction.toHex()
-											// 										const transactionId = transaction.getId()
-											// 										// sign transaction end
-
-											// 										// // build and broadcast to the Bitcoin RegTest network
-											// 										async function dum() {console.log (await regtestUtils.broadcast(signedTransaction))}
-											// 										dum();
-											// 										//endtemp 
-											// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 											res.status(status).json({
 												error: "none", psbtBaseText: PSBT, psbtSignedByOracleBaseText: OracleFinal,
 												version: constants.VERSION, error: "none", Circle: circleId, tokens: (constants.SATOSHI_FOR_GENESIS / 1e8), addressOfUTXO: AliceAddressOfNewUTXO, contract: contract
@@ -200,16 +147,8 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 							}
 							catch (e2) {
 								//client error = status 400
-								console.log({
-									error: "invalid contract syntax" + e2 +
-										""// "const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
-								}
-								);
-								return res.status(400).json({
-									error: "invalid contract syntax" + e2 +
-										""//"const ID = require('./identification');const dunbarsNumber = 150; module.exports.contract = (newId, callback) => { ID.checkExists(newId, (err) => {if (err) callback('', err + 'Not allowed (newId does not exist)');ID.hasGenesisCircle(newId, (err, circleId) => {if (err) callback('', err + ' Not allowed (NewId already in Circleinstance) ' + circleId); else if (CircleId.nrOfMembers >= dunbarsNumber) callback('', err + ' Not allowed (Circleinstance has reached the limit of ' + dunbarsNumber + ' unique Ids) ' + circleId); else callback(PSBT);});});}"
-								}
-								);
+								console.log({error: "invalid contract syntax" + e2 });
+								return res.status(400).json({error: "invalid contract syntax" + e2 });
 							}
 						})
 				}
@@ -222,69 +161,6 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 	})
 });
 
-
-// app.post('/api/startFresh', (req, res) => {  //temporary endpoint
-// 	// const addressToUnlock = req.body.addressToUnlock;// "2MsM7mj7MFFBahGfba1tSJXTizPyGwBuxHC"; // example address
-// 	const AliceId = req.body.AliceId;
-// 	const saltAlice = req.body.saltAlice;
-// 	const circleId = req.body.circleId;
-// 	CirclesCollection.updateOne(
-// 		// { "Attribute": "good" },
-// 		{ saltedHashedIdentification: ID.HMAC(AliceId, saltAlice), instanceCircles: circleId, "version": constants.VERSION },
-// 		{ $set: { version: "deleted"+ constants.VERSION } },
-// 		// { upsert: true },
-// 		function (err, circles) {
-// 			if (err) { return res.status(500).json({error: "Something went wrong: could not delete id/circle combination" + err}) }
-// 			if (circles.matchedCount != 1) return res.status(500).json({error: "2: Something went terribly wrong: no or more than 1 circles assigned to a user"} )  
-// 			else {
-// 				return res.status(200).json({error:"none"});
-// 			}
-
-
-// 		});
-// });
-
-// app.post('/api/GiveTxIdToOracle', (req, res) => {
-// 	const instanceCircles = req.body.instanceCircles;
-// 	const id = req.body.id;
-
-// 	const txId = req.body.txId;
-
-// 	//get address of public key:  https://bitcoin.stackexchange.com/a/54999/45311
-// 	//update mongoDB here for instanceCircles, id   combination with valuyes txId and address (ToUnlock)
-// 	CirclesCollection.updateOne(
-// 		// { "Attribute": "good" },
-// 		{ instanceCircles: instanceCircles, saltedHashedIdentification: id,  "version": constants.VERSION  },
-// 		{ $set: { txId: txId, addressToUnlock: address, updateDate: Date.now } },
-// 		function (err, circles) {
-// 			if (err) { return res.status(500).json({ error: "Something went wrong while updating!" + err }) }
-// 			// addressToUnlock=circles[0].BTCaddress;
-// 			// txId = circles[0].txId;
-// 			// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-// 			return res.status(200).json({ error: "none" })
-// 		})
-// });
-
-// app.post('/api/GiveTxIdToOracle', (req, res) => {
-// 	const instanceCircles = req.body.instanceCircles;
-// 	const id = req.body.id;
-
-// 	const txId = req.body.txId;
-
-// 	//get address of public key:  https://bitcoin.stackexchange.com/a/54999/45311
-// 	//update mongoDB here for instanceCircles, id   combination with valuyes txId and address (ToUnlock)
-// 	CirclesCollection.updateOne(
-// 		// { "Attribute": "good" },
-// 		{ instanceCircles: instanceCircles, saltedHashedIdentification: id,  "version": constants.VERSION  },
-// 		{ $set: { txId: txId, addressToUnlock: address, updateDate: Date.now } },
-// 		function (err, circles) {
-// 			if (err) { return res.status(500).json({ error: "Something went wrong while updating!" + err }) }
-// 			// addressToUnlock=circles[0].BTCaddress;
-// 			// txId = circles[0].txId;
-// 			// pubkeyUsedInUTXO = circles[0].pubKey; //do we lose some anonimity here? or should it be provided by USER id?
-// 			return res.status(200).json({ error: "none" })
-// 		})
-// });
 
 app.post('/api/broadcastToRegtest', async (req, res) => {
 	const psbt = req.body.psbtToBroadcast;
@@ -307,14 +183,10 @@ app.post('/api/broadcastToRegtest', async (req, res) => {
 	//     value: response.data.tokens,
 	// });
 	//////////////////////////////////////////////////////////////////////todo
-
 	const psbtBase64 = psbtToBroadcast.toBase64()
 	console.log('\npsbt can be decoded with \n"  bitcoin-cli -regtest decodepsbt ', psbtBase64 + '   "\n')//fromhex, tobase64  (e.g. with cyberchef)
-
-
 	return res.status(200).json({ msg: "done", error: '' })
 });
-
 
 function createTempContractFile(randFile, contractAlgorithm, callback) {
 	//a janitor that deletes the contract file after 30 secs
@@ -343,7 +215,6 @@ require("glob").glob("contractTMP*.js", function (er, files) {
 		})
 	}
 });
-
 
 // Make only one mongodb connection per session:  BY TOM:
 // Initialize connection once

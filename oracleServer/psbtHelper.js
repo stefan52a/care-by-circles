@@ -141,6 +141,7 @@ module.exports.decoderawtransaction = (hex) => {
 
 //from  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
 // This function is used to finalize a transaction using PSBT.
+//todo combine this one with getFinalScripts
 module.exports.getFinalScripts2 = (
     inputIndex,//: number,
     input,//: PsbtInput,
@@ -156,14 +157,9 @@ module.exports.getFinalScripts2 = (
     // whitelist depending on the circumstances!!!
     // You also want to check the contents of the input to see if you have enough
     // info to actually construct the scriptSig and Witnesses.
-
-    //todo: uncomment:
     if (!decompiled || decompiled[0] !== bitcoin.opcodes.OP_IF) {
         throw new Error(`Can not finalize input #${inputIndex} not starting with OP_IF`);
     }
-    // console.log("lock: " + bitcoin.script.toASM(decompiled))
-
-
     // Step 2: Create final scripts
     let payment = {
         network: regtest,
@@ -171,10 +167,10 @@ module.exports.getFinalScripts2 = (
         // This logic should be more strict and make sure the pubkeys in the
         // meaningful script are the ones signing in the PSBT etc.
         input: bitcoin.script.compile([
-            bitcoin.opcodes.OP_0,// because of multisig bug, don't do this in case of gneesis transaction
+            bitcoin.opcodes.OP_0,// because of the famous multisig bug
             input.partialSig[0].signature,
             input.partialSig[1].signature,
-            bitcoin.opcodes.OP_TRUE,// don't do this in case of gneesis transaction
+            bitcoin.opcodes.OP_TRUE,
         ]),
     };
     if (isP2WSH && isSegwit)
@@ -187,34 +183,7 @@ module.exports.getFinalScripts2 = (
             network: regtest,
             redeem: payment,
         });
-
-
-
-
-    // console.log("unlock: " + bitcoin.script.toASM(bitcoin.script.decompile(payment.redeem.input)))
-
-    // console.log("try out with btcdeb:\nbtcdeb '[" + bitcoin.script.toASM(bitcoin.script.decompile(payment.redeem.input)) + " " + bitcoin.script.toASM(decompiled) + "]'")
-    //      btcdeb '[OP_0 3045022100cc48b2b15404ec8dbdfaf3f001bb9f6ca4f8889c2dde09b46f5dbc26ac9281a002202ee792efcc8804b9f0b0176fb242ac2a0c2774487a2dba0bc2282bdffb12a4e201 304402203291eeccac48830fcbb06b07b9ee55523b792cedc9ca8d008a4faa2ce9b7f93602206f87dc6a0a8812a36cd58c2032ead1a7c98031ced0e47232e86b35af4d6f5ec7 OP_TRUE OP_IF 347afd7f77d0538d24979c520de1254a26b92b1c83c07f781a40fbac96dc368a OP_DROP OP_2 02758bfe7f2b8e61821e3e32b47be516193117daddde3c3f9126b8f2bd3ae40e1d 02a211312047f4ed82628df97148cccbbaba8927fce3f47061e841536fc5a3ee1e OP_2 OP_CHECKMULTISIGVERIFY OP_ELSE abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd OP_DROP OP_1 026194a5e97b32473c2e8c95118815ba5bade70ec47b7667d9ce627b4e29720982 OP_1 OP_CHECKMULTISIGVERIFY OP_ENDIF]'
-    // e.g. btcdeb '[OP_0 3045022100dee56de1b3c991f5169f96c53cd817d8eb4420f5659e3581dc2e69b12fe0376d02205e8916504c5131d1eabb2e31fd80765b5b7135cf39ab782800d4e424720f7569 30440220272d9f592037a221b4926f96f71668c0898e8e0cc608888bfb47bb8d9be7a34802207f404f93abdaf83d20c4363ca8be2dd8dd11ef94b45394120e13090d1e5507ad01 OP_TRUE OP_IF 347afd7f77d0538d24979c520de1254a26b92b1c83c07f781a40fbac96dc368a OP_DROP OP_2 02758bfe7f2b8e61821e3e32b47be516193117daddde3c3f9126b8f2bd3ae40e1d 02a211312047f4ed82628df97148cccbbaba8927fce3f47061e841536fc5a3ee1e OP_2 OP_CHECKMULTISIGVERIFY OP_ELSE abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd OP_DROP OP_1 026194a5e97b32473c2e8c95118815ba5bade70ec47b7667d9ce627b4e29720982 OP_1 OP_CHECKMULTISIGVERIFY OP_ENDIF]'
-    // e.g. btcdeb '[3045022100dee56de1b3c991f5169f96c53cd817d8eb4420f5659e3581dc2e69b12fe0376d02205e8916504c5131d1eabb2e31fd80765b5b7135cf39ab782800d4e424720f7569 02758bfe7f2b8e61821e3e32b47be516193117daddde3c3f9126b8f2bd3ae40e1d OP_DUP OP_HASH160 9b8ed87a689ace35b66dddbc3beda82793aca3e4 OP_EQUALVERIFY OP_CHECKSIG]'
-
-    // console.log ("or try very nice, but does not work ATM: https://siminchen.github.io/bitcoinIDE/build/editor.html ")
-
-
     // console.log ("lockc: bitcoin.script.toASM(decompiled) \nunlock:  bitcoin.script.toASM(bitcoin.script.decompile(payment.redeem.input)) \nuse https://github.com/crm416/script")
-
-
-    // var evaluate = require('bitcoin-script').evaluate;
-    // var script = 'OP_2 OP_3 OP_MUL OP_6 OP_EQUAL OP_VERIFY';
-    // // console.log(evaluate(script, /* enableDisabled */ true));
-    // // => true
-    // script = "3045022100a427e9a4c4f6bd14068bf30d6932a9160b25136e30153102395ccb1fe618e6d40220175e3fb101eaad3710c6e5d39a0f53f2cb477ccaab62388caac8610ea1d6bfa001 1 02758bfe7f2b8e61821e3e32b47be516193117daddde3c3f9126b8f2bd3ae40e1d 02a211312047f4ed82628df97148cccbbaba8927fce3f47061e841536fc5a3ee1e 2 OP_CHECKMULTISIG OP_VERIFY"
-    // console.log (script + "\nevaluates to: "+evaluate(script, true)); 
-    // script= bitcoin.script.toASM(bitcoin.script.decompile(payment.redeem.input)) + " " + bitcoin.script.toASM(decompiled)
-    // console.log (script + "\nevaluates to: "+evaluate(script, true)); 
-
-
-
     function witnessStackToScriptWitness(witness) {
         let buffer = Buffer.allocUnsafe(0);
 
@@ -253,7 +222,6 @@ module.exports.getFinalScripts2 = (
                 : undefined,
     };
 }
-
 
 //from https://github.com/bitcoinjs/bitcoinjs-lib/blob/f1d04cec002f8c4203389c80d259ad33656ad6f1/src/psbt.js
 module.exports.getFinalScripts = (inputIndex, input, script, isSegwit, isP2SH, isP2WSH) => {

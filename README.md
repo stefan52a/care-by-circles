@@ -228,7 +228,8 @@ node clientTest   #or use your favorite debugger
 
 ## Ideas ##
 
-Issue may contain binary metadata: should we allow owners of the asset add some additonal binary data to the as the "asset history" (like adding engravings to the owned token)
+- A transaction may contain binary metadata: should we allow owners of the asset add some additonal binary data to the as the "asset history" (like adding engravings to the owned token)
+- A Circle can elect a specialist among itsself, who can go in a new Circle S with specialists from other Circles. Circle S can elect a superspecialist that form with other superspecilists a new Cicrle S2 etc. This will lead to a log(N) working direct democracy?
 
 ## Some literature: ##
 

@@ -18,17 +18,6 @@ module.exports.checkExists = (id, salt, callback) => { //needed by contract
 	callback(); //for the moment always exists //identity determnined by his telephone number
 }
 
-
-
-
-
-
-
-///////todo remove:
-
-
-
-
 module.exports.inThisGenesisCircle = (circleId, id, salt, callback) => {// needed by contract
 	CirclesCollection.find({ instanceCircles: circleId, "saltedHashedIdentification": this.HMAC(id, salt), "version": constants.VERSION }).toArray(function (err, circles) {
 		if (err) { callback("NotFound", "", err) }
@@ -44,7 +33,6 @@ module.exports.inThisGenesisCircle = (circleId, id, salt, callback) => {// neede
 }
 
 module.exports.hasNoGenesisCircle = (id, salt, callback) => {
-	// Connect to Mongoose
 	CirclesCollection.find({ "saltedHashedIdentification": this.HMAC(id, salt), "version": constants.VERSION }).toArray(function (err, circles) {
 		if (err) { callback(err, "NotFound") } else
 			if (circles.length == 0) { callback("No circles assigned to a user!") } else
@@ -76,34 +64,8 @@ module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, contract, or
 		},
 		network: regtest,
 	})
-
 	return { p2sh: p2sh, redeemscript: redeemscript };
 }
-
-// // to test scripts:  https://github.com/kallewoof/btcdeb
-// module.exports.circlesLockScript = (  //TODO FTM this script because don't know how to sign the other yet
-// 	//make this Segwit later: https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
-// 	toPubkey,
-// 	algorithm,
-// 	oraclePleaseSignTxQ,  //: KeyPair,
-// 	oracleBurnTxQ  //: KeyPair,
-// ) => {
-// 	//returns a buffer:
-// 	return bitcoin.script.fromASM(
-// 		`
-// 			OP_0
-// 			OP_2
-// 			${toPubkey.toString('hex')}
-// 			${oraclePleaseSignTxQ.publicKey.toString('hex')}
-// 			OP_2
-// 			OP_CHECKMULTISIGVERIFY
-// 			${crypto.SHA256(algorithm).toString()} 
-//     `
-// 			.trim()
-// 			.replace(/\s+/g, ' '),
-// 	);
-// }
-
 
 // written along the lines of https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
 // to test scripts:  https://github.com/kallewoof/btcdeb
