@@ -25,6 +25,13 @@ Foreseen, but not implemented is:
 - Some tokens are 'freed' to be spent, such as alreday implemented: the miner fee. They are not locked by the Oracle. The Oracle guards, via the agreed contract, the other remaining tokens.
 - Unique identification of a person, for now this always returns true, see below
 
+## Inspiration ##
+- Formalizing and Securing Relationships on Public Networks by Nick Szabó
+- Dunbar's number
+- https://en.bitcoin.it/wiki/Contract#Example_4:_Using_external_state by Mike Hearn
+- The Social Dilemma by Netflix
+- and the literature mentioned at the bottom of this readme.
+
 ## Summary ##
 Alice's coins will be locked with a Special script. Alice can only spend to that special script, transactions that are cosigned by the Oracle server and Alice. The spending (to let Bob join the Circle) is only cosigned by the Oracle when 1 of the following is satisfied (the contract):
 
