@@ -144,10 +144,6 @@ module.exports = Object.freeze({
     DO_GENESIS: false,   ///<<====================================== set to true once to start, false in all subsequent calls
 });
 ```
-```
-node clientTest   #or use your favorite debugger
-```
-
 Then you need to set up a local mongodb, for this in clienTest.js to work:
 ```
 MongoClient.connect("mongodb://localhost:27017", { useNewUrlParser: true, useUnifiedTopology: true }, function (err, database) {
@@ -161,7 +157,13 @@ MongoClient.connect("mongodb://localhost:27017", { useNewUrlParser: true, useUni
 });
 ```
 
-Of course you can use any other database, like sqllite, or table for client side storage.
+Of course you can use any other database, like sqllite, or table for client side storage. 
+
+Then:
+
+```
+node clientTest   #or use your favorite debugger
+```
 
 Adapt clientTest.js to your heart's desire. You are Done.
 
