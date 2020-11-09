@@ -18,7 +18,7 @@ This work is Work in Progress, implemented is the blockchain part:
 
 Foreseen, but not implemented is:
 - Asking for help
-- Expelling a member of a Circle by majority (script as been written though: see below Transactions)
+- Expelling a member of a Circle by majority (script has been written though: see below Transactions)
 - The concept is blocklchain agnostic, its implementation, can be made in RGB, Rootstock and even in Ethereum, but for the moment we will use a BTC fork (see the powerpoint for further reasoning) (we also considered counterparty or Elements, but scripts are not easily programmable in a client)
 - When we will fork the BTC blockchain. current BTC holders will already have some Circle tokens, 
 - Related to that: we need to think about replay protection
