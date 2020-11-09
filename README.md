@@ -59,8 +59,8 @@ Next to that the Oracle currently also checks whether an Id is really 1 unique h
 An individual person's id is not stored as is on the blockchain or decentral storage.
 
 ## GDPR consideration ##
-In order, however, to determine the uniqueness of an id, the Oracle needs to be knowledgable about the id. Therefore the Oracle stores the id along with a salt in a table only accessible to the Oracle.
-The oracle enforces the uniqueness of the id. The user may withdraw the salt and the Oracle promises to delete the relationship between id and that salt, by which the data on his Circles in the blockchain is not retrievable anymore.
+In order, however, to determine the uniqueness of an id, the Oracle needs to be knowledgable about the id. Therefore the Oracle gets the id along with a salt from the user and store the hash in a table and forgets about the id and salt.
+The oracle enforces the uniqueness of the id. The user may withdraw the salt and the Oracle promises only to remember the hash of id and that salt. If the user withdraws his salt, the data on his Circles in the blockchain is not retrievable anymore.
 What gets stored in a decentral table, is:
 
 circle instance  <->  Hash(id, salt)     relationship 
