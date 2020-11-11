@@ -240,10 +240,11 @@ Harari: Sapiens
 van Mensvoort: Next Nature 
 
 ## A demo of a testclient ##
-1. Alice generates a Circle gets airdopped some tokens
+1. Alice generates a Circle & gets airdropped some tokens
 2. Alice adds Bob to her Circle
 3. Alice adds Charlie to her Circle
 4. Alice tries to add somebody with an invalid contract -> should fail
 5. Alice tries to add Charlie once again -> should fail
+6. Alice tries to add more than 150 friends to her Circle (should fail at the 151th, takes a couple of minutes on regtest)
 
 ![Promo Care By Circles](READMEImages/server.gif)
