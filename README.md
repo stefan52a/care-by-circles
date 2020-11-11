@@ -147,7 +147,6 @@ module.exports = Object.freeze({
     // For testClient:
     // BASE_URL: 'http://localhost:3000/api/',
     BASE_URL: 'https://www.carebycircle.com/api/',
-    DO_GENESIS: false,   ///<<====================================== set to true once to start, false in all subsequent calls
 });
 ```
 Then you need to set up a local mongodb, for this in clienTest.js to work:
@@ -172,16 +171,6 @@ node clientTest   #or use your favorite debugger
 ```
 
 Adapt clientTest.js to your heart's desire. You are Done.
-
-Remember the testClient can only be run twice: once with  DO_GENESIS: false,    and once with  DO_GENESIS: true,   
-
-After that you can change the users id (AliceId, BobId and CharlieId), otherwise you will get:
-
-```
-======>Alice accepts Bob in her Circle
-clientTest.js:125
-Error Contract error: Not allowed (BobId already in this Circleinstance) Circled3bdb6b36cc2e24d7d6214b50da61737834c7c2a30b988993d907f45bc39cdd1bb9c49a1d82f67fe9952c173b6474d3f5749ce365eac7be675475f911d97ce401aa7a235fa07e549486936093c79d286d7ace48c25fae22d66f4a1069b0df10fa348cb8feca42d4ba650adc209fa66c7f2a534f772b8d5dda6dc6b9444b246130811ad557f234ccbda511e556283ace7e1794064a13dd40468b556b9b0f12e521c556eec93b89508b41b0b8afedd75d9f1acf136df19e2bdae0d19dbdfddcaf6ac88fcbf373a8bc3d867d6c9e48fd4bbdbbadb884e28f75ff1a16f42e6d97e035af4a26bf8814f21ee3dc418c362f2620ee7d6b41b0a9c80d39797e40b6ed46f
-```
 
 If you want to run locally:
 
@@ -221,19 +210,7 @@ node oracle.js    #or use your favorite debugger
 
 7. Run a client or a test e.g.:
 
-adapt constants.js to
-
-```
-module.exports = Object.freeze({
-    VERSION: '0.11',
-    SATOSHI_FORGENESIS: 7e4,
-
-    // For testClient:
-    BASEURL: 'http://localhost:3000/api/',
-    DO_GENESIS: true,   ///<<====================================== set to true once to start, false in all subsequent calls
-
-});
-```
+adapt constants.js see point 3.
 
 ```
 node clientTest   #or use your favorite debugger
