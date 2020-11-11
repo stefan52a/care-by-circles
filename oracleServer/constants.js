@@ -9,5 +9,7 @@ module.exports = Object.freeze({
 
     // For testClient:
     BASE_URL: 'http://localhost:3000/api/',
+    REGTEST_URL: 'http://localhost:8080/1',
     // BASE_URL: 'https://www.carebycircle.com/api/',
+    // REGTEST_URL: 'https://www.carebycircle.com/1',
 });
