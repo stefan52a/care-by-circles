@@ -1,5 +1,7 @@
 //Handy:  https://github.com/BlockchainCommons/Learning-Bitcoin-from-the-Command-Line
 
+const log = require('./oracleServer/logger')
+
 const constants = require('./oracleServer/constants');
 const CirclesOnClient = require('./lib/CirclesOnClient');
 const fs = require('fs');

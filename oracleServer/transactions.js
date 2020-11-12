@@ -33,8 +33,8 @@ const oracleBurnTx = bitcoin.ECPair.fromWIF(
 // ftm take satoshis:
 const minersFee = 6100;
 
-module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, contract, satoshisFromFaucet, createGenesis, cb) => {// see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts  for basic transactions
-	randomBytes(256, async (err, buf) => {
+module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, contract, satoshisFromFaucet, createGenesis, cb) => { console.log("tralala");// see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts  for basic transactions
+	randomBytes(256, async (err, buf) => { console.log("tralala");
 		if (err) return cb({ unspent: "", CircleId: "", addressOfUTXO: "", status: "500", err: err })
 		else if (satoshisFromFaucet < constants.DUST_SATOSHIS) return b({ unspent: "", CircleId: "", addressOfUTXO: "", status: "500", err: "satoshis from faucet is lower than dust: " + (constants.DUST_SATOSHIS - 1) })
 		else {
@@ -120,7 +120,7 @@ module.exports.createAndBroadcastCircleGenesisTx = (id, salt, AlicePubkeyStr, co
 	})
 }
 
-module.exports.PubScriptToUnlockContainsAHashOfContract = (id, salt, pubkeyOfUTXO, addressOfUTXO, contract, callback) => {
+module.exports.PubScriptToUnlockContainsAHashOfContract = (id, salt, pubkeyOfUTXO, addressOfUTXO, contract, callback) => { console.log("tralala");
 	// The redeem script has a hash in the pubscript, and given the one-way nature of hashes
 	// you can never find the contents of the redeem script. (P2SH)
 	// we have to make a redeem script (a.o. containing a  hash of the contract etc) and look whether it hashes to the right hash of the redeem script.
@@ -143,7 +143,7 @@ module.exports.PubScriptToUnlockContainsAHashOfContract = (id, salt, pubkeyOfUTX
 
 // along the lines of https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/csv.spec.ts
 //broadcast via a 3rd Party Blockchain Provider (3PBP)
-module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob, BobPubkey, circleId, callback) => {
+module.exports.PSBT = (AliceId, saltAlice, contract, AlicePubkey, BobId, saltBob, BobPubkey, circleId, callback) => { console.log("tralala");
 	// Signs PSBT by oracle
 	// force update MTP  (Merkle Tree Proof?)
 	CirclesCollection.find({ "saltedHashedIdentification": ID.HMAC(AliceId, saltAlice), "version": constants.VERSION }).toArray(async function (err, circles) {

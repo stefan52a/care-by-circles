@@ -1,5 +1,7 @@
-// This API is callable by anybody, no protection needed should be needed.
 
+const log = require('./logger')
+
+// This API is callable by anybody, no protection needed should be needed.
 const constants = require('./constants');
 const bitcoin = require('bitcoinjs-lib');
 const regtestClient = require('regtest-client');
@@ -26,12 +28,12 @@ var MongoClient = require('mongodb').MongoClient;
 app.use(bodyParser.json());
 
 // Airdrop tokens to an identity that does not have a genesis Circle yet
-app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop form a faucet
+app.post('/api/oracleGetAirdrop', (req, res) => { console.log("tralala");   //Alice wil get an airdrop form a faucet
 	const AliceId = req.body.AliceId; // telephone number FTM
 	const saltAlice = req.body.saltAlice; // a secret number which only the user controls
 	// todo study how to change the id with a timestamp, like done in Corona BLE apps.
 	const AlicePubkey = req.body.AlicePubkey; //a HD wallet changing public key
-	ID.checkExists(AliceId, saltAlice, (error) => { //best would be to use an existing DID system preferably as trustless as possible
+	ID.checkExists(AliceId, saltAlice, (error) => { console.log("tralala"); //best would be to use an existing DID system preferably as trustless as possible
 		if (error) {
 			console.log("error: " + error + " Not allowed (id does not exist, id is not a person)");
 			return res.status(400).json({ error: error + " Not allowed (id does not exist, id is not a person)" });
@@ -43,12 +45,12 @@ app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop fo
 			console.log('OK: ' + filename);
 			console.log(contractFromFile)
 			const contract = contractFromFile // todo later  also in client:   .trim().replace(/\s+/g, ' ')
-			ID.hasNoGenesisCircle(AliceId, saltAlice, (ans, error) => {
+			ID.hasNoGenesisCircle(AliceId, saltAlice, (ans, error) => { console.log("tralala");
 				if (error) {
 					console.log("error: " + error);
 					return res.status(400).json({ error: error });
 				}
-				transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AlicePubkey, contract, constants.SATOSHI_FOR_GENESIS, true, (answ) => {
+				transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AlicePubkey, contract, constants.SATOSHI_FOR_GENESIS, true, (answ) => { console.log("tralala");
 					const status = answ.status
 					const err = answ.err
 					if (err) {
@@ -68,7 +70,7 @@ app.post('/api/oracleGetAirdrop', (req, res) => {  //Alice wil get an airdrop fo
 	});
 });
 
-app.post('/api/oraclePleaseSignTx', (req, res) => {
+app.post('/api/oraclePleaseSignTx', (req, res) => { console.log("tralala");
 	const AliceId = req.body.AliceId;
 	const saltAlice = req.body.saltAlice;
 	const circleId = req.body.circleId;
@@ -85,7 +87,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 
 	const contract = req.body.contract;
 	// execute the contract if has its hash is in the pubscript to be unlocked
-	transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, saltAlice, pubkeyOfUTXO, addressOfUTXO, contract, (err) => {
+	transactions.PubScriptToUnlockContainsAHashOfContract(AliceId, saltAlice, pubkeyOfUTXO, addressOfUTXO, contract, (err) => { console.log("tralala");
 		if (err) {
 			console.log({ error: err + " Not allowed (unlockscript contains incorrect information (contract or pubkey))" })
 			return res.status(400).json({ error: err + " Not allowed (unlockscript contains incorrect information (contract or pubkey)) " })
@@ -93,7 +95,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 		//save contractALgorithm to contract.js and execute that contract.js
 		try {
 			var randFile;
-			randomBytes(100, (err, buf) => {
+			randomBytes(100, (err, buf) => { console.log("tralala");
 				if (err) {
 					console.log({ error: err });
 					return res({ error: err });
@@ -107,7 +109,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 								return res.status(500).json({ error: err });
 							}
 							try {
-								require(randFile).contract(circleId, BobId, saltBob, (dummy, errInContract) => {
+								require(randFile).contract(circleId, BobId, saltBob, (dummy, errInContract) => { console.log("tralala");
 									if (errInContract) {
 										console.log({ error: errInContract })
 										return res.json({ error: errInContract })
@@ -121,7 +123,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 									////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 									// TEMPORARY, somehow it does not mine the transfer from Alice to Alice
 									// therefore we use a faucet to emulate that there is some tokens on Alice's address
-									transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FOR_GENESIS - 500, false, (answ) => {//-500 so I recognize it during debugging
+									transactions.createAndBroadcastCircleGenesisTx(AliceId, saltAlice, AliceNewPubkey, contract, constants.SATOSHI_FOR_GENESIS - 500, false, (answ) => { console.log("tralala");//-500 so I recognize it during debugging
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,7 +131,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 										////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-										transactions.PSBT(AliceId, saltAlice, contract, AliceNewPubkey, BobId, saltBob, BobPubkey, circleId, (AliceAddressOfNewUTXO, PSBT, OracleFinal, status, err) => {
+										transactions.PSBT(AliceId, saltAlice, contract, AliceNewPubkey, BobId, saltBob, BobPubkey, circleId, (AliceAddressOfNewUTXO, PSBT, OracleFinal, status, err) => { console.log("tralala");
 											if (err) {
 												console.log({ status: status, error: err })
 												return res.status(status).json({ error: err })
@@ -161,7 +163,7 @@ app.post('/api/oraclePleaseSignTx', (req, res) => {
 });
 
 
-app.post('/api/broadcastToRegtest', async (req, res) => {
+app.post('/api/broadcastToRegtest', async (req, res) => { console.log("tralala");
 	const psbt = req.body.psbtToBroadcast;
 	const psbtToBroadcast = bitcoin.Psbt.fromBase64(psbt, { network: regtest })
 	// build and broadcast to our RegTest network
@@ -198,7 +200,7 @@ function createTempContractFile(randFile, contractAlgorithm, callback) {
 }
 
 function rmFile(f) {
-	fs.unlink(f, (err) => {
+	fs.unlink(f, (err) => { console.log("tralala");
 		if (err) {
 			return console.log({ error: "Unexpected error removing " + f + " " + err })
 		}
@@ -209,7 +211,7 @@ function rmFile(f) {
 require("glob").glob("contractTMP*.js", function (er, files) {
 	if (er) console.log(er)
 	for (f in files) {
-		fs.unlink(files[f], (err) => {
+		fs.unlink(files[f], (err) => { console.log("tralala");
 			if (err) console.log({ error: "Unexpected error removing " + files[f] + " " + err })
 		})
 	}

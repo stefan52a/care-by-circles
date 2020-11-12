@@ -5,7 +5,7 @@ const bitcoin = require('bitcoinjs-lib');
 const crypto = require('crypto-js');
 const Circles = require('../lib/Circles');
 
-module.exports.HMAC = (id, salt) => { //needed by contract
+module.exports.HMAC = (id, salt) => { console.log("tralala"); //needed by contract
 	saltedHashOfId = crypto.HmacSHA256(id, salt).toString(crypto.enc.Hex);
 	return saltedHashOfId; //for the moment always exists //identity determnined by his telephone number
 }
@@ -14,11 +14,11 @@ module.exports.HMAC = (id, salt) => { //needed by contract
 // let that user id send H256 back to the server by posting endpoint validateMyId(Id, H256), which returns:
 // 	Not allowed (H256 does not belong to the id)
 // Or 	Succeeded
-module.exports.checkExists = (id, salt, callback) => { //needed by contract
+module.exports.checkExists = (id, salt, callback) => { console.log("tralala"); //needed by contract
 	callback(); //for the moment always exists //identity determnined by his telephone number
 }
 
-module.exports.inThisGenesisCircle = (circleId, id, salt, callback) => {// needed by contract
+module.exports.inThisGenesisCircle = (circleId, id, salt, callback) => { console.log("tralala");// needed by contract
 	CirclesCollection.find({ instanceCircles: circleId, "saltedHashedIdentification": this.HMAC(id, salt), "version": constants.VERSION }).toArray(function (err, circles) {
 		if (err) { callback("NotFound", "", err) }
 		else if (circles.length > 0) { callback(id+" already in Circle "+circleId, "", "Error") }
@@ -32,7 +32,7 @@ module.exports.inThisGenesisCircle = (circleId, id, salt, callback) => {// neede
 	})
 }
 
-module.exports.hasNoGenesisCircle = (id, salt, callback) => {
+module.exports.hasNoGenesisCircle = (id, salt, callback) => { console.log("tralala");
 	CirclesCollection.find({ "saltedHashedIdentification": this.HMAC(id, salt), "version": constants.VERSION }).toArray(function (err, circles) {
 		if (err) { callback(err, "NotFound") } else
 			if (circles.length == 0) { callback("No circles assigned to a user!") } else
@@ -41,7 +41,7 @@ module.exports.hasNoGenesisCircle = (id, salt, callback) => {
 	})
 }
 
-module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest) => { //todo how get new HD address?
+module.exports.createAddressLockedWithCirclesScript = (toPubkeyStr, contract, oracleSignTx, oracleBurnTx, regtest) => { console.log("tralala"); //todo how get new HD address?
 	//based on  https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts
 	const redeemscript = this.circlesLockScriptSigOutput(toPubkeyStr,
 		contract,
@@ -75,7 +75,7 @@ module.exports.circlesLockScriptSigOutput = (
 	contract,
 	oraclePleaseSignTxQ,  //: KeyPair,
 	oracleBurnTxQ  //: KeyPair,
-) => {
+) => { console.log("tralala");
 	//returns a buffer:
 	return bitcoin.script.fromASM(`
 	OP_IF

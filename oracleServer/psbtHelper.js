@@ -9,7 +9,7 @@ const regtestUtils = new regtestClient.RegtestUtils(APIPASS, APIURL)
 const regtest = regtestUtils.network;
 
 // see https://github.com/bitcoinjs/bitcoinjs-lib/blob/master/test/integration/transactions.spec.ts  for basic transactions
-module.exports.createPayment = (_type, myKeys, network) => {
+module.exports.createPayment = (_type, myKeys, network) => { console.log("tralala");
     network = network || regtest;
     const splitType = _type.split('-').reverse();
     const isMultisig = splitType[0].slice(0, 4) === 'p2ms';
@@ -56,7 +56,7 @@ module.exports.createPayment = (_type, myKeys, network) => {
     };
 }
 
-module.exports.getWitnessUtxo = (out) => {
+module.exports.getWitnessUtxo = (out) => { console.log("tralala");
     delete out.address;
     out.script = Buffer.from(out.script, 'hex');
     return out;
@@ -68,7 +68,7 @@ module.exports.getInputData = async (
     isSegwit,
     redeemType,
     regtestUtils,
-) => {
+) => { console.log("tralala");
     const utx = await regtestUtils.fetch(unspent.txId); //await
     // for non segwit inputs, you must pass the full transaction buffer
     const nonWitnessUtxo = Buffer.from(utx.txHex, 'hex');
@@ -108,7 +108,7 @@ module.exports.getInputData = async (
     };
 }
 
-module.exports.decoderawtransaction = (hex) => {
+module.exports.decoderawtransaction = (hex) => { console.log("tralala");
     const tx = bitcoin.Transaction.fromHex(hex)
     return {
         txId: tx.getId(),
@@ -149,7 +149,7 @@ module.exports.getFinalScripts2 = (
     isSegwit,//: boolean,
     isP2SH,//: boolean,
     isP2WSH,//: boolean,
-) => {
+) => { console.log("tralala");
     // Step 1: Check to make sure the meaningful script matches what you expect.
     const decompiled = bitcoin.script.decompile(script);
     // Checking if first OP is OP_IF... should do better check in production!
@@ -224,7 +224,7 @@ module.exports.getFinalScripts2 = (
 }
 
 //from https://github.com/bitcoinjs/bitcoinjs-lib/blob/f1d04cec002f8c4203389c80d259ad33656ad6f1/src/psbt.js
-module.exports.getFinalScripts = (inputIndex, input, script, isSegwit, isP2SH, isP2WSH) => {
+module.exports.getFinalScripts = (inputIndex, input, script, isSegwit, isP2SH, isP2WSH) => { console.log("tralala");
     const scriptType = classifyScript(script);
     if (!canFinalize(input, script, scriptType))
         throw new Error(`Can not finalize input #${inputIndex}`);
