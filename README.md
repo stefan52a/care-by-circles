@@ -70,7 +70,8 @@ In order, however, to determine the uniqueness of an id, the Oracle needs to hav
 The oracle enforces the uniqueness of the id. The user may withdraw the salt and the Oracle promises only to remember the hash of id and that salt. If the user withdraws his salt, the data on his Circles in the blockchain is not retrievable anymore.
 What gets stored in a decentral table, is:
 
-circle instance  <->  Hash(id, salt)     relationship 
+1 to 1 relationship between:
+"circle instance"  and  "Hash(id, salt)"
 
 For the id it would be better to use some kind of DID system here (e.g. one using built-up reputation of a public key), but this is outside the scope at the moment.
 
@@ -116,6 +117,7 @@ In context it looks like:
 
 ![Alt text](READMEImages/Transaction.jpg?raw=true "Transaction in context")
 
+Because Circle tokens are fungible and airdropped Circle tokens are "earned" when creating your first Circle instance, the Circle tokens can also be used to include new members in a Circle you are part of buit is started by another user.
 
 ## Usage ##
 1. Setup a BTC regtest server with junderw who maintains an image of a Dockerfile as junderw/bitcoinjs-regtest-server on Docker Hub.
