@@ -9,7 +9,7 @@
   "dependencies": {
     "assert": "^2.0.0",
     "async-lock": "^1.2.4",
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
     "bip32": "^2.0.6",
     "bip39": "^3.0.2",
