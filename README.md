@@ -35,9 +35,9 @@ Foreseen, but not implemented is:
 ## Summary ##
 Alice's coins will be locked with a Special script. Alice can only spend to that special script, transactions that are cosigned by the Oracle server and Alice. The spending (to let Bob join the Circle) is only cosigned by the Oracle when 1 of the following is satisfied (the contract):
 
-- The Oracle decides whether Alice's publickey belongs to a CircleInstance a.o. stays under 150 (Dunbar's number) members. Then Alice gets some 'free" tokens and the remainder gets locked by a similarly Special script.
+- (to let 'Bob' join Alice's Circle) The Oracle decides whether Alice's publickey belongs to a CircleInstance that a.o. stays under 150 (Dunbar's number) members. Then Alice gets some 'free" tokens and the remainder gets locked by a similarly Special script.
 
-- The Oracle decides whether a majority (which is greater than half of all Circle members + 1) of publickeys belonging to a CircleInstance exists, that asks to spend the tokens locked with the Special script. If it is a majority: the Oracle cosigns the spending of the tokens towards the pubkeys of that majority.  (to expel a member)
+- (to expel a member) The Oracle decides whether a majority (which is greater than half of all Circle members + 1) of publickeys belonging to a CircleInstance exists, that asks to spend the tokens locked with the Special script. If it is a majority: the Oracle cosigns the spending of the tokens towards the pubkeys of that majority.  
 
 Members agreeing in the Circle blockchain have consensus about the following:
 
@@ -49,7 +49,7 @@ Members agreeing in the Circle blockchain have consensus about the following:
 - Blockchain nodes cannot measure arbitrary conditions, so we must rely on an Oracle. An oracle is a server that has a keypair, and (co)signs transactions on request when a user-provided expression (contract) evaluates to true.
 - A transaction is adding another person to one of your Circles
 
-The Circle token is a fungible token, and is associated with identity. initially 1/100th (=1 million Satoshi) Circle token is associated with a telephone nr. (FTM to represent identity), but also e.g. 600 Satoshi1 token could be associated with an id.
+The Circle token is a fungible token, and is associated with identity. initially 1/100th (=1 million Satoshi) Circle token is associated with a telephone nr. (FTM to represent identity), but also less (e.g. 600) Satoshi token could be associated with an id.
 
 Important is to consider that it will not be a simple single sign signature unlock script, but a multisig (either of Alice and the Oracle, where Alice invites Bob to join a Circle) or (Alice, Bob and Carol and the Oracle in a Circle of 5 (so they are a majority, and then can "expel" David)
 
@@ -66,13 +66,13 @@ Next to that the Oracle currently also checks whether an Id is really 1 unique h
 An individual person's id is not stored as is on the blockchain or decentral storage.
 
 ## GDPR consideration ##
-In order, however, to determine the uniqueness of an id, the Oracle needs to be knowledgable about the id. Therefore the Oracle gets the id along with a salt from the user and store the hash in a table and forgets about the id and salt.
+In order, however, to determine the uniqueness of an id, the Oracle needs to have knowledge about that id. Therefore the Oracle gets the id along with a salt of the owner (user) and the Oracle stores the hash (fingerprint) in a table and forgets about the id and salt.
 The oracle enforces the uniqueness of the id. The user may withdraw the salt and the Oracle promises only to remember the hash of id and that salt. If the user withdraws his salt, the data on his Circles in the blockchain is not retrievable anymore.
 What gets stored in a decentral table, is:
 
 circle instance  <->  Hash(id, salt)     relationship 
 
-For the id it would be better to use some kind of DID system here (e.g. one using built-up reputation of a public key), but this is outside the scope ATM.
+For the id it would be better to use some kind of DID system here (e.g. one using built-up reputation of a public key), but this is outside the scope at the moment.
 
 Under the hood it uses Bitcoin blockchain principles for consensus (on Dunbar's number) and Oracle contracts with Partially Signed Bitcoin Transactions (PSBT).
 
@@ -91,7 +91,7 @@ n+1 <IDi pubkey> ..... <IDm pubkey><oracleBurn pubkey> m+1
 ENDIF
 CHECKMULTISIG
 ```
-where n>m/2, and contractPleaseSign_hash is the hash of (simplified):
+where n>m/2, and contractPleaseSign_hash is the hash of the contract, simplified:
 
 ```
 const ID = require('./identification');
@@ -218,7 +218,7 @@ adapt constants.js see point 3.
 node clientTest   #or use your favorite debugger
 ```
 
-8. Be aware that if you often switch between local and remote regtest, that you should empty the client side database (see point 3).
+8. Be aware that if you often switch between local and remote regtest, then you should empty the client side database (see point 3).
 
 ## Ideas ##
 
