@@ -243,6 +243,8 @@ Harari: Sapiens
 
 van Mensvoort: Next Nature 
 
+https://www.cs.princeton.edu/~arvindn/publications/mining_CCS.pdf , why a fee-only blockchain might not work, but (Jimmy Song:) The analysis here from an economic perspective is correct, but the social cost of intentionally forking or making stale blocks isn’t considered. And  https://www.researchgate.net/publication/343150528_Undercutting_Bitcoin_Is_Not_Profitable
+
 ## A demo of a testclient ##
 1. Alice generates a Circle & gets airdropped some tokens
 2. Alice adds Bob to her Circle
