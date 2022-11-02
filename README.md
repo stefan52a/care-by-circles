@@ -59,6 +59,7 @@ The Circle blockchain is a fork of the Bitcoin blockchain.
 This is an Express RESTful API server for the Oracle for Care By Circles, social inclusion.
 
 An Oracle is any service that tries to execute a contract, a contract on which the users of this blockchain have consensus on.
+This 150-rule contract is not an Oracle in a tighter definition, as it is not an external *event* that controls the flow of a smart contract. Consensus rule could be a better word. Although you could call somebody changing the 150 rule an event, that the Care By Circles consensus decides not to accept for executing functions, and in that way conrols the flow. Changing the 150-rule is actually a fork.
 
 Circles are tribes with a maximum of 150 (Dunbar's number) people each.
 
