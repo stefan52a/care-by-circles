@@ -23,7 +23,7 @@
     "crypto-js": "^4.0.0",
     "express": "*",
     "glob": "^7.1.6",
-    "got": "^11.8.0",
+    "got": "^12.5.3",
     "mongoose": "^5.10.9",
     "prompt-sync": "^4.2.0",
     "randombytes": "^2.1.0",
